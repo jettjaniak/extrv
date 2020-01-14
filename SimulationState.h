@@ -21,11 +21,9 @@ public:
     Parameters* p;
 
     // TODO: check seed type for default_random_engine
-    SimulationState(double h_0, Parameters* p_, size_t seed) {
-        h = h_0;
-        p = p_;
-        generator = generator_t(seed);
-    }
+    SimulationState(double h_0, Parameters* p_, size_t seed);
+
+    void simulate_one_step(double dt, double shear);
 };
 
 

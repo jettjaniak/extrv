@@ -2,7 +2,6 @@
 
 #include "types.h"
 #include "Parameters.h"
-#include "helpers.h"
 
 /**
  * Each ligand has xyz coordinates in the model.
@@ -21,15 +20,15 @@ private:
     double alpha_inc;
     // value 0 indicates no bonding, higher values indicate bonding to different receptors
     int bond_state = 0;
+    int prepared_bond_state = 0;
+    // x coordinate of receptor currently bonded to the ligand,
+    // valid only when ligand is bonded
+    double bd_rec_x = 0.0;
 
     // ligand's parameters
     LigandParameters* lig_p;
 
 public:
-    // x coordinate of receptor currently bonded to the ligand,
-    // valid only when ligand is bonded
-    double bd_rec_x = 0.0;
-
     /**
      * Ligand constructor.
      *
@@ -37,17 +36,11 @@ public:
      * @param lig_y y coordinate of point on the sphere
      * @param lig_p_ ligand's parameters
      */
-    Ligand(double lig_x, double lig_y, LigandParameters* lig_p_)
-    {
-        auto r_alpha_pair = helpers::parametrize_ligand(lig_x, lig_y);
-        r_cir = r_alpha_pair.first;
-        alpha_inc = r_alpha_pair.second;
-
-        lig_p = lig_p_;
-    }
+    Ligand(double lig_x, double lig_y, LigandParameters* lig_p_);
 
     /**
      * Computes bonding probability and draws if bonding will happen.
+     * If ligand is bonded (bond_state != 0), always returns false.
      * If there are more than one receptor to bond to, it chooses one accordingly to probability distribution.
      * If bonding happens, it saves all bonding information except for bd_rec_x.
      * It has to be updated after the sphere is moved.
@@ -59,11 +52,7 @@ public:
      * @param generator random number generator
      * @return true if bonding will happen, false otherwise
      */
-    bool prepare_bonding(double h, double alpha_0, double dt, Parameters* p, generator_t generator)
-    {
-        // TODO
-        return false;
-    }
+    bool prepare_bonding(double h, double alpha_0, double dt, Parameters* p, generator_t generator);
 
     /**
      * Computes bond rupture probability and draws if rupture will happen.
@@ -75,11 +64,24 @@ public:
      * @param generator random number generator
      * @return true if bond rupture will happen, false otherwise
      */
-    bool prepare_rupture(double h, double alpha_0, double dt, Parameters* p, generator_t generator)
-    {
-        // TODO
-        return false;
-    }
+    bool prepare_rupture(double h, double alpha_0, double dt, Parameters* p, generator_t generator);
+
+    /**
+     * Creates previously prepared bond.
+     * It will set `bd_rec_x` and `bond_state`.
+     *
+     * @param alpha_0 sphere's rotation
+     */
+    void bond(double alpha_0);
+
+    /**
+     * Ruptures current bond.
+     * It will set `bond_state`.
+     */
+    void rupture();
+
+
+    void move_bd_rec(double x_dist);
 
     /**
      * Computes forces that bond exerts on the sphere.
@@ -89,12 +91,7 @@ public:
      * @param p model's parameters
      * @return forces and torques exerted on the sphere
      */
-    forces_t bond_force(double h, double alpha_0, Parameters* p)
-    {
-        // TODO
-        forces_t f;
-        return f;
-    }
+    forces_t bond_forces(double h, double alpha_0, Parameters* p);
 };
 
 
