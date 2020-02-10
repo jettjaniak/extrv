@@ -1,5 +1,7 @@
 #include "helpers.h"
 
+#include <cmath>
+
 
 namespace helpers {
     pair<double, double> parametrize_ligand(double lig_x, double lig_y) {
@@ -22,4 +24,15 @@ namespace helpers {
         }
         return {r_cir, alpha};
     }
+
+    double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl) {
+        return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * TEMP));
+    }
+
+    std::uniform_real_distribution<double> uniform_dist(0, 1);
+
+    double draw_from_uniform_dist(generator_t generator) {
+        return uniform_dist(generator);
+    }
+
 }

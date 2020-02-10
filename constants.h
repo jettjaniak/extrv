@@ -6,3 +6,7 @@ constexpr double K_B = 1.38064852e-11;
 /// gravitational acceleration in μm / s^2 (in 1992 paper it's called gravitational constant)
 constexpr double G = 9806650.;
 constexpr double EPS_PROB = 1.1102230246251565e-16;
+/// average internal body temperature in K
+constexpr double TEMP = 310.15;
+/// cell radius in μm
+constexpr double R_C = 4.5;

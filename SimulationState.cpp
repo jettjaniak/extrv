@@ -24,9 +24,9 @@ void SimulationState::simulate_one_step(double dt, double shear) {
 
     vector<size_t> new_bondings_lig_ind;
     // We try with all ligands, including those already bonded!
-    // But `prepare_bonding` will check it.
+    // But `prepare_binding` will check it.
     for (size_t i = 0; i < ligands.size(); i++)
-        if (ligands[i].prepare_bonding(h, alpha_0, dt, p, generator))
+        if (ligands[i].prepare_binding(h, alpha_0, dt, p, generator))
             new_bondings_lig_ind.push_back(i);
 
     // Here we try only with bonded ligands.

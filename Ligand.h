@@ -28,6 +28,28 @@ private:
     // ligand's parameters
     LigandParameters* lig_p;
 
+    /**
+     * Computes x coordinate of ligand.
+     * @param alpha_0 sphere's rotation
+     */
+    double x_pos(double alpha_0);
+
+    /**
+     * Computes y coordinate of ligand.
+     * @param alpha_0 sphere's rotation
+     */
+    double y_pos(double alpha_0);
+
+    /**
+     * Compute distance from ligand to surface.
+     *
+     * @param h distance from sphere to surface
+     * @param alpha_0 sphere's rotation
+     * @param p model's parameters
+     * @return distance from ligand to surface
+     */
+    double surface_dist(double h, double alpha_0, Parameters* p);
+
 public:
     /**
      * Ligand constructor.
@@ -42,8 +64,8 @@ public:
      * Computes bonding probability and draws if bonding will happen.
      * If ligand is bonded (bond_state != 0), always returns false.
      * If there are more than one receptor to bond to, it chooses one accordingly to probability distribution.
-     * If bonding happens, it saves all bonding information except for bd_rec_x.
-     * It has to be updated after the sphere is moved.
+     * If bonding happens, it saves all bonding information except for bd_rec_x - it has to be updated after
+     * the sphere is moved, because we assume bonding will happen at the end of time step.
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
@@ -52,7 +74,7 @@ public:
      * @param generator random number generator
      * @return true if bonding will happen, false otherwise
      */
-    bool prepare_bonding(double h, double alpha_0, double dt, Parameters* p, generator_t generator);
+    bool prepare_binding(double h, double alpha_0, double dt, Parameters *p, generator_t generator);
 
     /**
      * Computes bond rupture probability and draws if rupture will happen.
