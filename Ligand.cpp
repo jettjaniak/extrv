@@ -64,16 +64,18 @@ bool Ligand::prepare_rupture(double h, double alpha_0, double dt, Parameters *p,
 
 void Ligand::bond(double alpha_0) {
     bond_state = prepared_bond_state;
-    prepared_bond_state = 0;
+    prepared_bond_state = -1;
     bd_rec_x = x_pos(alpha_0);
 }
 
 void Ligand::rupture() {
-    // TODO: implement
+    bond_state = 0;
+    bd_rec_x = INFTY;
 }
 
 void Ligand::move_bd_rec(double x_dist) {
-    // TODO: implement
+    if (bd_rec_x == INFTY) abort();
+    bd_rec_x -= x_dist;
 }
 
 forces_t Ligand::bond_forces(double h, double alpha_0, Parameters *p) {

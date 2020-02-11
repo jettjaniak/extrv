@@ -20,10 +20,11 @@ private:
     double alpha_inc;
     // value 0 indicates no bonding, higher values indicate bonding to different receptors
     int bond_state = 0;
-    int prepared_bond_state = 0;
+    // -1 indicates there is no prepared state
+    int prepared_bond_state = -1;
     // x coordinate of receptor currently bonded to the ligand,
     // valid only when ligand is bonded
-    double bd_rec_x = 0.0;
+    double bd_rec_x = INFTY;
 
     // ligand's parameters
     LigandParameters* lig_p;
@@ -111,7 +112,8 @@ public:
 
     /**
      * Creates previously prepared bond.
-     * It will set `bd_rec_x` and `bond_state`.
+     * It will set `bd_rec_x` and `bond_state` to appropriate values
+     * and `prepared_bond_state` to -1.
      *
      * @param alpha_0 sphere's rotation
      */
@@ -119,7 +121,7 @@ public:
 
     /**
      * Ruptures current bond.
-     * It will set `bond_state`.
+     * It will set `bond_state` to 0 and `bd_rec_x` to infinity.
      */
     void rupture();
 
