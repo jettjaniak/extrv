@@ -50,6 +50,26 @@ private:
      */
     double surface_dist(double h, double alpha_0, Parameters* p);
 
+    /**
+     * Compute bond length.
+     * Should abort if ligand is not bonded (bond_state == 0).
+     *
+     * @param h distance from sphere to surface
+     * @param alpha_0 sphere's rotation
+     * @return bond length in μm
+     */
+    double bond_length(double h, double alpha_0);
+
+    /**
+     * Compute force exerted on bond.
+     * Should abort if ligand is not bonded (bond_state == 0).
+     *
+     * @param h distance from sphere to surface
+     * @param alpha_0 sphere's rotation
+     * @return force exerted on bond in TODO: unit
+     */
+    double bond_force(double h, double alpha_0);
+
 public:
     /**
      * Ligand constructor.
@@ -78,6 +98,7 @@ public:
 
     /**
      * Computes bond rupture probability and draws if rupture will happen.
+     * If ligand is not bonded (bond_state == 0), always returns false.
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
