@@ -135,10 +135,9 @@ public:
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
-     * @param p model's parameters
      * @return forces and torques exerted on the sphere
      */
-    forces_t bond_forces(double h, double alpha_0, Parameters* p);
+    forces_t bond_forces(double h, double alpha_0);
 };
 
 

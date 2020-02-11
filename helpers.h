@@ -66,4 +66,20 @@ namespace helpers {
      * @return number in [0, 1]
      */
     double draw_from_uniform_dist(generator_t generator);
+
+    /**
+     * Compute vector of bond from ligand to corresponding receptor.
+     *
+     * @param surface_dist vertical distance from ligand to surface
+	 * @param lig_x x coordinate of bonded ligand
+	 * @param rec_x x coordinate of corresponding bonded receptor
+     * @return
+     */
+    pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x);
+
+    /**
+     * Compute Euclidian length.
+     * @param vector x and y coordinates
+     */
+    double compute_2d_vector_length(pair<double, double> vector);
 }

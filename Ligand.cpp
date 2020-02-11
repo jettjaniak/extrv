@@ -75,9 +75,24 @@ void Ligand::move_bd_rec(double x_dist) {
     bd_rec_x -= x_dist;
 }
 
-forces_t Ligand::bond_forces(double h, double alpha_0, Parameters *p) {
-    // TODO: implement
-    return {};
+forces_t Ligand::bond_forces(double h, double alpha_0) {
+    BondParameters* bond_p = get_curr_bond_p();
+
+    double lig_x = x_pos(alpha_0);
+    double lig_y = y_pos(alpha_0);
+
+    pair<double, double> bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), lig_x, bd_rec_x);
+    double bond_x = bond_vector.first;
+    double bond_y = bond_vector.second;
+
+    double bond_len = helpers::compute_2d_vector_length(bond_vector);
+    double f_common = (bond_p->sigma * (bond_len - bond_p->lambda_)) / bond_len;
+
+    double f_x = f_common * bond_x;
+    double f_y = f_common * bond_y;
+    double t_z = f_y * lig_x - f_x * lig_y;
+
+    return {f_x, f_y, t_z};
 }
 
 // Private methods
@@ -97,14 +112,18 @@ double Ligand::surface_dist(double h, double alpha_0) {
 }
 
 double Ligand::bond_length(double h, double alpha_0) {
-    double y_len = surface_dist(h, alpha_0);
-    double x_len = x_pos(alpha_0) - bd_rec_x;  // may be negative
+    if (bond_state < 1) abort();
 
-    return sqrt(x_len * x_len + y_len * y_len);
+    pair<double, double> bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), x_pos(alpha_0), bd_rec_x);
+
+    return helpers::compute_2d_vector_length(bond_vector);
 }
 
 double Ligand::bond_force(double h, double alpha_0) {
-    return get_curr_bond_p()->sigma * bond_length(h, alpha_0);
+    // `get_curr_bond_p` will abort if not bonded
+    BondParameters* bond_p = get_curr_bond_p();
+
+    return bond_p->sigma * std::abs(bond_length(h, alpha_0) - bond_p->lambda_);
 }
 
 BondParameters* Ligand::get_curr_bond_p() {
