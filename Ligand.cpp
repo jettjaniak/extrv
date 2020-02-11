@@ -16,13 +16,13 @@ Ligand::Ligand(double lig_x, double lig_y, LigandParameters* lig_p_) {
     lig_p = lig_p_;
 }
 
-bool Ligand::prepare_binding(double h, double alpha_0, double dt, Parameters *p, generator_t generator) {
+bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t generator) {
     if (bond_state != 0)
         return false;
 
     BondParameters* bond_p = lig_p->bonds_p[0];
     // TODO: more binding rates and bond states (different receptors)
-    double deviation = std::abs(surface_dist(h, alpha_0, p) - bond_p->lambda_);
+    double deviation = std::abs(surface_dist(h, alpha_0) - bond_p->lambda_);
     // Here we assume, that binding happens at rate corresponding to slip bond. It may be wrong.
     double binding_rate = helpers::bell_binding_rate(deviation, bond_p->k01s, bond_p->sigma, bond_p->x1s);
     double binding_probability = 1.0 - exp(-binding_rate * dt);
@@ -34,11 +34,8 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, Parameters *p,
 
 }
 
-bool Ligand::prepare_rupture(double h, double alpha_0, double dt, Parameters *p, generator_t generator) {
-    if (bond_state == 0)
-        return false;
-
-    BondParameters* bond_p = lig_p->bonds_p[bond_state - 1];
+bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t generator) {
+    BondParameters* bond_p = get_curr_bond_p();  // will abort if not bonded
     double bond_f = bond_force(h, alpha_0);
     double rupture_rate;
 
@@ -93,8 +90,27 @@ double Ligand::y_pos(double alpha_0) {
     return r_cir * cos(alpha_0 + alpha_inc);
 }
 
-double Ligand::surface_dist(double h, double alpha_0, Parameters *p) {
-    return h + R_C + y_pos(alpha_0);
+double Ligand::surface_dist(double h, double alpha_0) {
+    double surf_dist = h + R_C + y_pos(alpha_0);
+    if (surf_dist < 0) abort();
+    return surf_dist;
+}
+
+double Ligand::bond_length(double h, double alpha_0) {
+    double y_len = surface_dist(h, alpha_0);
+    double x_len = x_pos(alpha_0) - bd_rec_x;  // may be negative
+
+    return sqrt(x_len * x_len + y_len * y_len);
+}
+
+double Ligand::bond_force(double h, double alpha_0) {
+    return get_curr_bond_p()->sigma * bond_length(h, alpha_0);
+}
+
+BondParameters* Ligand::get_curr_bond_p() {
+    if (bond_state < 1 || bond_state > lig_p->bonds_p.size())
+        abort();
+    return lig_p->bonds_p[bond_state - 1];
 }
 
 

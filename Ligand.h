@@ -46,10 +46,9 @@ private:
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
-     * @param p model's parameters
      * @return distance from ligand to surface
      */
-    double surface_dist(double h, double alpha_0, Parameters* p);
+    double surface_dist(double h, double alpha_0);
 
     /**
      * Compute bond length.
@@ -71,6 +70,11 @@ private:
      */
     double bond_force(double h, double alpha_0);
 
+    /**
+     * Returns parameters of current bond.
+     */
+    BondParameters* get_curr_bond_p();
+
 public:
     /**
      * Ligand constructor.
@@ -91,24 +95,22 @@ public:
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
      * @param dt simulation time step
-     * @param p model's parameters
      * @param generator random number generator
      * @return true if bonding will happen, false otherwise
      */
-    bool prepare_binding(double h, double alpha_0, double dt, Parameters *p, generator_t generator);
+    bool prepare_binding(double h, double alpha_0, double dt, generator_t generator);
 
     /**
      * Computes bond rupture probability and draws if rupture will happen.
-     * If ligand is not bonded (bond_state == 0), always returns false.
+     * Should abort if ligand is not bonded (bond_state == 0).
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
      * @param dt simulation time step
-     * @param p model's parameters
      * @param generator random number generator
      * @return true if bond rupture will happen, false otherwise
      */
-    bool prepare_rupture(double h, double alpha_0, double dt, Parameters* p, generator_t generator);
+    bool prepare_rupture(double h, double alpha_0, double dt, generator_t generator);
 
     /**
      * Creates previously prepared bond.
