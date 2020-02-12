@@ -14,7 +14,6 @@
  *
  * Sometimes asymptotic formulas are used for small argument values.
  */
-// TODO: implement
 namespace interpolated {
 
     double f_r(double h_over_r);
@@ -28,6 +27,10 @@ namespace interpolated {
     double t_s(double h_over_r);
 
     double t_t(double h_over_r);
+
+    // ignore static storage initialization warnings, begin
+    #pragma clang diagnostic push
+    #pragma ide diagnostic ignored "cert-err58-cpp"
 
     const vector<double> F_R_DATA_X {3.2020e-03, 5.0040e-03, 4.5300e-02, 1.2760e-01,
                                      5.4310e-01, 1.3524e+00, 2.7622e+00, 9.0677e+00};
@@ -81,4 +84,7 @@ namespace interpolated {
 
     const vector<double> LOG_T_T_DATA_Y = helpers::transform_container(T_T_DATA_Y, log);
 
+    // ignore static storage initialization warnings, end
+    #pragma clang diagnostic pop
 }
+

@@ -30,17 +30,22 @@ namespace helpers {
     }
 
     double esel_rupture_rate(double force, double rate_0, double react_compl) {
-        return 0;  // TODO: implement
+        return rate_0 * exp(react_compl * force);
     }
 
     double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
                              double react_compl_catch) {
-        return 0;  // TODO: implement
+        double half_f = force / 2;
+        return (2.0 / 3.0) * rate_0_slip * exp(react_compl_slip * half_f)
+            + rate_0_catch * exp(react_compl_slip * half_f);
     }
 
     double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
                                  double react_compl_catch) {
-        return 0;  // TODO: implement
+        return 1 / (
+                (1 / rate_0_slip) * std::exp(-react_compl_slip * force) +
+                (1 / rate_0_catch) * std::exp(-react_compl_catch * force)
+        );
     }
 
     std::uniform_real_distribution<double> uniform_dist(0, 1);
@@ -74,6 +79,18 @@ namespace helpers {
         double slope = (points_y[i] - points_y[i - 1]) / (points_x[i] - points_x[i - 1]);
 
         return y_0 + dist * slope;
+    }
+
+    double log_x_minus_one(double x) {
+        return log(x - 1);
+    }
+
+    double log_minus_x_minus_one(double x) {
+        return log(- x - 1);
+    }
+
+    double log_minus_x_plus_one(double x) {
+        return log(- x + 1);
     }
 
 }

@@ -37,6 +37,7 @@ namespace helpers {
 
     /**
      * Compute rate of rupture in catch-slip P-selectin bond.
+     * TODO: citation
      *
      * @param force force exerted on bond in kg μm / s^2
      * @param rate_0_slip multiplicative constant in slip part of rupture rate in 1/s
@@ -50,6 +51,7 @@ namespace helpers {
 
     /**
      * Compute rate of rupture in catch-slip ICAM and VCAM bonds.
+     * TODO: citation
      *
      * @param force force exerted on bond in kg μm / s^2
      * @param rate_0_slip multiplicative constant in slip part of rupture rate in 1/s
@@ -100,6 +102,9 @@ namespace helpers {
     double log_minus_x_minus_one(double x);
     double log_minus_x_plus_one(double x);
 
+    /**
+     * Returns container with elements transformed by functor.
+     */
     template <typename Container, typename Functor>
     Container transform_container(const Container& c, Functor &&f)
     {
