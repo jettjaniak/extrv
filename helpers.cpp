@@ -55,11 +55,11 @@ namespace helpers {
     }
 
     pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x) {
-        return pair<double, double>();  // TODO: implement
+        return {rec_x - lig_x, - surf_dist};
     }
 
     double compute_2d_vector_length(pair<double, double> vector) {
-        return 0;  // TODO: implement
+        return sqrt(vector.first * vector.first + vector.second * vector.second);
     }
 
     /**
