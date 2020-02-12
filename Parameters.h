@@ -51,5 +51,10 @@ struct LigandParameters {
 };
 
 struct Parameters {
+    // TODO: description and constructor with unit conversion
+    double temp;
+    double r_c;
+    double dens_diff;
+    double mu;
     
 };

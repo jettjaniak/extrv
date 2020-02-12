@@ -25,8 +25,8 @@ namespace helpers {
         return {r_cir, alpha};
     }
 
-    double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl) {
-        return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * TEMP));
+    double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl, double temp) {
+        return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
     }
 
     std::uniform_real_distribution<double> uniform_dist(0, 1);

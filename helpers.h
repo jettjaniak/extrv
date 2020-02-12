@@ -18,9 +18,10 @@ namespace helpers {
      * @param rate_0 reaction rate when deviation is zero in 1/s
      * @param spring_const spring constant in kg/s^2
      * @param react_compl reactive compliance in μm
+     * @param temp temperature in K
      * @return binding rate in 1/s
      */
-    double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl);
+    double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl, double temp);
 
     /**
      * Compute rate of rupture in slip E-selectin bond.

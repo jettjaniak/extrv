@@ -8,11 +8,12 @@
 
 // Public methods
 
-Ligand::Ligand(double lig_x, double lig_y, LigandParameters* lig_p_) {
-    auto r_alpha_pair = helpers::parametrize_ligand(lig_x, lig_y);
+Ligand::Ligand(double lig_x, double lig_y, LigandParameters* lig_p_, Parameters* p_) {
+    pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_x, lig_y);
     r_cir = r_alpha_pair.first;
     alpha_inc = r_alpha_pair.second;
 
+    p = p_;
     lig_p = lig_p_;
 }
 
@@ -24,7 +25,7 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t ge
     // TODO: more binding rates and bond states (different receptors)
     double deviation = std::abs(surface_dist(h, alpha_0) - bond_p->lambda_);
     // Here we assume, that binding happens at rate corresponding to slip bond. It may be wrong.
-    double binding_rate = helpers::bell_binding_rate(deviation, bond_p->k01s, bond_p->sigma, bond_p->x1s);
+    double binding_rate = helpers::bell_binding_rate(deviation, bond_p->k01s, bond_p->sigma, bond_p->x1s, p->temp);
     double binding_probability = 1.0 - exp(-binding_rate * dt);
     if (helpers::draw_from_uniform_dist(generator) < binding_probability) {
         prepared_bond_state = 1;
@@ -106,7 +107,7 @@ double Ligand::y_pos(double alpha_0) {
 }
 
 double Ligand::surface_dist(double h, double alpha_0) {
-    double surf_dist = h + R_C + y_pos(alpha_0);
+    double surf_dist = h + p->r_c + y_pos(alpha_0);
     if (surf_dist < 0) abort();
     return surf_dist;
 }
