@@ -25,6 +25,10 @@ public:
     SimulationState(double h_0, Parameters* p_, size_t seed);
 
     void simulate_one_step(double dt, double shear);
+
+    void reseed(size_t seed) {
+        generator = std::default_random_engine(seed);
+    }
 };
 
 

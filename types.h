@@ -30,10 +30,16 @@ struct velocities_t {
     double o_z;
 };
 
+struct xyz_t {
+    double x;
+    double y;
+    double z;
+};
+
 typedef std::default_random_engine generator_t;
 
 // integrin means LFA-1 or VLA-4, active on inactive
-enum LigandType {psgl, integrin};
+enum LigandCategory {psgl, integrin};
 
 constexpr int PSGL_ESEL_STATE = 1;
 constexpr int PSGL_PSEL_STATE = 2;

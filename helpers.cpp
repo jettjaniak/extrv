@@ -54,6 +54,10 @@ namespace helpers {
         return uniform_dist(generator);
     }
 
+    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t generator) {
+        return {radius, 0, 0};  // TODO: implement
+    }
+
     pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x) {
         return {rec_x - lig_x, - surf_dist};
     }

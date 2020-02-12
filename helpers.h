@@ -73,6 +73,15 @@ namespace helpers {
     double draw_from_uniform_dist(generator_t generator);
 
     /**
+     * Draw from Uniform(S^2(0, radius)) distribution.
+     *
+     * @param generator random number generator
+     * @param radius sphere radius
+     * @return xyz triple
+     */
+    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t generator);
+
+    /**
      * Compute vector of bond from ligand to corresponding receptor.
      *
      * @param surface_dist vertical distance from ligand to surface
@@ -101,6 +110,8 @@ namespace helpers {
     double log_x_minus_one(double x);
     double log_minus_x_minus_one(double x);
     double log_minus_x_plus_one(double x);
+
+
 
     /**
      * Returns container with elements transformed by functor.
