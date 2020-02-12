@@ -66,7 +66,7 @@ private:
      *
      * @param h distance from sphere to surface
      * @param alpha_0 sphere's rotation
-     * @return force exerted on bond in TODO: unit
+     * @return force exerted on bond in kg μm / s^2
      */
     double bond_force(double h, double alpha_0);
 

@@ -25,7 +25,7 @@ namespace helpers {
     /**
      * Compute rate of rupture in slip E-selectin bond.
      *
-     * @param force force exerted on bond in TODO: unit
+     * @param force force exerted on bond in kg μm / s^2
      * @param rate_0 multiplicative constant in rupture rate in 1/s
      * @param react_compl reactive compliance in μm
      * @return rupture rate in 1/s
@@ -35,7 +35,7 @@ namespace helpers {
     /**
      * Compute rate of rupture in catch-slip P-selectin bond.
      *
-     * @param force force exerted on bond in TODO: unit
+     * @param force force exerted on bond in kg μm / s^2
      * @param rate_0_slip multiplicative constant in slip part of rupture rate in 1/s
      * @param rate_0_catch multiplicative constant in catch part of rupture rate in 1/s
      * @param react_compl_slip reactive compliance in slip part of rupture rate in μm
@@ -48,7 +48,7 @@ namespace helpers {
     /**
      * Compute rate of rupture in catch-slip ICAM and VCAM bonds.
      *
-     * @param force force exerted on bond in TODO: unit
+     * @param force force exerted on bond in kg μm / s^2
      * @param rate_0_slip multiplicative constant in slip part of rupture rate in 1/s
      * @param rate_0_catch multiplicative constant in catch part of rupture rate in 1/s
      * @param react_compl_slip reactive compliance in slip part of rupture rate in μm

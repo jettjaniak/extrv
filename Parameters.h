@@ -3,9 +3,10 @@
 #include "types.h"
 
 struct BondParameters {
+    // TODO: constructor with unit conversion
     // optimal bond length in μm
     double lambda_ = 0.0;
-    // spring constant in TODO: unit
+    // spring constant in kg/s^2
     double sigma = 0.0;
 
     // reactive compliance for slip bond in μm
