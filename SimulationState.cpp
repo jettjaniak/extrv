@@ -13,7 +13,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     forces_t f = forces::non_bond_forces(shear, h, p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(h, alpha_0, p);
+        f += ligands[bd_i].bond_forces(h, alpha_0);
 
     velocities_t v = velocities::compute_velocities(h, f, p);
 

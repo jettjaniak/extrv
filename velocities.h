@@ -20,4 +20,14 @@ namespace velocities {
      *
      */
     velocities_t compute_velocities(double h, const forces_t & f, const Parameters* p);
+
+    /**
+     * Function related to hydrodynamics used in velocity computation.
+     */
+    double lambda_fun(double h_over_r);
+
+    /**
+     * Function related to hydrodynamics used in velocity computation.
+     */
+    double d_fun(double t_t_val, double f_r_val, double f_t_val, double t_r_val);
 }
