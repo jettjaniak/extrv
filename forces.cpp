@@ -18,9 +18,13 @@ forces_t forces::shear_forces(double shear_rate, double h, const Parameters *p) 
 }
 
 double forces::repulsive_force(double h, const Parameters *p) {
-    return 0; // TODO: implement
+    double f_rep_0 = p->f_rep_0;
+    double tau = p->tau;
+    // formula is constructed for Å, hence * 1e4
+    double exp_m_tau_h = exp(-tau * h * 1e4);
+    return f_rep_0 * (tau * exp_m_tau_h) / (1.0 - exp_m_tau_h);
 }
 
 double forces::grav_force(const Parameters *p) {
-    return 0; // TODO: implement
+    return -(4.0 / 3.0) * PI * pow(p->r_c, 3.0) * p->dens_diff * G;
 }

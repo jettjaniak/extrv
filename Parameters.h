@@ -56,5 +56,6 @@ struct Parameters {
     double r_c;
     double dens_diff;
     double mu;
-    
+    double f_rep_0;
+    double tau;
 };
