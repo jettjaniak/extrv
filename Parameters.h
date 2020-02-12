@@ -48,14 +48,41 @@ struct BondParameters {
 struct LigandParameters {
     LigandType lig_type;
     vector<BondParameters*> bonds_p;
+
+    explicit LigandParameters(LigandType lig_type_) {
+        lig_type = lig_type_;
+    }
+    
+    void add_bond_p(BondParameters* bond_p) {
+        bonds_p.push_back(bond_p);
+    }
 };
 
 struct Parameters {
-    // TODO: description and constructor with unit conversion
-    double temp;
+    // cell radius in μm
     double r_c;
-    double dens_diff;
+    // viscosity in kg/(μm s)
     double mu;
+    // temperature in K
+    double temp;
+    // density difference in kg/μm^3
+    double dens_diff;
+
+    // repulsive force coefficient in kg μm / s^2
     double f_rep_0;
+    // reciprocal length scale of repulsive force in Å
     double tau;
+
+    Parameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) {
+        r_c = r_c_;
+        // conversion to kg/(μm s)
+        mu = mu_ * 1e-7;
+        temp = temp_;
+        // conversion to kg/μm^3
+        dens_diff = dens_diff_ * 1e-15;
+
+        // conversion to kg μm / s^2
+        f_rep_0 = f_rep_0_ * 1e-6;
+        tau = tau_;
+    }
 };
