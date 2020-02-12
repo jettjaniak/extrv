@@ -29,10 +29,51 @@ namespace helpers {
         return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
     }
 
+    double esel_rupture_rate(double force, double rate_0, double react_compl) {
+        return 0;  // TODO: implement
+    }
+
+    double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                             double react_compl_catch) {
+        return 0;  // TODO: implement
+    }
+
+    double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                                 double react_compl_catch) {
+        return 0;  // TODO: implement
+    }
+
     std::uniform_real_distribution<double> uniform_dist(0, 1);
 
     double draw_from_uniform_dist(generator_t generator) {
         return uniform_dist(generator);
+    }
+
+    pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x) {
+        return pair<double, double>();  // TODO: implement
+    }
+
+    double compute_2d_vector_length(pair<double, double> vector) {
+        return 0;  // TODO: implement
+    }
+
+    /**
+     * Right now implemented in dumb way with linear complexity.
+     * Could be O(log n).
+     */
+    double linear_interpolation(const vector<double> &points_x, const vector<double> &points_y, double x) {
+        if (x < points_x.front() || x > points_x.back())
+            abort();
+
+        size_t i = 1;
+        while (x > points_x[i])
+            i++;
+
+        double y_0 = points_y[i - 1];
+        double dist = x - points_x[i - 1];
+        double slope = (points_y[i] - points_y[i - 1]) / (points_x[i] - points_x[i - 1]);
+
+        return y_0 + dist * slope;
     }
 
 }

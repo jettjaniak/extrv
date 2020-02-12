@@ -2,6 +2,8 @@
 
 #include "types.h"
 
+#include <algorithm>
+
 namespace helpers {
     /**
      * Compute (r_cir, alpha) parametrization from (x, y) coordinates of point laying on a sphere.
@@ -83,4 +85,28 @@ namespace helpers {
      * @param vector x and y coordinates
      */
     double compute_2d_vector_length(pair<double, double> vector);
+
+    /**
+     * Performs piece-wise linear interpolation.
+     *
+     * @param points arguments (ascending) in first column, values in second
+     * @param x argument
+     * @returns f(x), where f is piece-wise linear interpolant of points
+     *
+     */
+    double linear_interpolation(const vector<double>& points_x, const vector<double>& points_y, double x);
+
+    double log_x_minus_one(double x);
+    double log_minus_x_minus_one(double x);
+    double log_minus_x_plus_one(double x);
+
+    template <typename Container, typename Functor>
+    Container transform_container(const Container& c, Functor &&f)
+    {
+        Container ret;
+        std::transform(std::begin(c), std::end(c), std::inserter(ret, std::end(ret)), f);
+        return ret;
+    }
+
+
 }
