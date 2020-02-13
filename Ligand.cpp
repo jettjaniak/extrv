@@ -21,7 +21,8 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &g
 
     BondParameters* bond_p = lig_p->bonds_p[0];
     // TODO: more binding rates and bond states (different receptors)
-    double deviation = std::abs(surface_dist(h, alpha_0) - bond_p->lambda_);
+    double surf_dist = surface_dist(h, alpha_0);
+    double deviation = std::abs(surf_dist - bond_p->lambda_);
     double rate_0 = bond_p->rec_dens * bond_p->k_f_0;
     double binding_rate = helpers::bell_binding_rate(deviation, rate_0, bond_p->sigma, bond_p->x1s, p->temp);
     double binding_probability = 1.0 - exp(-binding_rate * dt);
@@ -99,7 +100,7 @@ double Ligand::x_pos(double alpha_0) {
 }
 
 double Ligand::y_pos(double alpha_0) {
-    return r_cir * cos(alpha_0 + alpha_inc);
+    return - r_cir * cos(alpha_0 + alpha_inc);
 }
 
 double Ligand::surface_dist(double h, double alpha_0) {
