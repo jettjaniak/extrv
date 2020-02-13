@@ -13,10 +13,14 @@ int main() {
 
     settings->add_lig_type(psgl_lig_p, 10000);
 
-    auto ss = SimulationState(0.9, settings, 12345);
+    auto ss = SimulationState(0.077, settings, 123456);
 
-    for (int i = 0; i < 10000; ++i) {
-        ss.simulate_one_step(1e-5, 0.0);
-        if (i % 1000 == 0) std::cout << ss.h << std::endl;
+    size_t n_steps = 1e6;
+    for (size_t i = 0; i < n_steps; ++i) {
+        ss.simulate_one_step(1e-7, 0.0);
+        if (i % (n_steps/100) == 0) {
+            std::cout << "h: " << ss.h << std::endl;
+            std::cout << "bonds: " << ss.bd_lig_ind.size() << std::endl;
+        }
     }
 }

@@ -43,6 +43,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
 
     // update height
     h += dt * v.v_y;
+    if (h < 0) abort();  // TODO: use throw / configure CLion to catch aborts
 
     // move surface in x direction (sphere's center is always at origin),
     // i.e. move bonded receptors on surface in opposite direction
@@ -81,11 +82,12 @@ SimulationState::SimulationState(double h_0, SimulationSettings* settings_, size
         lig_p = lig_type.first;
         n_of_lig = lig_type.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-            // draw function returns xyz_t, we cast it onto xy_t
-            xy_t lig_xy {helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator)};
-            // TODO: check if |z| is small
-            // TODO: keep model's parameters in separate class
-            ligands.emplace_back(lig_xy, lig_p, settings->p);
+            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator);
+            // TODO: do it wisely
+            if (std::abs(lig_xyz.z) < 0.3 && lig_xyz.y < -4.45) {
+                xy_t lig_xy{lig_xyz};
+                ligands.emplace_back(lig_xy, lig_p, settings->p);
+            }
         }
         // TODO: sort ligands by r_cir
     }

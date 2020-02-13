@@ -22,7 +22,7 @@ namespace velocities {
     }
 
     double lambda_fun(double h_over_r) {
-        if (h_over_r < 10e-5)
+        if (h_over_r < 1e-5)
             return 1 / h_over_r;
 
         double alpha = log(1.0 + h_over_r + sqrt(pow(1.0 + h_over_r, 2) - 1.0));
