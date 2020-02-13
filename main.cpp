@@ -20,7 +20,9 @@ int main() {
         ss.simulate_one_step(1e-7, 0.0);
         if (i % (n_steps/100) == 0) {
             std::cout << "h: " << ss.h << std::endl;
+            std::cout << "alpha_0: " << ss.alpha_0 << std::endl;
             std::cout << "bonds: " << ss.bd_lig_ind.size() << std::endl;
+            std::cout << std::endl;
         }
     }
 }
