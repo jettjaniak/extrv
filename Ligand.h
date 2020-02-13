@@ -101,7 +101,7 @@ public:
      * @param generator random number generator
      * @return true if bonding will happen, false otherwise
      */
-    bool prepare_binding(double h, double alpha_0, double dt, generator_t generator);
+    bool prepare_binding(double h, double alpha_0, double dt, generator_t &generator);
 
     /**
      * Computes bond rupture probability and draws if rupture will happen.
@@ -113,7 +113,7 @@ public:
      * @param generator random number generator
      * @return true if bond rupture will happen, false otherwise
      */
-    bool prepare_rupture(double h, double alpha_0, double dt, generator_t generator);
+    bool prepare_rupture(double h, double alpha_0, double dt, generator_t &generator);
 
     /**
      * Creates previously prepared bond.

@@ -70,7 +70,7 @@ namespace helpers {
      * @param generator random number generator
      * @return number in [0, 1]
      */
-    double draw_from_uniform_dist(generator_t generator);
+    double draw_from_uniform_dist(generator_t &generator);
 
     /**
      * Draw from Normal(0, 1) distribution.
@@ -78,7 +78,7 @@ namespace helpers {
      * @param generator random number generator
      * @return real number
      */
-    double draw_from_normal_dist(generator_t generator);
+    double draw_from_normal_dist(generator_t &generator);
 
     /**
      * Draw from Uniform(S^2(0, radius)) distribution.
@@ -87,7 +87,7 @@ namespace helpers {
      * @param radius sphere radius
      * @return xyz triple
      */
-    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t generator);
+    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t &generator);
 
     /**
      * Compute vector of bond from ligand to corresponding receptor.

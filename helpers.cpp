@@ -48,17 +48,17 @@ namespace helpers {
 
     std::uniform_real_distribution<double> uniform_dist {};
 
-    double draw_from_uniform_dist(generator_t generator) {
+    double draw_from_uniform_dist(generator_t &generator) {
         return uniform_dist(generator);
     }
 
     std::normal_distribution<double> normal_dist {};
 
-    double draw_from_normal_dist(generator_t generator) {
+    double draw_from_normal_dist(generator_t &generator) {
         return normal_dist(generator);
     }
 
-    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t generator) {
+    xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t &generator) {
         xyz_t ret {
             draw_from_normal_dist(generator),
             draw_from_normal_dist(generator),

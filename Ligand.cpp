@@ -15,7 +15,7 @@ Ligand::Ligand(xy_t lig_xy, LigandParameters *lig_p_, Parameters *p_) {
     lig_p = lig_p_;
 }
 
-bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t generator) {
+bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &generator) {
     if (bond_state != 0)
         return false;
 
@@ -33,7 +33,7 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t ge
 
 }
 
-bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t generator) {
+bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &generator) {
     BondParameters* bond_p = get_curr_bond_p();  // will abort if not bonded
     double bond_f = bond_force(h, alpha_0);
     double rupture_rate;

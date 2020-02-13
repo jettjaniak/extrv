@@ -26,9 +26,17 @@ public:
     void simulate_one_step(double dt, double shear);
 
     void reseed(size_t seed) {
-        generator = std::default_random_engine(seed);
+        generator = generator_t{seed};
     }
 };
 
+
+//struct SimulationStats {
+//    size_t n_all_bonds = 0;
+//
+//    void update(const SimulationState& ss) {
+//
+//    }
+//};
 
 
