@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "Parameters.h"
+#include "SimulationSettings.h"
 
 
 namespace forces {

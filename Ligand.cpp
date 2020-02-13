@@ -1,7 +1,7 @@
 #include "Ligand.h"
 
 #include "helpers.h"
-#include "Parameters.h"
+#include "SimulationSettings.h"
 
 
 // Public methods
@@ -22,8 +22,8 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t ge
     BondParameters* bond_p = lig_p->bonds_p[0];
     // TODO: more binding rates and bond states (different receptors)
     double deviation = std::abs(surface_dist(h, alpha_0) - bond_p->lambda_);
-    // Here we assume, that binding happens at rate corresponding to slip bond. It may be wrong.
-    double binding_rate = helpers::bell_binding_rate(deviation, bond_p->k01s, bond_p->sigma, bond_p->x1s, p->temp);
+    double rate_0 = bond_p->rec_dens * bond_p->k_f_0;
+    double binding_rate = helpers::bell_binding_rate(deviation, rate_0, bond_p->sigma, bond_p->x1s, p->temp);
     double binding_probability = 1.0 - exp(-binding_rate * dt);
     if (helpers::draw_from_uniform_dist(generator) < binding_probability) {
         prepared_bond_state = 1;

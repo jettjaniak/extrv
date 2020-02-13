@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include "Ligand.h"
-#include "Parameters.h"
+#include "SimulationSettings.h"
 
 class SimulationState {
 public:

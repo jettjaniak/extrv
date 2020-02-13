@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "Parameters.h"
+#include "SimulationSettings.h"
 
 /**
  * Each ligand has xyz coordinates in the model.
