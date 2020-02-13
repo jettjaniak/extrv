@@ -3,13 +3,11 @@
 #include "helpers.h"
 #include "Parameters.h"
 
-#include <cmath>
-
 
 // Public methods
 
-Ligand::Ligand(double lig_x, double lig_y, LigandParameters* lig_p_, Parameters* p_) {
-    pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_x, lig_y);
+Ligand::Ligand(xy_t lig_xy, LigandParameters *lig_p_, Parameters *p_) {
+    pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
     alpha_inc = r_alpha_pair.second;
 
@@ -82,15 +80,13 @@ forces_t Ligand::bond_forces(double h, double alpha_0) {
     double lig_x = x_pos(alpha_0);
     double lig_y = y_pos(alpha_0);
 
-    pair<double, double> bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), lig_x, bd_rec_x);
-    double bond_x = bond_vector.first;
-    double bond_y = bond_vector.second;
+    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), lig_x, bd_rec_x);
 
-    double bond_len = helpers::compute_2d_vector_length(bond_vector);
+    double bond_len = bond_vector.length();
     double f_common = (bond_p->sigma * (bond_len - bond_p->lambda_)) / bond_len;
 
-    double f_x = f_common * bond_x;
-    double f_y = f_common * bond_y;
+    double f_x = f_common * bond_vector.x;
+    double f_y = f_common * bond_vector.y;
     double t_z = f_y * lig_x - f_x * lig_y;
 
     return {f_x, f_y, t_z};
@@ -115,9 +111,9 @@ double Ligand::surface_dist(double h, double alpha_0) {
 double Ligand::bond_length(double h, double alpha_0) {
     if (bond_state < 1) abort();
 
-    pair<double, double> bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), x_pos(alpha_0), bd_rec_x);
+    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), x_pos(alpha_0), bd_rec_x);
 
-    return helpers::compute_2d_vector_length(bond_vector);
+    return bond_vector.length();
 }
 
 double Ligand::bond_force(double h, double alpha_0) {

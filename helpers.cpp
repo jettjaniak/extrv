@@ -1,23 +1,21 @@
 #include "helpers.h"
 
-#include <cmath>
-
 
 namespace helpers {
-    pair<double, double> parametrize_ligand(double lig_x, double lig_y) {
-        double r_cir = sqrt(lig_x * lig_x + lig_y * lig_y);
+    pair<double, double> parametrize_ligand(xy_t lig_xy) {
+        double r_cir = lig_xy.length();
         double alpha;
         // x = r sin(alpha)
-        if (lig_y < 0)
+        if (lig_xy.y < 0)
             // We are in the bottom half, where alpha is in [-π/2, π/2],
             // which corresponds to asin return value range.
-            alpha = asin(lig_x / r_cir);
+            alpha = asin(lig_xy.x / r_cir);
         else {
             // We are in the top half, where alpha is in
             // [-π, -π/2] or [π/2, π].
 
             // sin(alpha - π) = - x / r
-            alpha = PI - asin(lig_x / r_cir);
+            alpha = PI - asin(lig_xy.x / r_cir);
             // but we want alpha to stay in [-π, π]
             if (alpha > PI)
                 alpha -= 2.0 * PI;
@@ -48,22 +46,30 @@ namespace helpers {
         );
     }
 
-    std::uniform_real_distribution<double> uniform_dist(0, 1);
+    std::uniform_real_distribution<double> uniform_dist {};
 
     double draw_from_uniform_dist(generator_t generator) {
         return uniform_dist(generator);
     }
 
+    std::normal_distribution<double> normal_dist {};
+
+    double draw_from_normal_dist(generator_t generator) {
+        return normal_dist(generator);
+    }
+
     xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t generator) {
-        return {radius, 0, 0};  // TODO: implement
+        xyz_t ret {
+            draw_from_normal_dist(generator),
+            draw_from_normal_dist(generator),
+            draw_from_normal_dist(generator)
+        };
+
+        return ret * (radius / ret.length());
     }
 
-    pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x) {
+    xy_t compute_bond_vector(double surf_dist, double lig_x, double rec_x) {
         return {rec_x - lig_x, - surf_dist};
-    }
-
-    double compute_2d_vector_length(pair<double, double> vector) {
-        return sqrt(vector.first * vector.first + vector.second * vector.second);
     }
 
     /**

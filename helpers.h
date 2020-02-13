@@ -7,11 +7,11 @@
 namespace helpers {
     /**
      * Compute (r_cir, alpha) parametrization from (x, y) coordinates of point laying on a sphere.
-     * @param lig_x x ligand coordinate
+     * @param lig_xy x ligand coordinate
      * @param lig_y y ligand coordinate
      * @return (r_cir, alpha), where alpha is in [-π, π]
      */
-    pair<double, double> parametrize_ligand(double lig_x, double lig_y);
+    pair<double, double> parametrize_ligand(xy_t lig_xy);
 
     /**
      * Compute rate of binding reaction in Bell model.
@@ -65,12 +65,20 @@ namespace helpers {
 
 
     /**
-     * Draw from Uniform([0,1]) distribution.
+     * Draw from Uniform([0, 1]) distribution.
      *
      * @param generator random number generator
      * @return number in [0, 1]
      */
     double draw_from_uniform_dist(generator_t generator);
+
+    /**
+     * Draw from Normal(0, 1) distribution.
+     *
+     * @param generator random number generator
+     * @return real number
+     */
+    double draw_from_normal_dist(generator_t generator);
 
     /**
      * Draw from Uniform(S^2(0, radius)) distribution.
@@ -89,13 +97,7 @@ namespace helpers {
 	 * @param rec_x x coordinate of corresponding bonded receptor
      * @return
      */
-    pair<double, double> compute_bond_vector(double surf_dist, double lig_x, double rec_x);
-
-    /**
-     * Compute Euclidian length.
-     * @param vector x and y coordinates
-     */
-    double compute_2d_vector_length(pair<double, double> vector);
+    xy_t compute_bond_vector(double surf_dist, double lig_x, double rec_x);
 
     /**
      * Performs piece-wise linear interpolation.

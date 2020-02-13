@@ -81,12 +81,12 @@ public:
     /**
      * Ligand constructor.
      *
-     * @param lig_x x coordinate of point on the sphere
+     * @param lig_xy x coordinate of point on the sphere
      * @param lig_y y coordinate of point on the sphere
      * @param lig_p_ ligand's parameters
      * @param p_ model's parameters
      */
-    Ligand(double lig_x, double lig_y, LigandParameters* lig_p_, Parameters* p_);
+    Ligand(xy_t lig_xy, LigandParameters *lig_p_, Parameters *p_);
 
     /**
      * Computes bonding probability and draws if bonding will happen.

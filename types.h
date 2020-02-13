@@ -3,6 +3,7 @@
 #include <vector>
 #include <set>
 #include <random>
+#include <cmath>
 
 #include "constants.h"
 
@@ -34,7 +35,40 @@ struct xyz_t {
     double x;
     double y;
     double z;
+
+    xyz_t operator*(double scale) {
+        return {x * scale, y * scale, z * scale};
+    }
+
+    double length() {
+        return sqrt(x * x + y * y + z * z);
+    }
 };
+
+struct xy_t {
+    double x;
+    double y;
+
+    xy_t(double x_, double y_) {
+        x = x_;
+        y = y_;
+    };
+
+    explicit xy_t(const xyz_t& xyz) {
+        x = xyz.x;
+        y = xyz.y;
+    }
+
+    xy_t operator*(double scale) {
+        return {x * scale, y * scale};
+    }
+
+    double length() {
+        return sqrt(x * x + y * y);
+    }
+};
+
+
 
 typedef std::default_random_engine generator_t;
 

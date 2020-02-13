@@ -3,7 +3,7 @@
 #include "helpers.h"
 
 #include <algorithm>
-#include <cmath>
+
 
 namespace interpolated {
     double f_r(double h_over_r)

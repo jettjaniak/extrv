@@ -79,11 +79,11 @@ SimulationState::SimulationState(double h_0, Parameters *p_, size_t seed) {
     for (auto& lig_type : p->lig_types) {
         lig_p = lig_type.first;
         n_of_lig = lig_type.second;
-        for (size_t i; i < n_of_lig; i++) {
-            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(0, p->r_c);
+        for (size_t i = 0; i < n_of_lig; i++) {
+            xy_t lig_xy {helpers::draw_from_uniform_dist_on_sphere(p->r_c, generator)};
             // TODO: check if |z| is small
             // TODO: keep model's parameters in separate class
-            ligands.emplace_back(lig_xyz.x, lig_xyz.y, lig_p, p);
+            ligands.emplace_back(lig_xy, lig_p, p);
         }
         // TODO: sort ligands by r_cir
     }
