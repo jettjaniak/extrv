@@ -58,6 +58,7 @@ struct LigandParameters {
     }
 };
 
+
 struct Parameters {
     // cell radius in μm
     double r_c;
@@ -73,10 +74,6 @@ struct Parameters {
     // reciprocal length scale of repulsive force in Å
     double tau;
 
-    // second pair element is number of ligands of particular type on whole sphere
-    vector<pair<LigandParameters*, size_t>> lig_types;
-
-
     Parameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) {
         r_c = r_c_;
         // conversion to kg/(μm s)
@@ -89,6 +86,18 @@ struct Parameters {
         f_rep_0 = f_rep_0_ * 1e-6;
         tau = tau_;
     }
+};
+
+
+struct SimulationSettings {
+    Parameters* p;
+
+    SimulationSettings(Parameters* p_) {
+        p = p_;
+    }
+
+    // second pair element is number of ligands of particular type on whole sphere
+    vector<pair<LigandParameters*, size_t>> lig_types;
 
     void add_lig_type(LigandParameters* lig_p, size_t n_of_lig) {
         lig_types.emplace_back(lig_p, n_of_lig);

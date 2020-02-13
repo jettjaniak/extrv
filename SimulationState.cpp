@@ -11,12 +11,12 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     // Compute forces and velocities //
     ///////////////////////////////////
 
-    forces_t f = forces::non_bond_forces(shear, h, p);
+    forces_t f = forces::non_bond_forces(shear, h, settings->p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
         f += ligands[bd_i].bond_forces(h, alpha_0);
 
-    velocities_t v = velocities::compute_velocities(h, f, p);
+    velocities_t v = velocities::compute_velocities(h, f, settings->p);
 
 
     //////////////////////////////
@@ -69,23 +69,24 @@ void SimulationState::simulate_one_step(double dt, double shear) {
 
 }
 
-SimulationState::SimulationState(double h_0, Parameters *p_, size_t seed) {
+SimulationState::SimulationState(double h_0, SimulationSettings* settings_, size_t seed) {
     h = h_0;
-    p = p_;
+    settings = settings_;
+
     reseed(seed);
 
     LigandParameters* lig_p;
     size_t n_of_lig;
-    for (auto& lig_type : p->lig_types) {
+    for (auto& lig_type : settings->lig_types) {
         lig_p = lig_type.first;
         n_of_lig = lig_type.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-            xy_t lig_xy {helpers::draw_from_uniform_dist_on_sphere(p->r_c, generator)};
+            // draw function returns xyz_t, we cast it onto xy_t
+            xy_t lig_xy {helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator)};
             // TODO: check if |z| is small
             // TODO: keep model's parameters in separate class
-            ligands.emplace_back(lig_xy, lig_p, p);
+            ligands.emplace_back(lig_xy, lig_p, settings->p);
         }
         // TODO: sort ligands by r_cir
     }
-
 }

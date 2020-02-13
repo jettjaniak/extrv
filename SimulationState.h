@@ -17,12 +17,11 @@ public:
 
     // random number generator
     generator_t generator;
-    // model's parameters
-    Parameters* p;
+
+    SimulationSettings* settings;
 
     // TODO: check seed type for default_random_engine
-    // TODO: implement
-    SimulationState(double h_0, Parameters* p_, size_t seed);
+    SimulationState(double h_0, SimulationSettings* settings_, size_t seed);
 
     void simulate_one_step(double dt, double shear);
 
