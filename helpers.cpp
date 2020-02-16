@@ -27,22 +27,24 @@ namespace helpers {
         return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
     }
 
-    double esel_rupture_rate(double force, double rate_0, double react_compl) {
-        return rate_0 * exp(react_compl * force);
+    double esel_rupture_rate(double force, double rate_0, double react_compl, double temp) {
+        return rate_0 * exp((react_compl * force) / (K_B * temp));
     }
 
     double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
                              double react_compl_catch) {
+        // TODO: K_B * temp in exp denominator
         double half_f = force / 2;
         return (2.0 / 3.0) * rate_0_slip * exp(react_compl_slip * half_f)
-            + rate_0_catch * exp(react_compl_slip * half_f);
+            + rate_0_catch * exp(react_compl_catch * half_f);
     }
 
     double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
                                  double react_compl_catch) {
+        // TODO: K_B * temp in exp denominator
         return 1 / (
-                (1 / rate_0_slip) * std::exp(-react_compl_slip * force) +
-                (1 / rate_0_catch) * std::exp(-react_compl_catch * force)
+                (1 / rate_0_slip) * exp(-react_compl_slip * force) +
+                (1 / rate_0_catch) * exp(-react_compl_catch * force)
         );
     }
 

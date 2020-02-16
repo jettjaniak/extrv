@@ -42,7 +42,7 @@ bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &g
     if (lig_p->lig_type == psgl) {
         if (bond_state == PSGL_ESEL_STATE)
             // PSGL + E-selectin slip bond
-            rupture_rate = helpers::esel_rupture_rate(bond_f, bond_p->k01s, bond_p->x1s);
+            rupture_rate = helpers::esel_rupture_rate(bond_f, bond_p->k01s, bond_p->x1s, p->temp);
         else if (bond_state == PSGL_PSEL_STATE)
             // PSGL + P-selectin catch-slip bond
             rupture_rate = helpers::psel_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,

@@ -33,7 +33,7 @@ namespace helpers {
      * @param react_compl reactive compliance in μm
      * @return rupture rate in 1/s
      */
-    double esel_rupture_rate(double force, double rate_0, double react_compl);
+    double esel_rupture_rate(double force, double rate_0, double react_compl, double temp);
 
     /**
      * Compute rate of rupture in catch-slip P-selectin bond.
