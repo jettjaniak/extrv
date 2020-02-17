@@ -93,6 +93,10 @@ namespace helpers {
         return y_0 + dist * slope;
     }
 
+    double log_dbl(double x) {
+        return log(x);
+    }
+
     double log_x_minus_one(double x) {
         return log(x - 1);
     }
@@ -103,6 +107,13 @@ namespace helpers {
 
     double log_minus_x_plus_one(double x) {
         return log(- x + 1);
+    }
+
+    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> f)
+    {
+        vector<double> ret;
+        std::transform(std::begin(c), std::end(c), std::inserter(ret, std::end(ret)), f);
+        return ret;
     }
 
 }

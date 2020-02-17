@@ -3,6 +3,8 @@
 #include "types.h"
 
 #include <algorithm>
+#include <functional>
+#include <iterator>
 
 namespace helpers {
     /**
@@ -109,22 +111,13 @@ namespace helpers {
      */
     double linear_interpolation(const vector<double>& points_x, const vector<double>& points_y, double x);
 
+    double log_dbl(double x);  // there are some problems with std::function and overloaded functions in Visual C++
     double log_x_minus_one(double x);
     double log_minus_x_minus_one(double x);
     double log_minus_x_plus_one(double x);
 
-
-
     /**
-     * Returns container with elements transformed by functor.
+     * Returns vector with elements transformed by f.
      */
-    template <typename Container, typename Functor>
-    Container transform_container(const Container& c, Functor &&f)
-    {
-        Container ret;
-        std::transform(std::begin(c), std::end(c), std::inserter(ret, std::end(ret)), f);
-        return ret;
-    }
-
-
+    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> f);
 }
