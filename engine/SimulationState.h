@@ -20,12 +20,11 @@ public:
 
     SimulationSettings* settings;
 
-    // TODO: check seed type for default_random_engine
-    SimulationState(double h_0, SimulationSettings* settings_, size_t seed);
+    SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed);
 
     void simulate_one_step(double dt, double shear);
 
-    void reseed(size_t seed) {
+    void reseed(unsigned int seed) {
         generator = generator_t{seed};
     }
 };

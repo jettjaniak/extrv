@@ -39,7 +39,7 @@ bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &g
     double bond_f = bond_force(h, alpha_0);
     double rupture_rate;
 
-    if (lig_p->lig_type == psgl) {
+    if (lig_p->lig_category == psgl) {
         if (bond_state == PSGL_ESEL_STATE)
             // PSGL + E-selectin slip bond
             rupture_rate = helpers::esel_rupture_rate(bond_f, bond_p->k01s, bond_p->x1s, p->temp);
@@ -49,7 +49,7 @@ bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &g
                     bond_p->x1s, bond_p->x1c);
         else abort();
 
-    } else if (lig_p->lig_type == integrin) {
+    } else if (lig_p->lig_category == integrin) {
         rupture_rate = helpers::integrin_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,
                 bond_p->x1s, bond_p->x1c);
     }

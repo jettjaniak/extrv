@@ -23,6 +23,8 @@ struct BondParameters {
     // multiplicative constant in catch part of rupture rate in 1/s
     double k01c;
 
+    BondParameters() = default;
+
     /**
      * Bond parameters constructor with unit conversion.
      *
@@ -58,11 +60,13 @@ struct BondParameters {
 };
 
 struct LigandParameters {
-    LigandCategory lig_type;
+    LigandCategory lig_category;
     vector<BondParameters*> bonds_p;
 
-    explicit LigandParameters(LigandCategory lig_type_) {
-        lig_type = lig_type_;
+    LigandParameters() = default;
+
+    explicit LigandParameters(LigandCategory lig_category_) {
+        lig_category = lig_category_;
     }
 
     void add_bond_p(BondParameters* bond_p) {
@@ -86,6 +90,8 @@ struct Parameters {
     // reciprocal length scale of repulsive force in Å
     double tau;
 
+    Parameters() = default;
+
     Parameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) {
         r_c = r_c_;
         // conversion to kg/(μm s)
@@ -103,13 +109,14 @@ struct Parameters {
 
 struct SimulationSettings {
     Parameters* p;
+    // second pair element is number of ligands of particular type on whole sphere
+    vector<pair<LigandParameters*, size_t>> lig_types;
+
+    SimulationSettings() = default;
 
     explicit SimulationSettings(Parameters* p_) {
         p = p_;
     }
-
-    // second pair element is number of ligands of particular type on whole sphere
-    vector<pair<LigandParameters*, size_t>> lig_types;
 
     void add_lig_type(LigandParameters* lig_p, size_t n_of_lig) {
         lig_types.emplace_back(lig_p, n_of_lig);
