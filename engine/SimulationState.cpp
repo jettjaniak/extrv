@@ -70,7 +70,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
 
 }
 
-SimulationState::SimulationState(double h_0, SimulationSettings* settings_, size_t seed) {
+SimulationState::SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed) {
     h = h_0;
     settings = settings_;
 
