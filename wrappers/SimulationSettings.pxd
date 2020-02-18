@@ -1,11 +1,7 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
-
-cdef extern from '../engine/types.h':
-    ctypedef enum LigandCategory:
-        psgl
-        integrin
+from types cimport LigandCategory
 
 
 cdef extern from '../engine/SimulationSettings.h':

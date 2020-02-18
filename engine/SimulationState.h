@@ -20,6 +20,7 @@ public:
 
     SimulationSettings* settings;
 
+    SimulationState() = default;
     SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed);
 
     void simulate_one_step(double dt, double shear);

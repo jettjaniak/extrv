@@ -1,12 +1,17 @@
+from libc cimport limits
+import numpy as np
+
+from types cimport psgl, integrin  # LigandCategory enum values
 from SimulationSettings cimport (
     BondParameters as BondParametersCpp,
     LigandParameters as LigandParametersCpp,
     Parameters as ParametersCpp,
     SimulationSettings as SimulationSettingsCpp,
-    psgl, integrin  # LigandCategory enum values
 )
+from SimulationState cimport SimulationState as SimulationStateCpp
 
 # TODO: getters, setters
+# TODO: documentation
 
 cdef class BondParameters:
     cdef BondParametersCpp _bond_p_cpp
@@ -30,7 +35,7 @@ cdef class LigandParameters:
         self.bonds_p = []
 
     def add_bond_p(self, BondParameters bond_p):
-        self._lig_p_cpp.add_bond_p(&(bond_p._bond_p_cpp))
+        self._lig_p_cpp.add_bond_p(&bond_p._bond_p_cpp)
         self.bonds_p.append(bond_p)
 
 
@@ -52,7 +57,27 @@ cdef class SimulationSettings:
         self.lig_types = []
 
     def add_lig_type(self, LigandParameters lig_p, size_t n_of_lig):
-        self._settings_cpp.add_lig_type(&(lig_p._lig_p_cpp), n_of_lig)
+        self._settings_cpp.add_lig_type(&lig_p._lig_p_cpp, n_of_lig)
         self.lig_types.append((lig_p, n_of_lig))
 
 
+cdef class SimulationState:
+    cdef SimulationStateCpp _ss_cpp
+
+    def __init__(self, double h_0, SimulationSettings settings, unsigned int seed = 0):
+        if seed == 0:
+            seed = np.random.randint(limits.UINT_MAX, dtype='uint')
+        self._ss_cpp = SimulationStateCpp(h_0, &settings._settings_cpp, seed)
+
+    def simulate(self, size_t n_steps, double dt, double shear):
+        cdef size_t i
+        for i in range(n_steps):
+            self._ss_cpp.simulate_one_step(dt, shear)
+
+    @property
+    def h(self):
+        return self._ss_cpp.h
+
+    @property
+    def alpha_0(self):
+        return self._ss_cpp.alpha_0
