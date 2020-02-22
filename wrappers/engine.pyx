@@ -1,5 +1,8 @@
 from libc cimport limits
+cimport cython
 import numpy as np
+cimport numpy as np
+from collections import namedtuple
 
 from types cimport psgl, integrin  # LigandCategory enum values
 from SimulationSettings cimport (
@@ -9,6 +12,8 @@ from SimulationSettings cimport (
     SimulationSettings as SimulationSettingsCpp,
 )
 from SimulationState cimport SimulationState as SimulationStateCpp
+
+SimulationResult = namedtuple('SimulationResult', ['h', 'rot', 'n_bonds'])
 
 # TODO: getters, setters
 # TODO: documentation
@@ -73,6 +78,25 @@ cdef class SimulationState:
         cdef size_t i
         for i in range(n_steps):
             self._ss_cpp.simulate_one_step(dt, shear)
+
+    @cython.cdivision(True)
+    def simulate_with_history(self, size_t n_steps, double dt, double shear, int save_every):
+        cdef size_t max_hist_size = 1 + (n_steps - 1) // save_every
+        cdef int n_lig_types = self._ss_cpp.settings.lig_types.size()  # TODO: define it somewhere deeper
+        cdef np.ndarray[np.int32_t, ndim=2] n_bonds = np.empty((max_hist_size, n_lig_types), dtype=np.int32)
+        cdef np.ndarray[np.double_t, ndim=1] h = np.empty(max_hist_size, dtype=np.double)
+        cdef np.ndarray[np.double_t, ndim=1] rot = np.empty(max_hist_size, dtype=np.double)
+
+        cdef hist_i = 0
+        cdef size_t i
+        for i in range(n_steps):
+            self._ss_cpp.simulate_one_step(dt, shear)
+            if i % save_every == 0:
+                n_bonds[hist_i] = self._ss_cpp.stats.n_bd_lig_vec
+                h[hist_i] = self._ss_cpp.h
+                rot[hist_i] = self._ss_cpp.alpha_0
+                hist_i += 1
+        return SimulationResult(h, rot, n_bonds)
 
     @property
     def h(self):

@@ -11,6 +11,9 @@
  * alpha is an angle from the bottommost circle point to the ligand.
  */
 class Ligand {
+public:
+    // ligand's parameters
+    LigandParameters* lig_p;
 private:
     // radius of the circle
     double r_cir;
@@ -28,8 +31,7 @@ private:
 
     // model's parameters
     Parameters* p;
-    // ligand's parameters
-    LigandParameters* lig_p;
+
 
     /**
      * Computes x coordinate of ligand.

@@ -60,6 +60,7 @@ struct BondParameters {
 };
 
 struct LigandParameters {
+    int index = -1;
     LigandCategory lig_category;
     vector<BondParameters*> bonds_p;
 
@@ -119,6 +120,9 @@ struct SimulationSettings {
     }
 
     void add_lig_type(LigandParameters* lig_p, size_t n_of_lig) {
+        if (lig_p->index > -1)
+            abort();  // ligand parameter was added to other setting, not implemented
+        lig_p->index = lig_types.size();
         lig_types.emplace_back(lig_p, n_of_lig);
     }
 };

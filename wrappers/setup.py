@@ -1,6 +1,7 @@
 import platform
 from distutils.core import setup, Extension
 from Cython.Build import cythonize
+import numpy as np
 
 extra_compile_args = []
 system = platform.system()
@@ -15,6 +16,7 @@ sources = [f"../engine/{s}" for s in sources]
 setup(ext_modules=cythonize(Extension(
     "engine",
     sources=["engine.pyx"] + sources,
+    include_dirs=[np.get_include()],
     extra_compile_args=extra_compile_args,
     language="c++"
 ), language_level='3', annotate=False))
