@@ -32,19 +32,18 @@ namespace helpers {
     }
 
     double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                             double react_compl_catch) {
-        // TODO: K_B * temp in exp denominator
+                             double react_compl_catch, double temp) {
         double half_f = force / 2;
-        return (2.0 / 3.0) * rate_0_slip * exp(react_compl_slip * half_f)
-            + rate_0_catch * exp(react_compl_catch * half_f);
+        double slip_part = (2.0 / 3.0) * rate_0_slip * exp(react_compl_slip * half_f / (K_B * temp));
+        double catch_part = rate_0_catch * exp(react_compl_catch * half_f / (K_B * temp));
+        return slip_part + catch_part;
     }
 
     double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                                 double react_compl_catch) {
-        // TODO: K_B * temp in exp denominator
+                                 double react_compl_catch, double temp) {
         return 1 / (
-                (1 / rate_0_slip) * exp(-react_compl_slip * force) +
-                (1 / rate_0_catch) * exp(-react_compl_catch * force)
+                (1 / rate_0_slip) * exp(-react_compl_slip * force / (K_B * temp)) +
+                (1 / rate_0_catch) * exp(-react_compl_catch * force / (K_B * temp))
         );
     }
 

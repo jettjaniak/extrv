@@ -46,12 +46,12 @@ bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &g
         else if (bond_state == PSGL_PSEL_STATE)
             // PSGL + P-selectin catch-slip bond
             rupture_rate = helpers::psel_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,
-                    bond_p->x1s, bond_p->x1c);
+                                                      bond_p->x1s, bond_p->x1c, p->temp);
         else abort();
 
     } else if (lig_p->lig_category == integrin) {
         rupture_rate = helpers::integrin_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,
-                bond_p->x1s, bond_p->x1c);
+                                                      bond_p->x1s, bond_p->x1c, p->temp);
     }
     else abort();
 

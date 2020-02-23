@@ -33,6 +33,7 @@ namespace helpers {
      * @param force force exerted on bond in kg μm / s^2
      * @param rate_0 multiplicative constant in rupture rate in 1/s
      * @param react_compl reactive compliance in μm
+     * @param temp temperature in K
      * @return rupture rate in 1/s
      */
     double esel_rupture_rate(double force, double rate_0, double react_compl, double temp);
@@ -46,10 +47,11 @@ namespace helpers {
      * @param rate_0_catch multiplicative constant in catch part of rupture rate in 1/s
      * @param react_compl_slip reactive compliance in slip part of rupture rate in μm
      * @param react_compl_catch reactive compliance in catch part of rupture rate in μm
+     * @param temp temperature in K
      * @return rupture rate in 1/s
      */
-    double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch,
-            double react_compl_slip, double react_compl_catch);
+    double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                             double react_compl_catch, double temp);
 
     /**
      * Compute rate of rupture in catch-slip ICAM and VCAM bonds.
@@ -60,10 +62,11 @@ namespace helpers {
      * @param rate_0_catch multiplicative constant in catch part of rupture rate in 1/s
      * @param react_compl_slip reactive compliance in slip part of rupture rate in μm
      * @param react_compl_catch reactive compliance in catch part of rupture rate in μm
+     * @param temp temperature in K
      * @return rupture rate in 1/s
      */
-    double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch,
-            double react_compl_slip, double react_compl_catch);
+    double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                                 double react_compl_catch, double temp);
 
 
     /**
