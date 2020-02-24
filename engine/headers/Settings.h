@@ -2,7 +2,10 @@
 
 #include "types.h"
 
+
 struct BondParameters {
+    // TODO: documentation
+    BondType bond_type;
     // optimal bond length in μm
     double lambda_;
     // spring constant in kg/s^2
@@ -37,46 +40,40 @@ struct BondParameters {
      * @param x1c_ reactive compliance for catch bond in Å
      * @param k01c_ multiplicative constant in catch part of rupture rate in 1/s
      */
-    BondParameters(double lambda__, double sigma_, double k_f_0_, double rec_dens_,
-            double x1s_, double k01s_, double x1c_ = 0.0, double k01c_ = 0.0)
-    {
-        // conversion to μm
-        lambda_ = lambda__ * 1e-3;
-        // conversion to kg/s^2
-        sigma = sigma_ * 1e-3;
+    BondParameters(BondType bond_type_, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
+            double x1s_, double k01s_, double x1c_ = 0.0, double k01c_ = 0.0);
 
-        k_f_0 = k_f_0_;
-        rec_dens = rec_dens_;
+    // TODO: documentation
+    double binding_rate(double surface_dist, double temp);
 
-        // conversion to μm
-        x1s = x1s_ * 1e-4;
-        k01s = k01s_;
+    // TODO: documentation
+    double rupture_rate(double bond_length, double temp);
 
-        // conversion to μm
-        x1c = x1c_ * 1e-4;
-        k01c = k01c_;
-    }
-
+    /**
+     * Compute force exerted on bond.
+     *
+     * @param bond_length bond length in μm
+     * @return force exerted on bond in kg μm / s^2
+     */
+    double bond_force(double bond_length);
 };
 
-struct LigandParameters {
-    int index = -1;
-    LigandCategory lig_category;
+
+struct LigandType {
+    int index_in_settings = -1;
     vector<BondParameters*> bonds_p;
 
-    LigandParameters() = default;
+    LigandType() = default;
 
-    explicit LigandParameters(LigandCategory lig_category_) {
-        lig_category = lig_category_;
-    }
+    // TODO: documentation
+    void add_bond_p(BondParameters* bond_p);
 
-    void add_bond_p(BondParameters* bond_p) {
-        bonds_p.push_back(bond_p);
-    }
+    // TODO: documentation
+    vector<double> binding_rates(double surface_dist, double temp);
 };
 
 
-struct Parameters {
+struct ModelParameters {
     // cell radius in μm
     double r_c;
     // viscosity in kg/(μm s)
@@ -91,38 +88,20 @@ struct Parameters {
     // reciprocal length scale of repulsive force in Å
     double tau;
 
-    Parameters() = default;
-
-    Parameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) {
-        r_c = r_c_;
-        // conversion to kg/(μm s)
-        mu = mu_ * 1e-7;
-        temp = temp_;
-        // conversion to kg/μm^3
-        dens_diff = dens_diff_ * 1e-15;
-
-        // conversion to kg μm / s^2
-        f_rep_0 = f_rep_0_ * 1e-6;
-        tau = tau_;
-    }
+    ModelParameters() = default;
+    // TODO: documentation
+    ModelParameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_);
 };
 
 
-struct SimulationSettings {
-    Parameters* p;
+struct Settings {
+    ModelParameters* p = nullptr;
     // second pair element is number of ligands of particular type on whole sphere
-    vector<pair<LigandParameters*, size_t>> lig_types;
+    vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
-    SimulationSettings() = default;
+    Settings() = default;
+    explicit Settings(ModelParameters* p_);
 
-    explicit SimulationSettings(Parameters* p_) {
-        p = p_;
-    }
-
-    void add_lig_type(LigandParameters* lig_p, size_t n_of_lig) {
-        if (lig_p->index > -1)
-            abort();  // ligand parameter was added to other setting, not implemented
-        lig_p->index = lig_types.size();
-        lig_types.emplace_back(lig_p, n_of_lig);
-    }
+    // TODO: documentation
+    void add_lig_type(LigandType* lig_type, size_t n_of_lig);
 };

@@ -1,8 +1,8 @@
-#include "SimulationState.h"
+#include "../headers/SimulationState.h"
 
-#include "forces.h"
-#include "velocities.h"
-#include "helpers.h"
+#include "../headers/forces.h"
+#include "../headers/velocities.h"
+#include "../headers/helpers.h"
 
 
 void SimulationState::simulate_one_step(double dt, double shear) {
@@ -14,7 +14,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     forces_t f = forces::non_bond_forces(shear, h, settings->p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(h, alpha_0);
+        f += ligands[bd_i].bond_forces(h, rot);
 
     velocities_t v = velocities::compute_velocities(h, f, settings->p);
 
@@ -27,13 +27,13 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     // We try with all ligands, including those already bonded!
     // But `prepare_binding` will check it.
     for (size_t i = 0; i < ligands.size(); i++)
-        if (ligands[i].prepare_binding(h, alpha_0, dt, generator))
+        if (ligands[i].prepare_binding(h, rot, dt, generator))
             new_bondings_lig_ind.push_back(i);
 
     // Here we try only with bonded ligands.
     vector<size_t> new_ruptures_lig_ind;
     for (auto & bd_i : bd_lig_ind)
-        if(ligands[bd_i].prepare_rupture(h, alpha_0, dt, generator))
+        if(ligands[bd_i].prepare_rupture(h, rot, dt, generator))
             new_ruptures_lig_ind.push_back(bd_i);
 
 
@@ -51,7 +51,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
         ligands[bd_i].move_bd_rec(- dt * v.v_x);
 
     // rotate sphere
-    alpha_0 += dt * v.o_z;
+    rot += dt * v.o_z;
 
 
     ////////////////////////
@@ -60,7 +60,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
 
     for (auto & new_bon_i : new_bondings_lig_ind) {
         bd_lig_ind.insert(new_bon_i);
-        ligands[new_bon_i].bond(alpha_0);
+        ligands[new_bon_i].bond(rot);
     }
 
     for (auto & new_rup_i : new_ruptures_lig_ind) {
@@ -71,16 +71,16 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     update_stats();
 }
 
-SimulationState::SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed) {
+SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) {
     h = h_0;
     settings = settings_;
-    stats = Stats(settings->lig_types.size());
+    stats = Stats(settings->lig_types_and_nrs.size());
 
     reseed(seed);
 
-    LigandParameters* lig_p;
+    LigandType* lig_p;
     size_t n_of_lig;
-    for (auto& lig_type : settings->lig_types) {
+    for (auto& lig_type : settings->lig_types_and_nrs) {
         lig_p = lig_type.first;
         n_of_lig = lig_type.second;
         for (size_t i = 0; i < n_of_lig; i++) {
@@ -99,7 +99,7 @@ void SimulationState::update_stats() {
     // Reset number of bonds of each ligand type to zero.
     std::fill(stats.n_bd_lig_vec.begin(), stats.n_bd_lig_vec.end(), 0);
     for (auto lig_i : bd_lig_ind) {
-        int this_lig_type_ind = ligands[lig_i].lig_p->index;
+        int this_lig_type_ind = ligands[lig_i].lig_type->index_in_settings;
         stats.n_bd_lig_vec[this_lig_type_ind]++;
     }
 }

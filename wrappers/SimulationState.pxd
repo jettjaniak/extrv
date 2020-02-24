@@ -1,7 +1,7 @@
 from libcpp.vector cimport vector
-from SimulationSettings cimport SimulationSettings
+from Settings cimport Settings
 
-cdef extern from '../engine/SimulationState.h':
+cdef extern from '../engine/headers/SimulationState.h':
     cdef cppclass Stats:
         vector[size_t] n_bd_lig_vec;
 
@@ -12,14 +12,13 @@ cdef extern from '../engine/SimulationState.h':
         # distance from sphere to surface
         double h
         # sphere's rotation
-        double alpha_0
+        double rot
 
-        SimulationSettings* settings
+        Settings* settings
         Stats stats
 
         SimulationState() except +
-        SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed)
+        SimulationState(double h_0, Settings* settings_, unsigned int seed)
     
         void simulate_one_step(double dt, double shear)
-    
         void reseed(unsigned int seed)

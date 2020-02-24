@@ -9,9 +9,9 @@ if system == "Linux":
     extra_compile_args.append('-std=c++11')
 # TODO: macOS
 
-sources = ["Ligand.cpp", "SimulationState.cpp", "forces.cpp",
-           "helpers.cpp", "interpolated.cpp", "velocities.cpp"]
-sources = [f"../engine/{s}" for s in sources]
+sources = ["Ligand.cpp", "Settings.cpp", "SimulationState.cpp",
+           "forces.cpp", "helpers.cpp", "interpolated.cpp", "velocities.cpp"]
+sources = [f"../engine/sources/{s}" for s in sources]
 
 setup(ext_modules=cythonize(Extension(
     "engine",

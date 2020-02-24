@@ -1,8 +1,4 @@
-#include "interpolated.h"
-
-#include "helpers.h"
-
-#include <algorithm>
+#include "../headers/interpolated.h"
 
 
 namespace interpolated {

@@ -4,12 +4,12 @@ import numpy as np
 cimport numpy as np
 from collections import namedtuple
 
-from types cimport psgl, integrin  # LigandCategory enum values
-from SimulationSettings cimport (
+from types cimport PSEL_BOND, ESEL_BOND, INTEGRIN_BOND
+from Settings cimport (
     BondParameters as BondParametersCpp,
-    LigandParameters as LigandParametersCpp,
-    Parameters as ParametersCpp,
-    SimulationSettings as SimulationSettingsCpp,
+    LigandType as LigandTypeCpp,
+    ModelParameters as ModelParametersCpp,
+    Settings as SettingsCpp,
 )
 from SimulationState cimport SimulationState as SimulationStateCpp
 
@@ -21,55 +21,60 @@ SimulationResult = namedtuple('SimulationResult', ['h', 'rot', 'n_bonds'])
 cdef class BondParameters:
     cdef BondParametersCpp _bond_p_cpp
 
-    def __init__(self, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
+    def __init__(self, str bond_type_str, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
                  double x1s_, double k01s_, double x1c_ = 0.0, double k01c_ = 0.0):
-        self._bond_p_cpp = BondParametersCpp(lambda__, sigma_, k_f_0_, rec_dens_, x1s_, k01s_, x1c_ , k01c_)
+        if bond_type_str == "esel":
+            self._bond_p_cpp = BondParametersCpp(ESEL_BOND,
+                                                 lambda__, sigma_, k_f_0_, rec_dens_, x1s_, k01s_, x1c_ , k01c_)
+        elif bond_type_str == "psel":
+            self._bond_p_cpp = BondParametersCpp(PSEL_BOND,
+                                                 lambda__, sigma_, k_f_0_, rec_dens_, x1s_, k01s_, x1c_ , k01c_)
+        elif bond_type_str == "integrin":
+            self._bond_p_cpp = BondParametersCpp(INTEGRIN_BOND,
+                                                 lambda__, sigma_, k_f_0_, rec_dens_, x1s_, k01s_, x1c_ , k01c_)
+        else:
+            raise ValueError(f"`{bond_type_str}` is not correct bond type name")
 
 
-cdef class LigandParameters:
-    cdef LigandParametersCpp _lig_p_cpp
+cdef class LigandType:
+    cdef LigandTypeCpp _lig_type_cpp
     cdef object bonds_p
 
-    def __init__(self, str lig_category):
-        if lig_category == 'psgl':
-            self._lig_p_cpp = LigandParametersCpp(psgl)
-        elif lig_category == 'integrin':
-            self._lig_p_cpp = LigandParametersCpp(integrin)
-        else:
-            raise ValueError('Wrong ligand category!')
+    def __init__(self):
+        self._lig_type_cpp = LigandTypeCpp()
         self.bonds_p = []
 
     def add_bond_p(self, BondParameters bond_p):
-        self._lig_p_cpp.add_bond_p(&bond_p._bond_p_cpp)
+        self._lig_type_cpp.add_bond_p(&bond_p._bond_p_cpp)
         self.bonds_p.append(bond_p)
 
 
-cdef class Parameters:
-    cdef ParametersCpp _p_cpp
+cdef class ModelParameters:
+    cdef ModelParametersCpp _p_cpp
 
     def __init__(self, double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_):
-        self._p_cpp = ParametersCpp(r_c_, mu_, temp_, dens_diff_, f_rep_0_, tau_)
+        self._p_cpp = ModelParametersCpp(r_c_, mu_, temp_, dens_diff_, f_rep_0_, tau_)
 
 
-cdef class SimulationSettings:
-    cdef SimulationSettingsCpp _settings_cpp
+cdef class Settings:
+    cdef SettingsCpp _settings_cpp
     cdef object p
-    cdef object lig_types
+    cdef object lig_types_and_nrs
 
-    def __init__(self, Parameters p):
-        self._settings_cpp = SimulationSettingsCpp(&(p._p_cpp))
+    def __init__(self, ModelParameters p):
+        self._settings_cpp = SettingsCpp(&(p._p_cpp))
         self.p = p
-        self.lig_types = []
+        self.lig_types_and_nrs = []
 
-    def add_lig_type(self, LigandParameters lig_p, size_t n_of_lig):
-        self._settings_cpp.add_lig_type(&lig_p._lig_p_cpp, n_of_lig)
-        self.lig_types.append((lig_p, n_of_lig))
+    def add_lig_type(self, LigandType lig_type, size_t n_of_lig):
+        self._settings_cpp.add_lig_type(&lig_type._lig_type_cpp, n_of_lig)
+        self.lig_types_and_nrs.append((lig_type, n_of_lig))
 
 
 cdef class SimulationState:
     cdef SimulationStateCpp _ss_cpp
 
-    def __init__(self, double h_0, SimulationSettings settings, unsigned int seed = 0):
+    def __init__(self, double h_0, Settings settings, unsigned int seed = 0):
         if seed == 0:
             seed = np.random.randint(limits.UINT_MAX, dtype='uint')
         self._ss_cpp = SimulationStateCpp(h_0, &settings._settings_cpp, seed)
@@ -82,7 +87,7 @@ cdef class SimulationState:
     @cython.cdivision(True)
     def simulate_with_history(self, size_t n_steps, double dt, double shear, int save_every):
         cdef size_t max_hist_size = 1 + (n_steps - 1) // save_every
-        cdef int n_lig_types = self._ss_cpp.settings.lig_types.size()  # TODO: define it somewhere deeper
+        cdef int n_lig_types = self._ss_cpp.settings.lig_types_and_nrs.size()  # TODO: define it somewhere deeper
         cdef np.ndarray[np.int32_t, ndim=2] n_bonds = np.empty((max_hist_size, n_lig_types), dtype=np.int32)
         cdef np.ndarray[np.double_t, ndim=1] h = np.empty(max_hist_size, dtype=np.double)
         cdef np.ndarray[np.double_t, ndim=1] rot = np.empty(max_hist_size, dtype=np.double)
@@ -94,7 +99,7 @@ cdef class SimulationState:
             if i % save_every == 0:
                 n_bonds[hist_i] = self._ss_cpp.stats.n_bd_lig_vec
                 h[hist_i] = self._ss_cpp.h
-                rot[hist_i] = self._ss_cpp.alpha_0
+                rot[hist_i] = self._ss_cpp.rot
                 hist_i += 1
         return SimulationResult(h, rot, n_bonds)
 
@@ -103,5 +108,5 @@ cdef class SimulationState:
         return self._ss_cpp.h
 
     @property
-    def alpha_0(self):
-        return self._ss_cpp.alpha_0
+    def rot(self):
+        return self._ss_cpp.rot

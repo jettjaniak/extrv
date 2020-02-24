@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "SimulationSettings.h"
+#include "Settings.h"
 
 
 namespace velocities {
@@ -19,7 +19,7 @@ namespace velocities {
      * @return computed velocities
      *
      */
-    velocities_t compute_velocities(double h, const forces_t & f, const Parameters* p);
+    velocities_t compute_velocities(double h, const forces_t & f, const ModelParameters* p);
 
     /**
      * Function related to hydrodynamics used in velocity computation.

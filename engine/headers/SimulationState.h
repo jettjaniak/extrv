@@ -2,7 +2,7 @@
 
 #include "types.h"
 #include "Ligand.h"
-#include "SimulationSettings.h"
+#include "Settings.h"
 
 struct Stats {
     vector<size_t> n_bd_lig_vec;
@@ -20,7 +20,7 @@ public:
     // distance from sphere to surface
     double h;
     // sphere's rotation
-    double alpha_0 = 0.0;
+    double rot = 0.0;
 
     vector<Ligand> ligands;
     // indices of bonded ligands
@@ -29,11 +29,11 @@ public:
     // random number generator
     generator_t generator;
 
-    SimulationSettings* settings;
+    Settings* settings;
     Stats stats;
 
     SimulationState() = default;
-    SimulationState(double h_0, SimulationSettings* settings_, unsigned int seed);
+    SimulationState(double h_0, Settings* settings_, unsigned int seed);
 
     void simulate_one_step(double dt, double shear);
 

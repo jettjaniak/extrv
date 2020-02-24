@@ -1,33 +1,33 @@
-#include "Ligand.h"
+#include "../headers/Ligand.h"
 
-#include "helpers.h"
-#include "SimulationSettings.h"
+#include "../headers/helpers.h"
 
 
 // Public methods
 
-Ligand::Ligand(xy_t lig_xy, LigandParameters *lig_p_, Parameters *p_) {
+Ligand::Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_) {
     pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
     alpha_inc = r_alpha_pair.second;
 
     p = p_;
-    lig_p = lig_p_;
+    lig_type = lig_type_;
 }
 
 bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &generator) {
     if (bond_state != 0)
         return false;
 
-    BondParameters* bond_p = lig_p->bonds_p[0];
-    // TODO: more binding rates and bond states (different receptors)
-    double surf_dist = surface_dist(h, alpha_0);
-    double deviation = std::abs(surf_dist - bond_p->lambda_);
-    double rate_0 = bond_p->rec_dens * bond_p->k_f_0;
-    double binding_rate = helpers::bell_binding_rate(deviation, rate_0, bond_p->sigma, bond_p->x1s, p->temp);
-    double binding_probability = 1.0 - exp(-binding_rate * dt);
-    if (helpers::draw_from_uniform_dist(generator) < binding_probability) {
-        prepared_bond_state = 1;
+    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, alpha_0), p->temp);
+
+    double any_binding_rate = 0.0;
+    for (double binding_rate : binding_rates)
+        any_binding_rate += binding_rate;
+
+    double any_binding_probability = 1.0 - exp(-any_binding_rate * dt);
+    if (helpers::draw_from_uniform_dist(generator) < any_binding_probability) {
+        std::discrete_distribution<int> which_bond_distr {binding_rates.begin(), binding_rates.end()};
+        prepared_bond_state = which_bond_distr(generator) + 1;
         return true;
     } else
         return false;
@@ -36,25 +36,7 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &g
 
 bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &generator) {
     BondParameters* bond_p = get_curr_bond_p();  // will abort if not bonded
-    double bond_f = bond_force(h, alpha_0);
-    double rupture_rate;
-
-    if (lig_p->lig_category == psgl) {
-        if (bond_state == PSGL_ESEL_STATE)
-            // PSGL + E-selectin slip bond
-            rupture_rate = helpers::esel_rupture_rate(bond_f, bond_p->k01s, bond_p->x1s, p->temp);
-        else if (bond_state == PSGL_PSEL_STATE)
-            // PSGL + P-selectin catch-slip bond
-            rupture_rate = helpers::psel_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,
-                                                      bond_p->x1s, bond_p->x1c, p->temp);
-        else abort();
-
-    } else if (lig_p->lig_category == integrin) {
-        rupture_rate = helpers::integrin_rupture_rate(bond_f, bond_p->k01s, bond_p->k01c,
-                                                      bond_p->x1s, bond_p->x1c, p->temp);
-    }
-    else abort();
-
+    double rupture_rate = bond_p->rupture_rate(bond_length(h, alpha_0), p->temp);
     double rupture_probability = 1.0 - exp(-rupture_rate * dt);
     return helpers::draw_from_uniform_dist(generator) < rupture_probability;
 }
@@ -117,17 +99,10 @@ double Ligand::bond_length(double h, double alpha_0) {
     return bond_vector.length();
 }
 
-double Ligand::bond_force(double h, double alpha_0) {
-    // `get_curr_bond_p` will abort if not bonded
-    BondParameters* bond_p = get_curr_bond_p();
-
-    return bond_p->sigma * std::abs(bond_length(h, alpha_0) - bond_p->lambda_);
-}
-
 BondParameters* Ligand::get_curr_bond_p() {
-    if (bond_state < 1 || bond_state > lig_p->bonds_p.size())
+    if (bond_state < 1 || bond_state > lig_type->bonds_p.size())
         abort();
-    return lig_p->bonds_p[bond_state - 1];
+    return lig_type->bonds_p[bond_state - 1];
 }
 
 

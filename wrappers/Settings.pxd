@@ -1,11 +1,13 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 
-from types cimport LigandCategory
+from types cimport BondType
 
 
-cdef extern from '../engine/SimulationSettings.h':
+cdef extern from '../engine/headers/Settings.h':
     cdef cppclass BondParameters:
+        # TODO: documentation
+        BondType bond_type
         # optimal bond length in μm
         double lambda_
         # spring constant in kg/s^2
@@ -27,21 +29,20 @@ cdef extern from '../engine/SimulationSettings.h':
         double k01c
 
         BondParameters() except +
-        BondParameters(double lambda__, double sigma_, double k_f_0_, double rec_dens_,
+        BondParameters(BondType bond_type_, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
             double x1s_, double k01s_, double x1c_, double k01c_) except +
 
-    cdef cppclass LigandParameters:
-        vector[BondParameters*] bonds_p
-        LigandCategory lig_category
+        # Note: class BondParameters has more methods,
+        # but there is no reason to expose them to Python.
 
-        LigandParameters() except +
-        LigandParameters(LigandCategory lig_category_) except +
+    cdef cppclass LigandType:
+        int index_in_settings
+        vector[BondParameters*] bonds_p
+
+        LigandType() except +
         void add_bond_p(BondParameters* bond_p) except +
 
-    # Workaround to use it in pair[ , ]
-    ctypedef LigandParameters* LigandParameters_ptr
-
-    cdef cppclass Parameters:
+    cdef cppclass ModelParameters:
         # cell radius in μm
         double r_c
         # viscosity in kg/(μm s)
@@ -56,13 +57,16 @@ cdef extern from '../engine/SimulationSettings.h':
         # reciprocal length scale of repulsive force in Å
         double tau
 
-        Parameters() except +
-        Parameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) except +
+        ModelParameters() except +
+        ModelParameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_) except +
 
-    cdef cppclass SimulationSettings:
-        Parameters* p;
-        vector[pair[LigandParameters_ptr, size_t]] lig_types
+    # Workaround to use it in pair[ , ]
+    ctypedef LigandType* LigandType_ptr
 
-        SimulationSettings() except +
-        SimulationSettings(Parameters* p_) except +
-        void add_lig_type(LigandParameters* lig_p, size_t n_of_lig) except +
+    cdef cppclass Settings:
+        ModelParameters* p;
+        vector[pair[LigandType_ptr, size_t]] lig_types_and_nrs
+
+        Settings() except +
+        Settings(ModelParameters* p_) except +
+        void add_lig_type(LigandType* lig_type, size_t n_of_lig) except +

@@ -6,6 +6,7 @@
 #include <functional>
 #include <iterator>
 
+
 namespace helpers {
     /**
      * Compute (r_cir, alpha) parametrization from (x, y) coordinates of point laying on a sphere.

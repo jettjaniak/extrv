@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "SimulationSettings.h"
+#include "Settings.h"
 
 /**
  * Each ligand has xyz coordinates in the model.
@@ -13,11 +13,11 @@
 class Ligand {
 public:
     // ligand's parameters
-    LigandParameters* lig_p;
+    LigandType* lig_type;
 private:
     // radius of the circle
     double r_cir;
-    // alpha - alpha_0, where alpha is the angle
+    // alpha - rot, where alpha is the angle
     // from the bottommost circle point to the ligand
     // alpha_inc is in [-π, π]
     double alpha_inc;
@@ -30,7 +30,7 @@ private:
     double bd_rec_x = INFTY;
 
     // model's parameters
-    Parameters* p;
+    ModelParameters* p;
 
 
     /**
@@ -65,16 +65,6 @@ private:
     double bond_length(double h, double alpha_0);
 
     /**
-     * Compute force exerted on bond.
-     * Should abort if ligand is not bonded (bond_state == 0).
-     *
-     * @param h distance from sphere to surface
-     * @param alpha_0 sphere's rotation
-     * @return force exerted on bond in kg μm / s^2
-     */
-    double bond_force(double h, double alpha_0);
-
-    /**
      * Returns parameters of current bond.
      */
     BondParameters* get_curr_bond_p();
@@ -85,10 +75,10 @@ public:
      *
      * @param lig_xy x coordinate of point on the sphere
      * @param lig_y y coordinate of point on the sphere
-     * @param lig_p_ ligand's parameters
+     * @param lig_type_ ligand's parameters
      * @param p_ model's parameters
      */
-    Ligand(xy_t lig_xy, LigandParameters *lig_p_, Parameters *p_);
+    Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_);
 
     /**
      * Computes bonding probability and draws if bonding will happen.
@@ -132,7 +122,7 @@ public:
      */
     void rupture();
 
-
+    // TODO: documentation
     void move_bd_rec(double x_dist);
 
     /**
