@@ -4,19 +4,8 @@
 #include "Ligand.h"
 #include "Settings.h"
 
-struct Stats {
-    vector<size_t> n_bd_lig_vec;
 
-    Stats() = default;
-
-    explicit Stats(int n_lig_types) {
-        n_bd_lig_vec.resize(n_lig_types);
-    }
-
-};
-
-class SimulationState {
-public:
+struct SimulationState {
     // distance from sphere to surface
     double h;
     // sphere's rotation
@@ -30,7 +19,6 @@ public:
     generator_t generator;
 
     Settings* settings;
-    Stats stats;
 
     SimulationState() = default;
     SimulationState(double h_0, Settings* settings_, unsigned int seed);
@@ -40,9 +28,15 @@ public:
     void reseed(unsigned int seed) {
         generator = generator_t{seed};
     }
-
-    void update_stats();
 };
 
 
+struct Stats {
+    vector<size_t> n_bd_lig_vec;
+    const SimulationState* s;
 
+    Stats() = default;
+    explicit Stats(const SimulationState* s_);
+
+    void update();
+};

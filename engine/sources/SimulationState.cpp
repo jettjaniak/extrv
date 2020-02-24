@@ -67,14 +67,11 @@ void SimulationState::simulate_one_step(double dt, double shear) {
         bd_lig_ind.erase(new_rup_i);
         ligands[new_rup_i].rupture();
     }
-
-    update_stats();
 }
 
 SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) {
     h = h_0;
     settings = settings_;
-    stats = Stats(settings->lig_types_and_nrs.size());
 
     reseed(seed);
 
@@ -95,11 +92,17 @@ SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int s
     }
 }
 
-void SimulationState::update_stats() {
+void Stats::update() {
     // Reset number of bonds of each ligand type to zero.
-    std::fill(stats.n_bd_lig_vec.begin(), stats.n_bd_lig_vec.end(), 0);
-    for (auto lig_i : bd_lig_ind) {
-        int this_lig_type_ind = ligands[lig_i].lig_type->index_in_settings;
-        stats.n_bd_lig_vec[this_lig_type_ind]++;
+    std::fill(n_bd_lig_vec.begin(), n_bd_lig_vec.end(), 0);
+    for (auto lig_i : s->bd_lig_ind) {
+        int this_lig_type_ind = s->ligands[lig_i].lig_type->index_in_settings;
+        n_bd_lig_vec[this_lig_type_ind]++;
     }
+}
+
+Stats::Stats(const SimulationState* s_) {
+    s = s_;
+    n_bd_lig_vec.resize(s->settings->lig_types_and_nrs.size());
+    update();
 }

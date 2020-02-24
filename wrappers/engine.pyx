@@ -11,7 +11,7 @@ from Settings cimport (
     ModelParameters as ModelParametersCpp,
     Settings as SettingsCpp,
 )
-from SimulationState cimport SimulationState as SimulationStateCpp
+from SimulationState cimport SimulationState as SimulationStateCpp, Stats
 
 SimulationResult = namedtuple('SimulationResult', ['h', 'rot', 'n_bonds'])
 
@@ -23,6 +23,7 @@ cdef class BondParameters:
 
     def __init__(self, str bond_type_str, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
                  double x1s_, double k01s_, double x1c_ = 0.0, double k01c_ = 0.0):
+        # TODO: dict
         if bond_type_str == "esel":
             self._bond_p_cpp = BondParametersCpp(ESEL_BOND,
                                                  lambda__, sigma_, k_f_0_, rec_dens_, x1s_, k01s_, x1c_ , k01c_)
@@ -71,6 +72,7 @@ cdef class Settings:
         self.lig_types_and_nrs.append((lig_type, n_of_lig))
 
 
+# TODO: extract to separate *.pyx
 cdef class SimulationState:
     cdef SimulationStateCpp _ss_cpp
 
@@ -84,10 +86,13 @@ cdef class SimulationState:
         for i in range(n_steps):
             self._ss_cpp.simulate_one_step(dt, shear)
 
+    # TODO: progress bar (tqdm too slow): https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     @cython.cdivision(True)
     def simulate_with_history(self, size_t n_steps, double dt, double shear, int save_every):
+        cdef Stats stats = Stats(&self._ss_cpp)
+        cdef int n_lig_types = stats.n_bd_lig_vec.size()
         cdef size_t max_hist_size = 1 + (n_steps - 1) // save_every
-        cdef int n_lig_types = self._ss_cpp.settings.lig_types_and_nrs.size()  # TODO: define it somewhere deeper
+
         cdef np.ndarray[np.int32_t, ndim=2] n_bonds = np.empty((max_hist_size, n_lig_types), dtype=np.int32)
         cdef np.ndarray[np.double_t, ndim=1] h = np.empty(max_hist_size, dtype=np.double)
         cdef np.ndarray[np.double_t, ndim=1] rot = np.empty(max_hist_size, dtype=np.double)
@@ -96,8 +101,9 @@ cdef class SimulationState:
         cdef size_t i
         for i in range(n_steps):
             self._ss_cpp.simulate_one_step(dt, shear)
+            stats.update()
             if i % save_every == 0:
-                n_bonds[hist_i] = self._ss_cpp.stats.n_bd_lig_vec
+                n_bonds[hist_i] = stats.n_bd_lig_vec
                 h[hist_i] = self._ss_cpp.h
                 rot[hist_i] = self._ss_cpp.rot
                 hist_i += 1
