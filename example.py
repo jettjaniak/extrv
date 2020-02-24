@@ -24,5 +24,7 @@ if __name__ == '__main__':
     plt.plot(sim_res.h)
     plt.title("height")
 
+    # TODO: trajectory plot with individual bonds
+
     plt.tight_layout()
     plt.show()

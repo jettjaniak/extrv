@@ -3,6 +3,7 @@
 #include "types.h"
 #include "Ligand.h"
 #include "Settings.h"
+#include "helpers.h"
 
 
 struct SimulationState {
@@ -31,8 +32,11 @@ struct SimulationState {
 };
 
 
+
+
 struct Stats {
     vector<size_t> n_bd_lig_vec;
+    vector<pair<size_t, xy_t>> bd_ligs_ind_and_xy;
     const SimulationState* s;
 
     Stats() = default;

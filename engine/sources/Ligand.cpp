@@ -14,11 +14,11 @@ Ligand::Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_) {
     lig_type = lig_type_;
 }
 
-bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &generator) {
+bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
     if (bond_state != 0)
         return false;
 
-    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, alpha_0), p->temp);
+    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, rot), p->temp);
 
     double any_binding_rate = 0.0;
     for (double binding_rate : binding_rates)
@@ -34,17 +34,17 @@ bool Ligand::prepare_binding(double h, double alpha_0, double dt, generator_t &g
 
 }
 
-bool Ligand::prepare_rupture(double h, double alpha_0, double dt, generator_t &generator) {
+bool Ligand::prepare_rupture(double h, double rot, double dt, generator_t &generator) {
     BondParameters* bond_p = get_curr_bond_p();  // will abort if not bonded
-    double rupture_rate = bond_p->rupture_rate(bond_length(h, alpha_0), p->temp);
+    double rupture_rate = bond_p->rupture_rate(bond_length(h, rot), p->temp);
     double rupture_probability = 1.0 - exp(-rupture_rate * dt);
     return helpers::draw_from_uniform_dist(generator) < rupture_probability;
 }
 
-void Ligand::bond(double alpha_0) {
+void Ligand::bond(double rot) {
     bond_state = prepared_bond_state;
     prepared_bond_state = -1;
-    bd_rec_x = x_pos(alpha_0);
+    bd_rec_x = x_pos(rot);
 }
 
 void Ligand::rupture() {
@@ -57,13 +57,13 @@ void Ligand::move_bd_rec(double x_dist) {
     bd_rec_x -= x_dist;
 }
 
-forces_t Ligand::bond_forces(double h, double alpha_0) {
+forces_t Ligand::bond_forces(double h, double rot) {
     BondParameters* bond_p = get_curr_bond_p();
 
-    double lig_x = x_pos(alpha_0);
-    double lig_y = y_pos(alpha_0);
+    double lig_x = x_pos(rot);
+    double lig_y = y_pos(rot);
 
-    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), lig_x, bd_rec_x);
+    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, rot), lig_x, bd_rec_x);
 
     double bond_len = bond_vector.length();
     double f_common = (bond_p->sigma * (bond_len - bond_p->lambda_)) / bond_len;
@@ -77,24 +77,24 @@ forces_t Ligand::bond_forces(double h, double alpha_0) {
 
 // Private methods
 
-double Ligand::x_pos(double alpha_0) {
-    return r_cir * sin(alpha_0 + alpha_inc);
+double Ligand::x_pos(double rot) const {
+    return r_cir * sin(rot + alpha_inc);
 }
 
-double Ligand::y_pos(double alpha_0) {
-    return - r_cir * cos(alpha_0 + alpha_inc);
+double Ligand::y_pos(double rot) const {
+    return - r_cir * cos(rot + alpha_inc);
 }
 
-double Ligand::surface_dist(double h, double alpha_0) {
-    double surf_dist = h + p->r_c + y_pos(alpha_0);
+double Ligand::surface_dist(double h, double rot) {
+    double surf_dist = h + p->r_c + y_pos(rot);
     if (surf_dist < 0) abort();
     return surf_dist;
 }
 
-double Ligand::bond_length(double h, double alpha_0) {
+double Ligand::bond_length(double h, double rot) {
     if (bond_state < 1) abort();
 
-    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, alpha_0), x_pos(alpha_0), bd_rec_x);
+    xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, rot), x_pos(rot), bd_rec_x);
 
     return bond_vector.length();
 }
