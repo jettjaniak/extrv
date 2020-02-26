@@ -104,19 +104,7 @@ cdef class SimulationState:
                 h[hist_i] = self._ss_cpp.h
                 rot[hist_i] = self._ss_cpp.rot
                 hist_i += 1
-                # n_all_bonds = np.sum(n_bonds[hist_i])
-                # # np.resize(bd_lig_ind, n_all_bonds)
-                # # np.resize(bd_lig_xy, (n_all_bonds, 2))
-                # bd_lig_ind = np.empty(n_all_bonds, dtype=np.int32)
-                # bd_lig_xy = np.empty((n_all_bonds, 2), dtype=np.double)
-                #
-                # for j in range(n_all_bonds):
-                #     bd_lig_ind[j] = stats.bd_ligs_ind_and_xy[j].first
-                #     bd_lig_xy[j][0] = stats.bd_ligs_ind_and_xy[j].second.x
-                #     bd_lig_xy[j][1] = stats.bd_ligs_ind_and_xy[j].second.y
-                # bd_ligs_ind.append(bd_lig_ind)
-                # bd_ligs_xy.append(bd_lig_xy)
-
+                # TODO: expand, wrap and use History from SimulationState.h
         return SimulationResult(h, rot)
 
     @property

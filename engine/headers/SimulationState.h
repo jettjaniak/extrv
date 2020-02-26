@@ -32,19 +32,8 @@ struct SimulationState {
 };
 
 
-struct Stats {
-    vector<size_t> n_bd_lig_vec;
-    vector<pair<size_t, xy_t>> bd_ligs_ind_and_xy;
-    const SimulationState* s;
-
-    Stats() = default;
-    explicit Stats(const SimulationState* s_);
-
-    void update();
-};
-
-
 struct History {
+    // TODO: documentation, documentation, documentation
     struct active_traj_t {
         size_t start_i;
         vector<xy_t> positions;
@@ -85,6 +74,4 @@ struct History {
     void update();
 
     void finish();
-
-    // TODO: test, return something that Cython can chew
 };

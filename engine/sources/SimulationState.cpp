@@ -97,25 +97,6 @@ SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int s
     }
 }
 
-void Stats::update() {
-    bd_ligs_ind_and_xy.clear();
-    // Reset number of bonds of each ligand type to zero.
-    std::fill(n_bd_lig_vec.begin(), n_bd_lig_vec.end(), 0);
-    for (auto lig_i : s->bd_lig_ind) {
-        auto & ligand = s->ligands[lig_i];
-        xy_t lig_xy_pos = xy_t{ligand.x_pos(s->rot), ligand.y_pos(s->rot)};
-        bd_ligs_ind_and_xy.emplace_back(lig_i, lig_xy_pos);
-        int this_lig_type_ind = ligand.lig_type->index_in_settings;
-        n_bd_lig_vec[this_lig_type_ind]++;
-    }
-}
-
-Stats::Stats(const SimulationState* s_) {
-    s = s_;
-    n_bd_lig_vec.resize(s->settings->lig_types_and_nrs.size());
-    update();
-}
-
 
 History::History(const SimulationState *s_) {
     s = s_;
