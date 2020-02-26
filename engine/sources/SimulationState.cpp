@@ -87,13 +87,15 @@ SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int s
         n_of_lig = lig_type.second;
         for (size_t i = 0; i < n_of_lig; i++) {
             xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator);
-            // TODO: do it wisely
-            if (std::abs(lig_xyz.z) < 0.3 && lig_xyz.y < -4.45) {
+            // TODO: do it wisely, use EPS_PROB
+            if (std::abs(lig_xyz.z) < 0.1) {
                 xy_t lig_xy{lig_xyz};
                 ligands.emplace_back(lig_xy, lig_p, settings->p);
             }
         }
         // TODO: sort ligands by r_cir
+        // TODO @Kajetan: indicate which ligands have chance of bonding,
+        //   by specifying range of indices (or iterators)
     }
 }
 
