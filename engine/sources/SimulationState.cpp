@@ -4,7 +4,7 @@
 #include <utility>
 #include <iostream>
 
-
+// TODO: add includes to CMake and Cython, so we can just type "[name].h"
 #include "../headers/forces.h"
 #include "../headers/velocities.h"
 #include "../headers/helpers.h"
@@ -105,28 +105,32 @@ History::History(const SimulationState *s_) {
 void History::update() {
     const set<size_t> & curr_blis = s->bd_lig_ind;
 
+    vector<size_t>::iterator it;
+
     // bon_lis = curr_blis \ prev_blis
     bon_lis.resize(curr_blis.size());
-    std::set_difference(
+    it = std::set_difference(
             curr_blis.cbegin(), curr_blis.cend(),
             prev_blis.cbegin(), prev_blis.cend(),
             bon_lis.begin()
     );
+    bon_lis.resize(it - bon_lis.begin());
 
     // rup_lis = prev_blis \ curr_blis
     rup_lis.resize(prev_blis.size());
-    std::set_difference(
+    it = std::set_difference(
             prev_blis.cbegin(), prev_blis.cend(),
             curr_blis.cbegin(), curr_blis.cend(),
             rup_lis.begin()
     );
+    rup_lis.resize(it - rup_lis.begin());
 
     for (size_t bli : bon_lis)
         active_trajs_map.emplace(bli, active_traj_t(hist_i));
 
     for (size_t rli : rup_lis) {
         auto active_traj_map_it = active_trajs_map.find(rli);
-        // not found
+        // not found, shouldn't happen
         if (active_traj_map_it == active_trajs_map.end())
             abort();
         auto &active_traj = (*active_traj_map_it).second;
@@ -136,11 +140,9 @@ void History::update() {
 
     for (size_t cli : curr_blis) {
         auto active_traj_it = active_trajs_map.find(cli);
-        // not found
-        if (active_traj_it != active_trajs_map.end()) {
-            std::cout << "index " << cli << " not found in active_trajs_map" << std::endl;
+        // not found, shouldn't happen
+        if (active_traj_it == active_trajs_map.end())
             abort();
-        }
         vector<xy_t> &active_traj_pos = (*active_traj_it).second.positions;
         const Ligand &ligand = s->ligands[cli];
         active_traj_pos.emplace_back(ligand.x_pos(s->rot), ligand.y_pos(s->rot));

@@ -1,6 +1,5 @@
 from libc cimport limits
 cimport cython
-from cython.operator cimport dereference, postincrement
 import numpy as np
 cimport numpy as np
 from collections import namedtuple
@@ -64,7 +63,7 @@ cdef class Settings:
     cdef object lig_types_and_nrs
 
     def __init__(self, ModelParameters p):
-        self._settings_cpp = SettingsCpp(&(p._p_cpp))
+        self._settings_cpp = SettingsCpp(&p._p_cpp)
         self.p = p
         self.lig_types_and_nrs = []
 
