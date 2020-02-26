@@ -1,10 +1,11 @@
 from libc cimport limits
 cimport cython
+from cython.operator cimport dereference, postincrement
 import numpy as np
 cimport numpy as np
 from collections import namedtuple
 
-from types cimport PSEL_BOND, ESEL_BOND, INTEGRIN_BOND
+from types cimport PSEL_BOND, ESEL_BOND, INTEGRIN_BOND, xy_t
 from Settings cimport (
     BondParameters as BondParametersCpp,
     LigandType as LigandTypeCpp,
@@ -13,7 +14,7 @@ from Settings cimport (
 )
 from SimulationState cimport SimulationState as SimulationStateCpp, Stats
 
-SimulationResult = namedtuple('SimulationResult', ['h', 'rot', 'n_bonds', 'bd_ligs_ind', 'bd_ligs_xy'])
+SimulationResult = namedtuple('SimulationResult', ['h', 'rot'])#, 'n_bonds', 'bd_ligs_ind', 'bd_ligs_xy'])
 
 # TODO: getters, setters
 # TODO: documentation
@@ -71,7 +72,6 @@ cdef class Settings:
         self._settings_cpp.add_lig_type(&lig_type._lig_type_cpp, n_of_lig)
         self.lig_types_and_nrs.append((lig_type, n_of_lig))
 
-
 # TODO: extract to separate *.pyx
 cdef class SimulationState:
     cdef SimulationStateCpp _ss_cpp
@@ -89,11 +89,8 @@ cdef class SimulationState:
     # TODO: progress bar (tqdm too slow): https://stackoverflow.com/questions/3173320/text-progress-bar-in-the-console
     @cython.cdivision(True)
     def simulate_with_history(self, size_t n_steps, double dt, double shear, int save_every):
-        cdef Stats stats = Stats(&self._ss_cpp)
-        cdef int n_lig_types = stats.n_bd_lig_vec.size()
         cdef size_t max_hist_size = 1 + (n_steps - 1) // save_every
 
-        cdef np.ndarray[np.int32_t, ndim=2] n_bonds = np.empty((max_hist_size, n_lig_types), dtype=np.int32)
         cdef np.ndarray[np.double_t, ndim=1] h = np.empty(max_hist_size, dtype=np.double)
         cdef np.ndarray[np.double_t, ndim=1] rot = np.empty(max_hist_size, dtype=np.double)
 
@@ -101,33 +98,26 @@ cdef class SimulationState:
         cdef size_t i
         cdef int n_all_bonds, j
 
-        cdef np.ndarray[np.int32_t, ndim=1] bd_lig_ind = np.empty(0, dtype=np.int32)
-        cdef np.ndarray[np.double_t, ndim=2] bd_lig_xy = np.empty((0, 2), dtype=np.double)
-
-        bd_ligs_ind = []
-        bd_ligs_xy = []
         for i in range(n_steps):
             self._ss_cpp.simulate_one_step(dt, shear)
             if i % save_every == 0:
-                stats.update()
-                n_bonds[hist_i] = stats.n_bd_lig_vec
-                n_all_bonds = np.sum(n_bonds[hist_i])
-                # np.resize(bd_lig_ind, n_all_bonds)
-                # np.resize(bd_lig_xy, (n_all_bonds, 2))
-                bd_lig_ind = np.empty(n_all_bonds, dtype=np.int32)
-                bd_lig_xy = np.empty((n_all_bonds, 2), dtype=np.double)
-
-                for j in range(n_all_bonds):
-                    bd_lig_ind[j] = stats.bd_ligs_ind_and_xy[j].first
-                    bd_lig_xy[j][0] = stats.bd_ligs_ind_and_xy[j].second.x
-                    bd_lig_xy[j][1] = stats.bd_ligs_ind_and_xy[j].second.y
-                bd_ligs_ind.append(bd_lig_ind)
-                bd_ligs_xy.append(bd_lig_xy)
                 h[hist_i] = self._ss_cpp.h
                 rot[hist_i] = self._ss_cpp.rot
                 hist_i += 1
+                # n_all_bonds = np.sum(n_bonds[hist_i])
+                # # np.resize(bd_lig_ind, n_all_bonds)
+                # # np.resize(bd_lig_xy, (n_all_bonds, 2))
+                # bd_lig_ind = np.empty(n_all_bonds, dtype=np.int32)
+                # bd_lig_xy = np.empty((n_all_bonds, 2), dtype=np.double)
+                #
+                # for j in range(n_all_bonds):
+                #     bd_lig_ind[j] = stats.bd_ligs_ind_and_xy[j].first
+                #     bd_lig_xy[j][0] = stats.bd_ligs_ind_and_xy[j].second.x
+                #     bd_lig_xy[j][1] = stats.bd_ligs_ind_and_xy[j].second.y
+                # bd_ligs_ind.append(bd_lig_ind)
+                # bd_ligs_xy.append(bd_lig_xy)
 
-        return SimulationResult(h, rot, n_bonds, bd_ligs_ind, bd_ligs_xy)
+        return SimulationResult(h, rot)
 
     @property
     def h(self):

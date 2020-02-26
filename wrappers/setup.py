@@ -19,4 +19,4 @@ setup(ext_modules=cythonize(Extension(
     include_dirs=[np.get_include()],
     extra_compile_args=extra_compile_args,
     language="c++"
-), language_level='3', annotate=False))
+), language_level='3', annotate=True))

@@ -1,5 +1,6 @@
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
+from libcpp.set cimport set
 
 from Settings cimport Settings
 from types cimport xy_t
@@ -10,6 +11,9 @@ cdef extern from '../engine/headers/SimulationState.h':
         double h
         # sphere's rotation
         double rot
+
+        # TODO: documentation
+        set[size_t] bd_lig_ind
 
         Settings* settings
 

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_map>
 #include <random>
 #include <cmath>
 
@@ -9,6 +10,7 @@
 
 using std::vector;
 using std::set;
+using std::unordered_map;
 using std::pair;
 
 

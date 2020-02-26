@@ -14,13 +14,10 @@ if __name__ == '__main__':
     ss = SimulationState(h_0=0.075, settings=settings)
     sim_res = ss.simulate_with_history(n_steps=1e6, dt=1e-6, shear=0, save_every=100)
 
-    plt.subplot(311)
+    plt.subplot(211)
     plt.plot(sim_res.rot)
     plt.title("rotation")
-    plt.subplot(312)
-    plt.plot(sim_res.n_bonds[:, 0])
-    plt.title("number of bonds")
-    plt.subplot(313)
+    plt.subplot(212)
     plt.plot(sim_res.h)
     plt.title("height")
 
