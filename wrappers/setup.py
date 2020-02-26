@@ -6,7 +6,7 @@ import numpy as np
 extra_compile_args = []
 system = platform.system()
 if system == "Linux":
-    extra_compile_args.append('-std=c++11')
+    extra_compile_args.append('-std=c++17')
 # TODO: macOS
 
 sources = ["Ligand.cpp", "Settings.cpp", "SimulationState.cpp",
