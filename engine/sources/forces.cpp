@@ -1,6 +1,6 @@
-#include "../headers/forces.h"
+#include "forces.h"
 
-#include "../headers/interpolated.h"
+#include "interpolated.h"
 
 
 forces_t forces::non_bond_forces(double shear_rate, double h, const ModelParameters *p) {

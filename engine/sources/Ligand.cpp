@@ -1,6 +1,6 @@
-#include "../headers/Ligand.h"
+#include "Ligand.h"
 
-#include "../headers/helpers.h"
+#include "helpers.h"
 
 
 // Public methods

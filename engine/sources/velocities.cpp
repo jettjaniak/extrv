@@ -1,6 +1,6 @@
-#include "../headers/velocities.h"
+#include "velocities.h"
 
-#include "../headers/interpolated.h"
+#include "interpolated.h"
 
 
 namespace velocities {

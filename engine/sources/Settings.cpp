@@ -1,6 +1,6 @@
-#include "../headers/Settings.h"
+#include "Settings.h"
 
-#include "../headers/helpers.h"
+#include "helpers.h"
 
 
 //////////////////////

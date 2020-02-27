@@ -1,13 +1,12 @@
-#include "../headers/SimulationState.h"
+#include "SimulationState.h"
 
 #include <algorithm>
 #include <utility>
 #include <iostream>
 
-// TODO: add includes to CMake and Cython, so we can just type "[name].h"
-#include "../headers/forces.h"
-#include "../headers/velocities.h"
-#include "../headers/helpers.h"
+#include "forces.h"
+#include "velocities.h"
+#include "helpers.h"
 
 
 void SimulationState::simulate_one_step(double dt, double shear) {
