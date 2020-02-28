@@ -1,14 +1,39 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+// for string formatting
+#include <iomanip>
+#include <sstream>
+
+#include "types.h"
 #include "Settings.h"
 #include "SimulationState.h"
 
 namespace py = pybind11;
 using pybind11::literals::operator""_a;
 
+// TODO: __repr__ for each object
 
 PYBIND11_MODULE(extrv_engine, m) {
+
+    /////////////
+    //  types  //
+    /////////////
+
+    py::class_<xy_t> xy_type(m, "xy_t");
+
+    xy_type.def("__repr__",
+        [](const xy_t &xy) {
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(4);
+            stream << "<xy_t (" << xy.x << ", " << xy.y << ")>";
+            return stream.str();
+        }
+    );
+
+    xy_type.def_readwrite("x", &xy_t::x)
+           .def_readwrite("y", &xy_t::y);
+
 
     //////////////////////
     //  BondParameters  //
@@ -82,6 +107,22 @@ PYBIND11_MODULE(extrv_engine, m) {
             .def_readwrite("lig_types_and_nrs", &Settings::lig_types_and_nrs);
 
 
+    ///////////////
+    //  History  //
+    ///////////////
+
+    py::class_<History> hist(m, "History");
+
+    py::class_<History::BondTrajectory> bond_traj(hist, "BondTrajectory");
+
+    bond_traj.def_readonly("start_i", &History::BondTrajectory::start_i)
+            .def_readonly("positions", &History::BondTrajectory::positions);
+
+    hist.def_readonly("h", &History::h)
+            .def_readonly("rot", &History::rot)
+            .def_readonly("bond_trajectories", &History::bond_trajectories);
+
+
     ///////////////////////
     //  SimulationState  //
     ///////////////////////
@@ -93,14 +134,18 @@ PYBIND11_MODULE(extrv_engine, m) {
         "h_0"_a, "settings"_a, "seed"_a
     );
 
-    s.def("simulate_one_step", &SimulationState::simulate_one_step, "dt"_a, "shear"_a);
+    s.def("simulate_one_step", &SimulationState::simulate_one_step, "dt"_a, "shear"_a)
+     .def("simulate", &SimulationState::simulate, "n_steps"_a, "dt"_a, "shear"_a)
+     .def("simulate_with_history", &SimulationState::simulate_with_history,
+          "n_steps"_a, "dt"_a, "shear"_a, "save_every"_a=1000);
 
     s.def_readwrite("h", &SimulationState::h)
      .def_readwrite("rot", &SimulationState::rot)
      .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
      .def_readwrite("settings", &SimulationState::settings);
 
-    // TODO: History, simulate
+
+
 }
 
 

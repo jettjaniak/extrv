@@ -99,18 +99,34 @@ void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-
-History::History(const SimulationState *s_) {
-    s = s_;
+void SimulationState::simulate(size_t n_steps, double dt, double shear) {
+    for (int i = 0; i < n_steps; ++i)
+        simulate_one_step(dt, shear);
 }
 
-void History::update() {
-    const set<size_t> & curr_blis = s->bd_lig_ind;
+History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
+    History hist(this);
+    hist.update();
+    for (int i = 0; i < n_steps; ++i) {
+        simulate_one_step(dt, shear);
+        if (i % save_every == 0)
+            hist.update();
+    }
+    hist.finish();
+    return hist;
+}
 
+
+History::History(const SimulationState *s) : s(s) {}
+
+void History::update_bond_trajectories() {
+
+    const set<size_t> & curr_blis = s->bd_lig_ind;
     vector<size_t>::iterator it;
 
+    // just bonded ligand indices
+    vector<size_t> bon_lis(curr_blis.size());
     // bon_lis = curr_blis \ prev_blis
-    bon_lis.resize(curr_blis.size());
     it = std::set_difference(
             curr_blis.cbegin(), curr_blis.cend(),
             prev_blis.cbegin(), prev_blis.cend(),
@@ -118,8 +134,9 @@ void History::update() {
     );
     bon_lis.resize(it - bon_lis.begin());
 
+    // just ruptured ligand indices
+    vector<size_t> rup_lis(prev_blis.size());
     // rup_lis = prev_blis \ curr_blis
-    rup_lis.resize(prev_blis.size());
     it = std::set_difference(
             prev_blis.cbegin(), prev_blis.cend(),
             curr_blis.cbegin(), curr_blis.cend(),
@@ -128,7 +145,7 @@ void History::update() {
     rup_lis.resize(it - rup_lis.begin());
 
     for (size_t bli : bon_lis)
-        active_trajs_map.emplace(bli, active_traj_t(hist_i));
+        active_trajs_map.emplace(bli, BondTrajectory(hist_i));
 
     for (size_t rli : rup_lis) {
         auto active_traj_map_it = active_trajs_map.find(rli);
@@ -136,7 +153,7 @@ void History::update() {
         if (active_traj_map_it == active_trajs_map.end())
             abort();
         auto &active_traj = (*active_traj_map_it).second;
-        final_trajs_vec.emplace_back(active_traj);
+        bond_trajectories.emplace_back(active_traj);
         active_trajs_map.erase(active_traj_map_it);
     }
 
@@ -151,12 +168,19 @@ void History::update() {
     }
 
     prev_blis = curr_blis;
-    hist_i++;
 }
 
 void History::finish() {
     for (auto &value_p : active_trajs_map)
-        final_trajs_vec.emplace_back(value_p.second);
+        bond_trajectories.emplace_back(value_p.second);
     active_trajs_map.clear();
 }
 
+void History::update() {
+    update_bond_trajectories();
+    h.push_back(s->h);
+    rot.push_back(s->rot);
+    hist_i++;
+}
+
+History::BondTrajectory::BondTrajectory(size_t start_i) : start_i(start_i) {}

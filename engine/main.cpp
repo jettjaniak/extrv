@@ -18,21 +18,5 @@ int main() {
     settings->add_lig_type(psgl2_lig_t, 20000);
 
     auto s = SimulationState(0.0745478, settings, 1234567);
-    size_t n_steps = 1e5;
-
-    auto hist = History(&s);
-    for (size_t i = 0; i < n_steps; ++i) {
-        s.simulate_one_step(1e-6, 0);
-        if (i % (n_steps/100) == 0) {
-            hist.update();
-            std::cout << "h: " << s.h << std::endl;
-            std::cout << "rot: " << s.rot * (180 / PI) << std::endl;
-            std::cout << std::endl;
-        }
-    }
-    hist.finish();
-    std::cout << "bonds trajectories:" << std::endl;
-    for (auto &final_traj : hist.final_trajs_vec) {
-        std::cout << final_traj.start_i << ", " << final_traj.n_of_pos << std::endl;
-    }
+    s.simulate_with_history(1e5, 1e-6, 0);
 }

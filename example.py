@@ -19,4 +19,4 @@ if __name__ == '__main__':
     settings.add_lig_type(psgl_lig_t, 10000)
 
     s = SimulationState(h_0=0.075, settings=settings, seed=12345)
-    s.simulate_one_step(dt=1e-6, shear=100)
+    sim_hist = s.simulate_with_history(n_steps=int(1e5), dt=1e-6, shear=0.0)
