@@ -4,6 +4,8 @@
 
 
 struct BondParameters {
+    enum class BondType {psel, esel, integrin};  // TODO: change esel to slip, psel to catch-slip-psel, etc.
+
     // TODO: documentation
     BondType bond_type;
     // optimal bond length in μm
@@ -26,22 +28,20 @@ struct BondParameters {
     // multiplicative constant in catch part of rupture rate in 1/s
     double k01c;
 
-    BondParameters() = default;
-
     /**
      * Bond parameters constructor with unit conversion.
      *
-     * @param lambda__ equilibrium bond length in nm
-     * @param sigma_ spring constant in dyn / cm
-     * @param k_f_0_ multiplicative constant in binding rate in μm^2/s
-     * @param rec_dens_ density of bond receptors on the surface in 1/μm^2
-     * @param x1s_ reactive compliance for slip bond in Å
-     * @param k01s_ multiplicative constant in slip part of binding and rupture rate in 1/s
-     * @param x1c_ reactive compliance for catch bond in Å
-     * @param k01c_ multiplicative constant in catch part of rupture rate in 1/s
+     * @param lambda_ equilibrium bond length in nm
+     * @param sigma spring constant in dyn / cm
+     * @param k_f_0 multiplicative constant in binding rate in μm^2/s
+     * @param rec_dens density of bond receptors on the surface in 1/μm^2
+     * @param x1s reactive compliance for slip bond in Å
+     * @param k01s multiplicative constant in slip part of binding and rupture rate in 1/s
+     * @param x1c reactive compliance for catch bond in Å
+     * @param k01c multiplicative constant in catch part of rupture rate in 1/s
      */
-    BondParameters(BondType bond_type_, double lambda__, double sigma_, double k_f_0_, double rec_dens_,
-            double x1s_, double k01s_, double x1c_ = 0.0, double k01c_ = 0.0);
+    BondParameters(BondType bond_type, double lambda_, double sigma, double k_f_0, double rec_dens,
+                   double x1s, double k01s, double x1c = 0.0, double k01c = 0.0);
 
     // TODO: documentation
     double binding_rate(double surface_dist, double temp);
@@ -88,9 +88,8 @@ struct ModelParameters {
     // reciprocal length scale of repulsive force in Å
     double tau;
 
-    ModelParameters() = default;
     // TODO: documentation
-    ModelParameters(double r_c_, double mu_, double temp_, double dens_diff_, double f_rep_0_, double tau_);
+    ModelParameters(double r_c, double mu, double temp, double dens_diff, double f_rep_0, double tau);
 };
 
 
@@ -99,8 +98,7 @@ struct Settings {
     // second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
-    Settings() = default;
-    explicit Settings(ModelParameters* p_);
+    explicit Settings(ModelParameters* p);
 
     // TODO: documentation
     void add_lig_type(LigandType* lig_type, size_t n_of_lig);

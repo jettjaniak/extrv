@@ -7,26 +7,25 @@
 //  BondParameters  //
 //////////////////////
 
-BondParameters::BondParameters(BondType bond_type_, double lambda__, double sigma_, double k_f_0_, double rec_dens_, double x1s_,
-                               double k01s_, double x1c_, double k01c_) {
-    bond_type = bond_type_;
+BondParameters::BondParameters(BondType bond_type, double lambda_, double sigma, double k_f_0, double rec_dens,
+                               double x1s, double k01s, double x1c, double k01c) :
+        bond_type(bond_type),
+        // conversion to μm
+        lambda_(lambda_ * 1e-3),
+        // conversion to kg/s^2
+        sigma(sigma * 1e-3),
 
-    // conversion to μm
-    lambda_ = lambda__ * 1e-3;
-    // conversion to kg/s^2
-    sigma = sigma_ * 1e-3;
+        k_f_0(k_f_0),
+        rec_dens(rec_dens),
+        // conversion to μm
+        x1s(x1s * 1e-4),
+        k01s(k01s),
 
-    k_f_0 = k_f_0_;
-    rec_dens = rec_dens_;
+        // conversion to μm
+        x1c(x1c * 1e-4),
+        k01c(k01c)
+        {}
 
-    // conversion to μm
-    x1s = x1s_ * 1e-4;
-    k01s = k01s_;
-
-    // conversion to μm
-    x1c = x1c_ * 1e-4;
-    k01c = k01c_;
-}
 
 double BondParameters::binding_rate(double surface_dist, double temp) {
     double deviation = std::abs(surface_dist - lambda_);
@@ -38,13 +37,13 @@ double BondParameters::binding_rate(double surface_dist, double temp) {
 double BondParameters::rupture_rate(double bond_length, double temp) {
     double bond_f = bond_force(bond_length);
     switch (bond_type) {
-        case ESEL_BOND:
+        case BondType::esel:
             // PSGL + E-selectin slip bond
             return helpers::esel_rupture_rate(bond_f, k01s, x1s, temp);
-        case PSEL_BOND:
+        case BondType::psel:
             // PSGL + P-selectin catch-slip bond
             return helpers::psel_rupture_rate(bond_f, k01s, k01c, x1s, x1c, temp);
-        case INTEGRIN_BOND:
+        case BondType::integrin:
             return helpers::integrin_rupture_rate(bond_f, k01s, k01c, x1s, x1c, temp);
         default:
             abort();  // not implemented
@@ -80,28 +79,24 @@ void LigandType::add_bond_p(BondParameters *bond_p) {
 //  ModelParameters  //
 ///////////////////////
 
-ModelParameters::ModelParameters(double r_c_, double mu_, double temp_, double dens_diff_,
-        double f_rep_0_, double tau_) {
-    r_c = r_c_;
-    // conversion to kg/(μm s)
-    mu = mu_ * 1e-7;
-    temp = temp_;
-    // conversion to kg/μm^3
-    dens_diff = dens_diff_ * 1e-15;
-
-    // conversion to kg μm / s^2
-    f_rep_0 = f_rep_0_ * 1e-6;
-    tau = tau_;
-}
+ModelParameters::ModelParameters(double r_c, double mu, double temp, double dens_diff, double f_rep_0, double tau) :
+        r_c(r_c),
+        // conversion to kg/(μm s)
+        mu(mu * 1e-7),
+        temp(temp),
+        // conversion to kg/μm^3
+        dens_diff(dens_diff * 1e-15),
+        // conversion to kg μm / s^2
+        f_rep_0(f_rep_0 * 1e-6),
+        tau(tau)
+        {}
 
 
 //////////////////////////
 //  Settings  //
 //////////////////////////
 
-Settings::Settings(ModelParameters *p_) {
-    p = p_;
-}
+Settings::Settings(ModelParameters *p) : p(p) {}
 
 void Settings::add_lig_type(LigandType *lig_type, size_t n_of_lig) {
     if (lig_type->index_in_settings > -1)

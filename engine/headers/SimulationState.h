@@ -21,14 +21,14 @@ struct SimulationState {
 
     Settings* settings;
 
-    SimulationState() = default;
     SimulationState(double h_0, Settings* settings_, unsigned int seed);
 
     void simulate_one_step(double dt, double shear);
 
-    void reseed(unsigned int seed) {
-        generator = generator_t{seed};
-    }
+    // TODO: simulate, simulate_with_history
+
+    // TODO: generate seed if seed = 0 (timestamp won't work in multiprocessing!)
+    void reseed(unsigned int seed);
 };
 
 

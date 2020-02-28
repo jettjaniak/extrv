@@ -9,8 +9,8 @@ int main() {
 
     auto psgl_lig_t = new LigandType();
     auto psgl2_lig_t = new LigandType();
-    auto esel_bond_p = new BondParameters(ESEL_BOND, 77, 100, 0.06, 3600, 0.18, 2.6);
-    auto esel2_bond_p = new BondParameters(ESEL_BOND, 77, 100, 0.06, 3600, 0.18, 2.6);
+    auto esel_bond_p = new BondParameters(BondParameters::BondType::esel, 77, 100, 0.06, 3600, 0.18, 2.6);
+    auto esel2_bond_p = new BondParameters(BondParameters::BondType::esel, 77, 100, 0.06, 3600, 0.18, 2.6);
     psgl_lig_t->add_bond_p(esel_bond_p);
     psgl2_lig_t->add_bond_p(esel2_bond_p);
 

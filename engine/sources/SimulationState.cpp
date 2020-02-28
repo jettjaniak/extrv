@@ -73,10 +73,7 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     }
 }
 
-SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) {
-    h = h_0;
-    settings = settings_;
-
+SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) : h(h_0), settings(settings_) {
     reseed(seed);
 
     LigandType* lig_p;
@@ -96,6 +93,10 @@ SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int s
         // TODO @Kajetan: indicate which ligands have chance of bonding,
         //   by specifying range of indices (or iterators)
     }
+}
+
+void SimulationState::reseed(unsigned int seed) {
+    generator = generator_t{seed};
 }
 
 
