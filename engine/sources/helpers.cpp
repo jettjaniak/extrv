@@ -27,32 +27,35 @@ namespace helpers {
         return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
     }
 
-    double esel_rupture_rate(double force, double rate_0, double react_compl, double temp) {
+    double slip_rupture_rate(double force, double rate_0, double react_compl, double temp) {
         return rate_0 * exp((react_compl * force) / (K_B * temp));
     }
 
-    double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                             double react_compl_catch, double temp) {
+    double catch_slip_psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                                        double react_compl_catch, double temp) {
         double half_f = force / 2;
         double slip_part = (2.0 / 3.0) * rate_0_slip * exp(react_compl_slip * half_f / (K_B * temp));
         double catch_part = rate_0_catch * exp(react_compl_catch * half_f / (K_B * temp));
         return slip_part + catch_part;
     }
 
-    double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                                 double react_compl_catch, double temp) {
+    double catch_slip_integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch,
+                                            double react_compl_slip,
+                                            double react_compl_catch, double temp) {
         return 1 / (
                 (1 / rate_0_slip) * exp(-react_compl_slip * force / (K_B * temp)) +
                 (1 / rate_0_catch) * exp(-react_compl_catch * force / (K_B * temp))
         );
     }
 
+    // TODO: use it as static variable inside function
     std::uniform_real_distribution<double> uniform_dist {};
 
     double draw_from_uniform_dist(generator_t &generator) {
         return uniform_dist(generator);
     }
 
+    // TODO: use it as static variable inside function
     std::normal_distribution<double> normal_dist {};
 
     double draw_from_normal_dist(generator_t &generator) {

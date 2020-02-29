@@ -5,7 +5,7 @@
 
 namespace velocities {
 
-    velocities_t compute_velocities(double h, const forces_t &f, const ModelParameters *p) {
+    velocities_t compute_velocities(double h, const forces_t &f, const Settings::ModelParameters *p) {
         double h_over_r = h / p->r_c;
         double t_t_val = interpolated::t_t(h_over_r);
         double f_r_val = interpolated::f_r(h_over_r);

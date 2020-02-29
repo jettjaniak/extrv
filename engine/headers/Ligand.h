@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "Settings.h"
+#include "AbstractBondType.h"
 
 /**
  * Each ligand has xyz coordinates in the model.
@@ -26,9 +27,9 @@ struct Ligand {
     double bd_rec_x = INFTY;
 
     // ligand's parameters
-    LigandType* lig_type;
+    Settings::LigandType* lig_type;
     // model's parameters
-    ModelParameters* p;
+    Settings::ModelParameters* p;
 
     /**
      * Ligand constructor.
@@ -38,7 +39,7 @@ struct Ligand {
      * @param lig_type_ ligand's parameters
      * @param p_ model's parameters
      */
-    Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_);
+    Ligand(xy_t lig_xy, Settings::LigandType *lig_type_, Settings::ModelParameters *p_);
 
     /**
      * Computes x coordinate of ligand.
@@ -74,7 +75,7 @@ struct Ligand {
     /**
      * Returns parameters of current bond.
      */
-    BondParameters* get_curr_bond_p();
+    AbstractBondType* get_curr_bond_p();
 
     /**
      * Computes bonding probability and draws if bonding will happen.

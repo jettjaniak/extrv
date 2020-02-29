@@ -19,7 +19,7 @@ namespace velocities {
      * @return computed velocities
      *
      */
-    velocities_t compute_velocities(double h, const forces_t & f, const ModelParameters* p);
+    velocities_t compute_velocities(double h, const forces_t & f, const Settings::ModelParameters* p);
 
     /**
      * Function related to hydrodynamics used in velocity computation.

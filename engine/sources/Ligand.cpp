@@ -1,11 +1,12 @@
 #include "Ligand.h"
 
 #include "helpers.h"
+#include "AbstractBondType.h"
 
 
 // Public methods
 
-Ligand::Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_) {
+Ligand::Ligand(xy_t lig_xy, Settings::LigandType *lig_type_, Settings::ModelParameters *p_) {
     pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
     alpha_inc = r_alpha_pair.second;
@@ -35,7 +36,7 @@ bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &gener
 }
 
 bool Ligand::prepare_rupture(double h, double rot, double dt, generator_t &generator) {
-    BondParameters* bond_p = get_curr_bond_p();  // will abort if not bonded
+    AbstractBondType* bond_p = get_curr_bond_p();  // will abort if not bonded
     double rupture_rate = bond_p->rupture_rate(bond_length(h, rot), p->temp);
     double rupture_probability = 1.0 - exp(-rupture_rate * dt);
     return helpers::draw_from_uniform_dist(generator) < rupture_probability;
@@ -58,7 +59,7 @@ void Ligand::move_bd_rec(double x_dist) {
 }
 
 forces_t Ligand::bond_forces(double h, double rot) {
-    BondParameters* bond_p = get_curr_bond_p();
+    AbstractBondType* bond_p = get_curr_bond_p();
 
     double lig_x = x_pos(rot);
     double lig_y = y_pos(rot);
@@ -99,7 +100,7 @@ double Ligand::bond_length(double h, double rot) {
     return bond_vector.length();
 }
 
-BondParameters* Ligand::get_curr_bond_p() {
+AbstractBondType* Ligand::get_curr_bond_p() {
     if (bond_state < 1 || bond_state > lig_type->bonds_p.size())
         abort();
     return lig_type->bonds_p[bond_state - 1];

@@ -37,7 +37,7 @@ namespace helpers {
      * @param temp temperature in K
      * @return rupture rate in 1/s
      */
-    double esel_rupture_rate(double force, double rate_0, double react_compl, double temp);
+    double slip_rupture_rate(double force, double rate_0, double react_compl, double temp);
 
     /**
      * Compute rate of rupture in catch-slip P-selectin bond.
@@ -51,8 +51,8 @@ namespace helpers {
      * @param temp temperature in K
      * @return rupture rate in 1/s
      */
-    double psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                             double react_compl_catch, double temp);
+    double catch_slip_psel_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
+                                        double react_compl_catch, double temp);
 
     /**
      * Compute rate of rupture in catch-slip ICAM and VCAM bonds.
@@ -66,8 +66,9 @@ namespace helpers {
      * @param temp temperature in K
      * @return rupture rate in 1/s
      */
-    double integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch, double react_compl_slip,
-                                 double react_compl_catch, double temp);
+    double catch_slip_integrin_rupture_rate(double force, double rate_0_slip, double rate_0_catch,
+                                            double react_compl_slip,
+                                            double react_compl_catch, double temp);
 
 
     /**
