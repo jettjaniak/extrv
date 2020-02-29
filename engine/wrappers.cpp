@@ -113,9 +113,9 @@ PYBIND11_MODULE(extrv_engine, m) {
 
     // passing a pointer is OK
     lig_type.def(py::init())
-            .def("add_bond_p", &Settings::LigandType::add_bond_p, "bond_p"_a);
+            .def("add_bond_type", &Settings::LigandType::add_bond_type, "bond_type"_a);
 
-    lig_type.def_readonly("bonds_p", &Settings::LigandType::bonds_p);
+    lig_type.def_readonly("bonds_types", &Settings::LigandType::bonds_types);
 
 
     ///////////////

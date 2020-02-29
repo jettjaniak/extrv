@@ -16,17 +16,17 @@ Settings::ModelParameters::ModelParameters(double r_c, double mu, double temp, d
         {}
 
 vector<double> Settings::LigandType::binding_rates(double surface_dist, double temp) {
-    vector<double> ret(bonds_p.size());
-    AbstractBondType* bond_p;
-    for (int i = 0; i < bonds_p.size(); i++) {
-        bond_p = bonds_p[i];
-        ret[i] = bond_p->binding_rate(surface_dist, temp);
+    vector<double> ret(bonds_types.size());
+    AbstractBondType* bond_type;
+    for (int i = 0; i < bonds_types.size(); i++) {
+        bond_type = bonds_types[i];
+        ret[i] = bond_type->binding_rate(surface_dist, temp);
     }
     return ret;
 }
 
-void Settings::LigandType::add_bond_p(AbstractBondType *bond_p) {
-    bonds_p.push_back(bond_p);
+void Settings::LigandType::add_bond_type(AbstractBondType *bond_type) {
+    bonds_types.push_back(bond_type);
 }
 
 Settings::Settings(ModelParameters *p) : p(p) {}

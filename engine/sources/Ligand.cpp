@@ -36,8 +36,8 @@ bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &gener
 }
 
 bool Ligand::prepare_rupture(double h, double rot, double dt, generator_t &generator) {
-    AbstractBondType* bond_p = get_curr_bond_p();  // will abort if not bonded
-    double rupture_rate = bond_p->rupture_rate(bond_length(h, rot), p->temp);
+    AbstractBondType* bond_type = get_curr_bond_type();  // will abort if not bonded
+    double rupture_rate = bond_type->rupture_rate(bond_length(h, rot), p->temp);
     double rupture_probability = 1.0 - exp(-rupture_rate * dt);
     return helpers::draw_from_uniform_dist(generator) < rupture_probability;
 }
@@ -59,7 +59,7 @@ void Ligand::move_bd_rec(double x_dist) {
 }
 
 forces_t Ligand::bond_forces(double h, double rot) {
-    AbstractBondType* bond_p = get_curr_bond_p();
+    AbstractBondType* bond_type = get_curr_bond_type();
 
     double lig_x = x_pos(rot);
     double lig_y = y_pos(rot);
@@ -67,7 +67,7 @@ forces_t Ligand::bond_forces(double h, double rot) {
     xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, rot), lig_x, bd_rec_x);
 
     double bond_len = bond_vector.length();
-    double f_common = (bond_p->sigma * (bond_len - bond_p->lambda_)) / bond_len;
+    double f_common = (bond_type->sigma * (bond_len - bond_type->lambda_)) / bond_len;
 
     double f_x = f_common * bond_vector.x;
     double f_y = f_common * bond_vector.y;
@@ -100,10 +100,10 @@ double Ligand::bond_length(double h, double rot) {
     return bond_vector.length();
 }
 
-AbstractBondType* Ligand::get_curr_bond_p() {
-    if (bond_state < 1 || bond_state > lig_type->bonds_p.size())
+AbstractBondType* Ligand::get_curr_bond_type() {
+    if (bond_state < 1 || bond_state > lig_type->bonds_types.size())
         abort();
-    return lig_type->bonds_p[bond_state - 1];
+    return lig_type->bonds_types[bond_state - 1];
 }
 
 

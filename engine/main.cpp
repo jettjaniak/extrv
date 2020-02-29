@@ -10,7 +10,7 @@ int main() {
 
     auto psgl_lig_t = new Settings::LigandType();
     auto esel_bond_t = new SlipBondType(77, 100, 0.06, 3600, 0.18, 2.6);
-    psgl_lig_t->add_bond_p(esel_bond_t);
+    psgl_lig_t->add_bond_type(esel_bond_t);
 
     settings->add_lig_type(psgl_lig_t, 10000);
 

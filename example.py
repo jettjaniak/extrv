@@ -2,7 +2,7 @@ from extrv_engine import SlipBondType, CatchSlipPselBondType, CatchSlipIntegrinB
 
 
 if __name__ == '__main__':
-    esel_bond_p = SlipBondType(
+    esel_bond_type = SlipBondType(
         lambda_=77,
         sigma=100,
         k_f_0=0.06,
@@ -11,7 +11,7 @@ if __name__ == '__main__':
         k01s=2.6
     )
     psgl_lig_t = Settings.LigandType()
-    psgl_lig_t.add_bond_p(esel_bond_p)
+    psgl_lig_t.add_bond_type(esel_bond_type)
 
     p = Settings.ModelParameters(r_c=4.5, mu=0.01, temp=310, dens_diff=0.05, f_rep_0=1e3, tau=5)
     settings = Settings(p)

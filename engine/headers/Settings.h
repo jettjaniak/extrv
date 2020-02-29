@@ -27,12 +27,12 @@ struct Settings {
 
     struct LigandType {
         int index_in_settings = -1;
-        vector<AbstractBondType*> bonds_p;
+        vector<AbstractBondType*> bonds_types;
 
         LigandType() = default;
 
         // TODO: documentation
-        void add_bond_p(AbstractBondType* bond_p);
+        void add_bond_type(AbstractBondType* bond_type);
 
         // TODO: documentation
         vector<double> binding_rates(double surface_dist, double temp);

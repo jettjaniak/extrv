@@ -75,7 +75,7 @@ struct Ligand {
     /**
      * Returns parameters of current bond.
      */
-    AbstractBondType* get_curr_bond_p();
+    AbstractBondType* get_curr_bond_type();
 
     /**
      * Computes bonding probability and draws if bonding will happen.
