@@ -13,7 +13,7 @@ add_executable(extrv main.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp
-        sources/Settings.cpp
+        sources/Parameters.cpp
         sources/History.cpp
         sources/AbstractBondType.cpp)
 
@@ -24,6 +24,6 @@ pybind11_add_module(extrv_engine wrappers.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp
-        sources/Settings.cpp
+        sources/Parameters.cpp
         sources/History.cpp
         sources/AbstractBondType.cpp)

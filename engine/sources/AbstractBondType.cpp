@@ -1,67 +1,124 @@
-#include "helpers.h"
-#include "Settings.h"
 #include "AbstractBondType.h"
 
-AbstractBondType::AbstractBondType(double lambda_, double sigma, double k_f_0, double rec_dens,
-        double x1s, double k01s):
+#include "helpers.h"
+#include "Parameters.h"
+
+
+////////////////////////
+//  AbstractBondType  //
+////////////////////////
+
+AbstractBondType::AbstractBondType(
+        double eq_bond_len, double spring_const, double binding_rate_0,
+        double rec_dens, double react_compl_slip, double rup_rate_0_slip):
 
         // conversion to μm
-        lambda_(lambda_ * 1e-3),
+        eq_bond_len(eq_bond_len * 1e-3),
         // conversion to kg/s^2
-        sigma(sigma * 1e-3),
+        spring_const(spring_const * 1e-3),
 
-        k_f_0(k_f_0),
+        binding_rate_0(binding_rate_0),
         rec_dens(rec_dens),
         // conversion to μm
-        x1s(x1s * 1e-4),
-        k01s(k01s)
-        {}
+        react_compl_slip(react_compl_slip * 1e-4),
+        rup_rate_0_slip(rup_rate_0_slip) {}
+
 
 double AbstractBondType::binding_rate(double surface_dist, double temp) {
-    double deviation = abs(surface_dist - lambda_);
-    double rate_0 = rec_dens * k_f_0;
+    double deviation = abs(surface_dist - eq_bond_len);
+    double rate_0 = rec_dens * binding_rate_0;
     // Here we assume that binding is subject to reactive compliance of slip part of bond.
-    return helpers::bell_binding_rate(deviation, rate_0, sigma, x1s, temp);
+    return helpers::bell_binding_rate(deviation, rate_0, spring_const, react_compl_slip, temp);
 }
 
 double AbstractBondType::bond_force(double bond_length) {
-    return sigma * abs(bond_length - lambda_);
+    return spring_const * abs(bond_length - eq_bond_len);
 }
 
-SlipBondType::SlipBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s)
-        : AbstractBondType(lambda_, sigma, k_f_0, rec_dens, x1s, k01s) {}
+
+////////////////////
+//  SlipBondType  //
+////////////////////
+
+SlipBondType::SlipBondType(
+        double eq_bond_len, double spring_const, double binding_rate_0,
+        double rec_dens, double react_compl_slip, double rup_rate_0_slip) :
+
+        // use base class constructor
+        AbstractBondType(
+                eq_bond_len, spring_const, binding_rate_0,
+                rec_dens, react_compl_slip, rup_rate_0_slip) {}
+
 
 double SlipBondType::rupture_rate(double bond_length, double temp) {
     double bond_f = bond_force(bond_length);
-    // TODO: move it here from helpers
-    return helpers::slip_rupture_rate(bond_f, k01s, x1s, temp);
+    return rup_rate_0_slip * exp((react_compl_slip * bond_f) / (K_B * temp));
 }
 
-CatchSlipBondType::CatchSlipBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s,
-        double k01s, double x1c, double k01c) :
 
-        AbstractBondType(lambda_, sigma, k_f_0, rec_dens, x1s, k01s),
-        // conversion to μm
-        x1c(x1c * 1e-4),
-        k01c(k01c)
-        {}
+/////////////////////////////////
+//  AbstractCatchSlipBondType  //
+/////////////////////////////////
 
-CatchSlipPselBondType::CatchSlipPselBondType(double lambda_, double sigma, double k_f_0, double rec_dens,
-        double x1s, double k01s, double x1c, double k01c) :
-        CatchSlipBondType(lambda_, sigma, k_f_0, rec_dens, x1s, k01s, x1c, k01c) {}
+AbstractCatchSlipBondType::AbstractCatchSlipBondType(
+        double eq_bond_len, double spring_const, double binding_rate_0,
+        double rec_dens, double react_compl_slip,  double rup_rate_0_slip,
+        double react_compl_catch, double rup_rate_0_catch) :
+
+        // use base class constructor
+        AbstractBondType(
+                eq_bond_len, spring_const, binding_rate_0,
+                rec_dens, react_compl_slip, rup_rate_0_slip),
+
+        // then initialize two additional parameters
+        react_compl_catch(react_compl_catch * 1e-4),  // conversion to μm
+        rup_rate_0_catch(rup_rate_0_catch) {}
+
+
+/////////////////////////////
+//  CatchSlipPselBondType  //
+/////////////////////////////
+
+CatchSlipPselBondType::CatchSlipPselBondType(
+        double eq_bond_len, double spring_const, double binding_rate_0,
+        double rec_dens, double react_compl_slip, double rup_rate_0_slip,
+        double react_compl_catch, double rup_rate_0_catch) :
+
+        // use base class constructor
+        AbstractCatchSlipBondType(
+                eq_bond_len, spring_const, binding_rate_0,
+                rec_dens, react_compl_slip, rup_rate_0_slip,
+                react_compl_catch, rup_rate_0_catch) {}
+
 
 double CatchSlipPselBondType::rupture_rate(double bond_length, double temp) {
-    double bond_f = bond_force(bond_length);
-    // TODO: move it here from helpers
-    return helpers::catch_slip_psel_rupture_rate(bond_f, k01s, k01c, x1s, x1c, temp);
+    // TODO: any gain from using static?
+    double half_f = bond_force(bond_length) / 2;
+    double slip_part = (2.0 / 3.0) * rup_rate_0_slip * exp(react_compl_slip * half_f / (K_B * temp));
+    double catch_part = rup_rate_0_catch * exp(react_compl_catch * half_f / (K_B * temp));
+    return slip_part + catch_part;
 }
 
-CatchSlipIntegrinBondType::CatchSlipIntegrinBondType(double lambda_, double sigma, double k_f_0, double rec_dens,
-        double x1s, double k01s, double x1c, double k01c) :
-        CatchSlipBondType(lambda_, sigma, k_f_0, rec_dens, x1s, k01s, x1c, k01c) {}
+
+/////////////////////////////////
+//  CatchSlipIntegrinBondType  //
+/////////////////////////////////
+
+CatchSlipIntegrinBondType::CatchSlipIntegrinBondType(
+        double eq_bond_len, double spring_const, double binding_rate_0,
+        double rec_dens, double react_compl_slip, double rup_rate_0_slip,
+        double react_compl_catch, double rup_rate_0_catch) :
+
+        AbstractCatchSlipBondType(
+                eq_bond_len, spring_const, binding_rate_0,
+                rec_dens, react_compl_slip, rup_rate_0_slip,
+                react_compl_catch, rup_rate_0_catch) {}
+
 
 double CatchSlipIntegrinBondType::rupture_rate(double bond_length, double temp) {
     double bond_f = bond_force(bond_length);
-    // TODO: move it here from helpers
-    return helpers::catch_slip_integrin_rupture_rate(bond_f, k01s, k01c, x1s, x1c, temp);
+    return 1 / (
+            (1 / rup_rate_0_slip) * exp(-react_compl_slip * bond_f / (K_B * temp)) +
+            (1 / rup_rate_0_catch) * exp(-react_compl_catch * bond_f / (K_B * temp))
+    );
 }

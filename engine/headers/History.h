@@ -2,14 +2,21 @@
 
 #include "types.h"
 #include "Ligand.h"
-#include "Settings.h"
+#include "Parameters.h"
 #include "helpers.h"
 
 
 struct SimulationState;
 
-class History {  // TODO: documentation, documentation, documentation
+/**
+ * Builds and represents simulation history.
+ */
+class History {
 public:
+    /**
+     * Stores index for which given bond was first observed and
+     * subsequent positions of bonded ligand.
+     */
     struct BondTrajectory {
         size_t start_i;
         vector<xy_t> positions;
@@ -17,28 +24,31 @@ public:
         explicit BondTrajectory(size_t start_i);
     };
 
-    const SimulationState* s;
+    /// vector of heights above surface in μm
     vector<double> h;
+    /// vector of sphere's rotation in radians
     vector<double> rot;
-    // here we move values from active_trajs_map after rupture or finish
+    /// here we move values from active_trajs_map after rupture or finish
     vector<BondTrajectory> bond_trajectories;
 
-    // TODO: documentation
-    explicit History(const SimulationState *s);
+    History() = default;
 
-    // TODO: documentation
-    void update();
+    /// update history using current data from simulation state
+    void update(const SimulationState* s);
 
-    // before calling this function simulation results are not complete
+    /// before calling this function simulation results are not complete
     void finish();
 
 private:
+    /// number of calls to update
     size_t hist_i = 0;
-    // bonded ligand indices from previous update
+    /// bonded ligand indices from previous update
     set<size_t> prev_blis;
-    // here we store ligands that are continuously bonded, key: ligand index
+    /// here we store ligands that are continuously bonded, key: ligand index
     unordered_map<size_t, BondTrajectory> active_trajs_map;
 
-    // TODO: documentation
-    void update_bond_trajectories();
+    /**
+     * Find which bonds are new, which ruptured, update positions etc.
+     */
+    void update_bond_trajectories(const SimulationState *s);
 };

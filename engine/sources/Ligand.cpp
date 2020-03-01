@@ -6,20 +6,17 @@
 
 // Public methods
 
-Ligand::Ligand(xy_t lig_xy, Settings::LigandType *lig_type_, Settings::ModelParameters *p_) {
+Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_type) {
     pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
     alpha_inc = r_alpha_pair.second;
-
-    p = p_;
-    lig_type = lig_type_;
 }
 
 bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
     if (bond_state != 0)
         return false;
 
-    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, rot), p->temp);
+    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, rot));
 
     double any_binding_rate = 0.0;
     for (double binding_rate : binding_rates)
@@ -37,7 +34,7 @@ bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &gener
 
 bool Ligand::prepare_rupture(double h, double rot, double dt, generator_t &generator) {
     AbstractBondType* bond_type = get_curr_bond_type();  // will abort if not bonded
-    double rupture_rate = bond_type->rupture_rate(bond_length(h, rot), p->temp);
+    double rupture_rate = bond_type->rupture_rate(bond_length(h, rot), lig_type->p->temp);
     double rupture_probability = 1.0 - exp(-rupture_rate * dt);
     return helpers::draw_from_uniform_dist(generator) < rupture_probability;
 }
@@ -67,7 +64,7 @@ forces_t Ligand::bond_forces(double h, double rot) {
     xy_t bond_vector = helpers::compute_bond_vector(surface_dist(h, rot), lig_x, bd_rec_x);
 
     double bond_len = bond_vector.length();
-    double f_common = (bond_type->sigma * (bond_len - bond_type->lambda_)) / bond_len;
+    double f_common = (bond_type->spring_const * (bond_len - bond_type->eq_bond_len)) / bond_len;
 
     double f_x = f_common * bond_vector.x;
     double f_y = f_common * bond_vector.y;
@@ -87,7 +84,7 @@ double Ligand::y_pos(double rot) const {
 }
 
 double Ligand::surface_dist(double h, double rot) {
-    double surf_dist = h + p->r_c + y_pos(rot);
+    double surf_dist = h + lig_type->p->r_cell + y_pos(rot);
     if (surf_dist < 0) abort();
     return surf_dist;
 }

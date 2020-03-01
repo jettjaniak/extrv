@@ -9,40 +9,40 @@
 #include "helpers.h"
 
 
-SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) : h(h_0), settings(settings_) {
+SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : h(h_0), p(p) {
     reseed(seed);
 
-    Settings::LigandType* lig_p;
+    Parameters::LigandType* lig_p;
     size_t n_of_lig;
-    for (auto& lig_type : settings->lig_types_and_nrs) {
+    for (auto& lig_type : p->lig_types_and_nrs) {
         lig_p = lig_type.first;
         n_of_lig = lig_type.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator);
+            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator);
             // TODO: do it wisely, use EPS_PROB
             if (std::abs(lig_xyz.z) < 0.1) {
                 xy_t lig_xy{lig_xyz};
-                ligands.emplace_back(lig_xy, lig_p, settings->p);
+                ligands.emplace_back(lig_xy, lig_p);
             }
         }
-        // TODO: sort ligands by r_cir
+        // TODO: sort ligands by alpha_inc
         // TODO @Kajetan: indicate which ligands have chance of bonding,
         //   by specifying range of indices (or iterators)
     }
 }
 
-void SimulationState::simulate_one_step(double dt, double shear) {
+void SimulationState::simulate_one_step(double dt, double shear_rate) {
 
     ///////////////////////////////////
     // Compute forces and velocities //
     ///////////////////////////////////
 
-    forces_t f = forces::non_bond_forces(shear, h, settings->p);
+    forces_t f = forces::non_bond_forces(shear_rate, h, p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
         f += ligands[bd_i].bond_forces(h, rot);
 
-    velocities_t v = velocities::compute_velocities(h, f, settings->p);
+    velocities_t v = velocities::compute_velocities(h, f, p);
 
 
     //////////////////////////////
@@ -95,18 +95,18 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     }
 }
 
-void SimulationState::simulate(size_t n_steps, double dt, double shear) {
+void SimulationState::simulate(size_t n_steps, double dt, double shear_rate) {
     for (int i = 0; i < n_steps; ++i)
-        simulate_one_step(dt, shear);
+        simulate_one_step(dt, shear_rate);
 }
 
 History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
-    History hist(this);
-    hist.update();
+    History hist;
+    hist.update(this);
     for (int i = 0; i < n_steps; ++i) {
         simulate_one_step(dt, shear);
         if (i % save_every == 0)
-            hist.update();
+            hist.update(this);
     }
     hist.finish();
     return hist;

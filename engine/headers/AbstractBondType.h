@@ -3,41 +3,51 @@
 #include "types.h"
 
 struct AbstractBondType {
-    // optimal bond length in μm
-    double lambda_;
-    // spring constant in kg/s^2
-    double sigma;
+    /// equilibrium bond length in μm
+    double eq_bond_len;
+    /// spring constant in kg/s^2
+    double spring_const;
 
-    // multiplicative constant in binding rate in μm^2/s, it doesn't include receptor density
-    double k_f_0;
-    // density of bond receptors on the surface in 1/μm^2
+    /// multiplicative constant in binding rate in μm^2/s, it doesn't include receptor density
+    double binding_rate_0;
+    /// density of bond receptors on the surface in 1/μm^2
     double rec_dens;
 
-    // reactive compliance for slip bond in μm
-    double x1s;
-    // multiplicative constant in slip part of binding or rupture rate in 1/s
-    double k01s;
+    /// reactive compliance for binding rate and slip part of rupture rate in μm
+    double react_compl_slip;
+    /// multiplicative constant in slip part of rupture rate in 1/s
+    double rup_rate_0_slip;
 
     /**
-     * Bond parameters constructor with unit conversion.
+     * Abstract bond type constructor with unit conversion.
      *
-     * @param lambda_ equilibrium bond length in nm
-     * @param sigma spring constant in dyn / cm
-     * @param k_f_0 multiplicative constant in binding rate in μm^2/s
+     * @param eq_bond_len equilibrium bond length in nm
+     * @param spring_const spring constant in dyn / cm
+     * @param binding_rate_0 multiplicative constant in binding rate in μm^2/s, it doesn't include receptor density
      * @param rec_dens density of bond receptors on the surface in 1/μm^2
-     * @param x1s reactive compliance for slip bond in Å
-     * @param k01s multiplicative constant in slip part of binding and rupture rate in 1/s
-     * @param x1c reactive compliance for catch bond in Å
-     * @param k01c multiplicative constant in catch part of rupture rate in 1/s
+     * @param react_compl_slip reactive compliance for binding rate and slip part of rupture rate in Å
+     * @param rup_rate_0_slip multiplicative constant in slip part of rupture rate in 1/s
      */
-    AbstractBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s);
+    AbstractBondType(double eq_bond_len, double spring_const, double binding_rate_0, double rec_dens,
+            double react_compl_slip, double rup_rate_0_slip);
 
 
-    // TODO: documentation
+    /**
+     * Compute rate of binding of this type.
+     *
+     * @param surface_dist distance from surface in μm
+     * @param temp temperature in K
+     * @return binding rate in 1/s
+     */
     double binding_rate(double surface_dist, double temp);
 
-    // pure virtual
-    // TODO: documentation
+    /**
+     * Compute rate of rupture of bond of this type.
+     *
+     * @param bond_length bond length in μm
+     * @param temp temperature in K
+     * @return rupture rate in 1/s
+     */
     virtual double rupture_rate(double bond_length, double temp) = 0;
 
     /**
@@ -52,29 +62,49 @@ struct AbstractBondType {
 struct SlipBondType : AbstractBondType {
     double rupture_rate(double bond_length, double temp) override;
 
-    SlipBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s);
+    /**
+     * Slip bond type constructor with unit conversion.
+     * Inherited from AbstractBondType.
+     */
+    SlipBondType(double eq_bond_len, double spring_const, double binding_rate_0, double rec_dens,
+            double react_compl_slip, double rup_rate_0_slip);
 };
 
-struct CatchSlipBondType : AbstractBondType {
-    // reactive compliance for catch bond in μm
-    double x1c;
-    // multiplicative constant in catch part of rupture rate in 1/s
-    double k01c;
+struct AbstractCatchSlipBondType : AbstractBondType {
+    /// reactive compliance for catch bond in μm
+    double react_compl_catch;
+    /// multiplicative constant in catch part of rupture rate in 1/s
+    double rup_rate_0_catch;
 
-    CatchSlipBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s,
-            double x1c, double k01c);
+    /**
+     * Abstract catch-slip bond type constructor with unit conversion.
+     * All but last two parameters are passed to AbstractBondType constructor.
+     *
+     * @param react_compl_catch reactive compliance for catch part of rupture rate in Å
+     * @param rup_rate_0_catch multiplicative constant in catch part of rupture rate in 1/s
+     */
+    AbstractCatchSlipBondType(double eq_bond_len, double spring_const, double binding_rate_0, double rec_dens,
+            double react_compl_slip, double rup_rate_0_slip, double react_compl_catch, double rup_rate_0_catch);
 };
 
-struct CatchSlipPselBondType : CatchSlipBondType {
+struct CatchSlipPselBondType : AbstractCatchSlipBondType {
     double rupture_rate(double bond_length, double temp) override;
 
-    CatchSlipPselBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s,
-            double x1c, double k01c);
+    /**
+     * Catch-slip, P-selectin like bond type constructor with unit conversion.
+     * Inherited from AbstractCatchSlipBondType.
+     */
+    CatchSlipPselBondType(double eq_bond_len, double spring_const, double binding_rate_0, double rec_dens,
+            double react_compl_slip, double rup_rate_0_slip, double react_compl_catch, double rup_rate_0_catch);
 };
 
-struct CatchSlipIntegrinBondType : CatchSlipBondType {
+struct CatchSlipIntegrinBondType : AbstractCatchSlipBondType {
     double rupture_rate(double bond_length, double temp) override;
 
-    CatchSlipIntegrinBondType(double lambda_, double sigma, double k_f_0, double rec_dens, double x1s, double k01s,
-            double x1c, double k01c);
+    /**
+     * Catch-slip, integrin like bond type constructor with unit conversion.
+     * Inherited from AbstractCatchSlipBondType.
+     */
+    CatchSlipIntegrinBondType(double eq_bond_len, double spring_const, double binding_rate_0, double rec_dens,
+            double react_compl_slip, double rup_rate_0_slip, double react_compl_catch, double rup_rate_0_catch);
 };
