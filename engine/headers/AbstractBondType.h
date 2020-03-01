@@ -3,6 +3,8 @@
 #include "types.h"
 
 struct AbstractBondType {
+    // TODO: add name
+
     /// equilibrium bond length in μm
     double eq_bond_len;
     /// spring constant in kg/s^2

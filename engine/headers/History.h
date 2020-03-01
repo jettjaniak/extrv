@@ -18,6 +18,7 @@ public:
      * subsequent positions of bonded ligand.
      */
     struct BondTrajectory {
+        // TODO: add bond type
         size_t start_i;
         vector<xy_t> positions;
 
