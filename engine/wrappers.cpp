@@ -88,7 +88,7 @@ PYBIND11_MODULE(extrv_engine, m) {
     py::class_<Parameters> p(m, "Parameters");
 
     // LigandType
-
+    // TODO: no docstring in Python
     py::class_<Parameters::LigandType> lig_type(p, "LigandType");
 
     // passing a pointer is OK
