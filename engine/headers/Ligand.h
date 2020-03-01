@@ -1,7 +1,8 @@
 #pragma once
 
 #include "types.h"
-#include "Settings.h"
+#include "Parameters.h"
+#include "AbstractBondType.h"
 
 /**
  * Each ligand has xyz coordinates in the model.
@@ -11,34 +12,37 @@
  * alpha is an angle from the bottommost circle point to the ligand.
  */
 struct Ligand {
-    // radius of the circle
+    /// radius of the circle in μm
     double r_cir;
-    // alpha - rot, where alpha is the angle
-    // from the bottommost circle point to the ligand
-    // alpha_inc is in [-π, π]
+    /**
+     * alpha - rot, where alpha is the angle
+     * from the bottommost circle point to the ligand
+     * alpha_inc is in [-π, π]
+     */
     double alpha_inc;
-    // value 0 indicates no bonding, higher values indicate bonding to different receptors
+    /// value 0 indicates no bonding, higher values indicate bonding to different receptors
     int bond_state = 0;
-    // -1 indicates there is no prepared state
+    /// -1 indicates there is no prepared state
     int prepared_bond_state = -1;
-    // x coordinate of receptor currently bonded to the ligand,
-    // valid only when ligand is bonded
+
+    /**
+     * x coordinate of receptor currently bonded to the ligand,
+     * valid only when ligand is bonded
+     */
     double bd_rec_x = INFTY;
 
-    // ligand's parameters
-    LigandType* lig_type;
-    // model's parameters
-    ModelParameters* p;
+    /// type of ligand
+    Parameters::LigandType* lig_type;
 
     /**
      * Ligand constructor.
      *
      * @param lig_xy x coordinate of point on the sphere
      * @param lig_y y coordinate of point on the sphere
-     * @param lig_type_ ligand's parameters
+     * @param lig_type ligand's parameters
      * @param p_ model's parameters
      */
-    Ligand(xy_t lig_xy, LigandType *lig_type_, ModelParameters *p_);
+    Ligand(xy_t lig_xy, Parameters::LigandType *lig_type);
 
     /**
      * Computes x coordinate of ligand.
@@ -74,7 +78,7 @@ struct Ligand {
     /**
      * Returns parameters of current bond.
      */
-    BondParameters* get_curr_bond_p();
+    AbstractBondType* get_curr_bond_type();
 
     /**
      * Computes bonding probability and draws if bonding will happen.
@@ -118,7 +122,14 @@ struct Ligand {
      */
     void rupture();
 
-    // TODO: documentation
+    /**
+     * Change position of receptor bonded to this ligand.
+     *
+     * In our frame of reference cell center is at (0, 0),
+     * so when we move in x direction by x_dist we have to move receptor by - x_dist.
+     *
+     * @param x_dist how much cell moved in x direction in μm
+     */
     void move_bd_rec(double x_dist);
 
     /**

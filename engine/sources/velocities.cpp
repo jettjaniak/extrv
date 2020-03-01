@@ -1,23 +1,23 @@
-#include "../headers/velocities.h"
+#include "velocities.h"
 
-#include "../headers/interpolated.h"
+#include "interpolated.h"
 
 
 namespace velocities {
 
-    velocities_t compute_velocities(double h, const forces_t &f, const ModelParameters *p) {
-        double h_over_r = h / p->r_c;
+    velocities_t compute_velocities(double h, const forces_t &f, const Parameters *p) {
+        double h_over_r = h / p->r_cell;
         double t_t_val = interpolated::t_t(h_over_r);
         double f_r_val = interpolated::f_r(h_over_r);
         double f_t_val = interpolated::f_t(h_over_r);
         double t_r_val = interpolated::t_r(h_over_r);
-        double d_24pi_mu_r2 = d_fun(t_t_val, f_r_val, f_t_val, t_r_val) * 24 * PI * p->mu * pow(p->r_c, 2);
-        double d_24pi_mu_r3 = d_24pi_mu_r2 * p->r_c;
+        double d_24pi_mu_r2 = d_fun(t_t_val, f_r_val, f_t_val, t_r_val) * 24 * PI * p->visc * pow(p->r_cell, 2);
+        double d_24pi_mu_r3 = d_24pi_mu_r2 * p->r_cell;
         double lambda = lambda_fun(h_over_r);
 
-        double v_x = (4 * p->r_c * f.f_x * t_r_val + 3 * f_r_val * f.t_z) / d_24pi_mu_r2;
-        double v_y = f.f_y / (6 * PI * lambda * p->mu * p->r_c);
-        double o_z = (4 * p->r_c * f.f_x * t_t_val + 3 * f_t_val * f.t_z) / d_24pi_mu_r3;
+        double v_x = (4 * p->r_cell * f.f_x * t_r_val + 3 * f_r_val * f.t_z) / d_24pi_mu_r2;
+        double v_y = f.f_y / (6 * PI * lambda * p->visc * p->r_cell);
+        double o_z = (4 * p->r_cell * f.f_x * t_t_val + 3 * f_t_val * f.t_z) / d_24pi_mu_r3;
 
         return {v_x, v_y, o_z};
     }

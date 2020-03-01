@@ -1,38 +1,18 @@
-#include "headers/Settings.h"
+#include "Parameters.h"
 #include "headers/SimulationState.h"
+#include "AbstractBondType.h"
 
 #include <iostream>
 
 int main() {
-    auto p = new ModelParameters(4.5, 0.01, 310, 0.05, 1e3, 5);
-    auto settings = new Settings(p);
+    auto p = new Parameters(4.5, 0.01, 310, 0.05, 1e3, 5);
 
-    auto psgl_lig_t = new LigandType();
-    auto psgl2_lig_t = new LigandType();
-    auto esel_bond_p = new BondParameters(ESEL_BOND, 77, 100, 0.06, 3600, 0.18, 2.6);
-    auto esel2_bond_p = new BondParameters(ESEL_BOND, 77, 100, 0.06, 3600, 0.18, 2.6);
-    psgl_lig_t->add_bond_p(esel_bond_p);
-    psgl2_lig_t->add_bond_p(esel2_bond_p);
+    auto psgl_lig_t = new Parameters::LigandType();
+    auto esel_bond_t = new SlipBondType(77, 100, 0.06, 3600, 0.18, 2.6);
+    psgl_lig_t->add_bond_type(esel_bond_t);
 
-    settings->add_lig_type(psgl_lig_t, 20000);
-    settings->add_lig_type(psgl2_lig_t, 20000);
+    p->add_ligands(psgl_lig_t, 10000);
 
-    auto s = SimulationState(0.0745478, settings, 1234567);
-    size_t n_steps = 1e5;
-
-    auto hist = History(&s);
-    for (size_t i = 0; i < n_steps; ++i) {
-        s.simulate_one_step(1e-6, 0);
-        if (i % (n_steps/100) == 0) {
-            hist.update();
-            std::cout << "h: " << s.h << std::endl;
-            std::cout << "rot: " << s.rot * (180 / PI) << std::endl;
-            std::cout << std::endl;
-        }
-    }
-    hist.finish();
-    std::cout << "bonds trajectories:" << std::endl;
-    for (auto &final_traj : hist.final_trajs_vec) {
-        std::cout << final_traj.start_i << ", " << final_traj.n_of_pos << std::endl;
-    }
+    auto s = SimulationState(0.0745478 /*h_0*/, p, 1234567 /*seed*/);
+    s.simulate_with_history(size_t(1e4) /*n_steps*/, 1e-5 /*dt*/, 0 /*shear*/);
 }

@@ -51,15 +51,9 @@ struct xy_t {
     double x;
     double y;
 
-    xy_t(double x_, double y_) {
-        x = x_;
-        y = y_;
-    };
+    xy_t(double x, double y) : x(x), y(y) {}
 
-    explicit xy_t(const xyz_t& xyz) {
-        x = xyz.x;
-        y = xyz.y;
-    }
+    explicit xy_t(const xyz_t& xyz) : x(xyz.x), y(xyz.y) {}
 
     xy_t operator*(double scale) {
         return {x * scale, y * scale};
@@ -73,4 +67,3 @@ struct xy_t {
 
 
 typedef std::default_random_engine generator_t;
-enum BondType {PSEL_BOND, ESEL_BOND, INTEGRIN_BOND};

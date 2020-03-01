@@ -1,27 +1,77 @@
-from wrappers.engine import *
-import matplotlib.pyplot as plt
+from extrv_engine import Parameters, SimulationState, SlipBondType, CatchSlipPselBondType, CatchSlipIntegrinBondType
 
 
 if __name__ == '__main__':
-    p = ModelParameters(4.5, 0.01, 310, 0.05, 1e3, 5)
-    settings = Settings(p)
-    psgl_lig_p = LigandType()
-    esel_bond_p = BondParameters("esel", 77, 100, 0.06, 3600, 0.18, 2.6)
-    psgl_lig_p.add_bond_p(esel_bond_p)
-    settings.add_lig_type(psgl_lig_p, 20000)
+    p = Parameters(
+        r_c=4.5,
+        visc=0.01,
+        temp=310,
+        dens_diff=0.05,
+        f_rep_0=1e3,
+        tau=5
+    )
 
-    # add seed parameter (positive integer) for reproducibility
-    ss = SimulationState(h_0=0.075, settings=settings)
-    sim_res = ss.simulate_with_history(n_steps=1e6, dt=1e-6, shear=0, save_every=100)
+    # For this parameters simulation makes sense.
+    psgl = Parameters.LigandType()
+    psgl_plus_esel_bond = SlipBondType(
+        eq_bond_len=77,
+        spring_const=100,
+        binding_rate_0=0.06,
+        rec_dens=3600,
+        react_compl_slip=0.18,
+        rup_rate_0_slip=2.6
+    )
+    psgl.add_bond_type(psgl_plus_esel_bond)
 
-    plt.subplot(211)
-    plt.plot(sim_res.rot)
-    plt.title("rotation")
-    plt.subplot(212)
-    plt.plot(sim_res.h)
-    plt.title("height")
+    # Find good parameters before you use it!
+    """
+    psgl_plus_psel_bond = CatchSlipPselBondType(
+        eq_bond_len=77,
+        spring_const=100,
+        binding_rate_0=0.06,
+        rec_dens=3600,
+        react_compl_slip=0.18,
+        rup_rate_0_slip=2.6,
+        react_compl_catch = 0.18,
+        rup_rate_0_catch = 2.6
+    )
+    """
+    p.add_ligands(lig_type=psgl, n_of_lig=10000)
 
-    # TODO: trajectory plot with individual bonds
+    # Find good parameters before you use it!
+    """
+    active_lfa = Parameters.LigandType()
+    active_lfa_plus_icam_bond = CatchSlipIntegrinBondType(
+        eq_bond_len=77,
+        spring_const=100,
+        binding_rate_0=0.06,
+        rec_dens=3600,
+        react_compl_slip=0.18,
+        rup_rate_0_slip=2.6,
+        react_compl_catch=0.18,
+        rup_rate_0_catch=2.6
+    )
+    active_lfa.add_bond_type(active_lfa_plus_icam_bond)
+    p.add_ligands(lig_type=active_lfa, n_of_lig=10000)
+    """
 
-    plt.tight_layout()
-    plt.show()
+    # Find good parameters before you use it!
+    """
+    inactive_lfa = Parameters.LigandType()
+    inactive_lfa_plus_icam_bond = CatchSlipIntegrinBondType(
+        eq_bond_len=77,
+        spring_const=100,
+        binding_rate_0=0.06,
+        rec_dens=3600,
+        react_compl_slip=0.18,
+        rup_rate_0_slip=2.6,
+        react_compl_catch=0.18,
+        rup_rate_0_catch=2.6
+    )
+    inactive_lfa.add_bond_type(inactive_lfa_plus_icam_bond)
+    p.add_ligands(lig_type=inactive_lfa, n_of_lig=10000)
+    """
+
+    s = SimulationState(h_0=0.075, p=p, seed=12345)
+    # You will need more steps.
+    sim_hist = s.simulate_with_history(n_steps=int(1e5), dt=1e-6, shear=0.0)

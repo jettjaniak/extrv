@@ -4,3 +4,6 @@ wrappers/build/
 wrappers/*.cpp
 *.pyd
 *.pyc
+*.ilk
+
+*.pdb

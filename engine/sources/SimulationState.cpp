@@ -1,27 +1,48 @@
-#include "../headers/SimulationState.h"
+#include "SimulationState.h"
 
 #include <algorithm>
 #include <utility>
 #include <iostream>
 
-// TODO: add includes to CMake and Cython, so we can just type "[name].h"
-#include "../headers/forces.h"
-#include "../headers/velocities.h"
-#include "../headers/helpers.h"
+#include "forces.h"
+#include "velocities.h"
+#include "helpers.h"
 
 
-void SimulationState::simulate_one_step(double dt, double shear) {
+SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : h(h_0), p(p) {
+    reseed(seed);
+
+    Parameters::LigandType* lig_p;
+    size_t n_of_lig;
+    for (auto& lig_type : p->lig_types_and_nrs) {
+        lig_p = lig_type.first;
+        n_of_lig = lig_type.second;
+        for (size_t i = 0; i < n_of_lig; i++) {
+            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator);
+            // TODO: do it wisely, use EPS_PROB
+            if (std::abs(lig_xyz.z) < 0.1) {
+                xy_t lig_xy{lig_xyz};
+                ligands.emplace_back(lig_xy, lig_p);
+            }
+        }
+        // TODO: sort ligands by alpha_inc
+        // TODO @Kajetan: indicate which ligands have chance of bonding,
+        //   by specifying range of indices (or iterators)
+    }
+}
+
+void SimulationState::simulate_one_step(double dt, double shear_rate) {
 
     ///////////////////////////////////
     // Compute forces and velocities //
     ///////////////////////////////////
 
-    forces_t f = forces::non_bond_forces(shear, h, settings->p);
+    forces_t f = forces::non_bond_forces(shear_rate, h, p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
         f += ligands[bd_i].bond_forces(h, rot);
 
-    velocities_t v = velocities::compute_velocities(h, f, settings->p);
+    velocities_t v = velocities::compute_velocities(h, f, p);
 
 
     //////////////////////////////
@@ -74,89 +95,23 @@ void SimulationState::simulate_one_step(double dt, double shear) {
     }
 }
 
-SimulationState::SimulationState(double h_0, Settings* settings_, unsigned int seed) {
-    h = h_0;
-    settings = settings_;
+void SimulationState::simulate(size_t n_steps, double dt, double shear_rate) {
+    for (int i = 0; i < n_steps; ++i)
+        simulate_one_step(dt, shear_rate);
+}
 
-    reseed(seed);
-
-    LigandType* lig_p;
-    size_t n_of_lig;
-    for (auto& lig_type : settings->lig_types_and_nrs) {
-        lig_p = lig_type.first;
-        n_of_lig = lig_type.second;
-        for (size_t i = 0; i < n_of_lig; i++) {
-            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(settings->p->r_c, generator);
-            // TODO: do it wisely, use EPS_PROB
-            if (std::abs(lig_xyz.z) < 0.1) {
-                xy_t lig_xy{lig_xyz};
-                ligands.emplace_back(lig_xy, lig_p, settings->p);
-            }
-        }
-        // TODO: sort ligands by r_cir
-        // TODO @Kajetan: indicate which ligands have chance of bonding,
-        //   by specifying range of indices (or iterators)
+History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
+    History hist;
+    hist.update(this);
+    for (int i = 0; i < n_steps; ++i) {
+        simulate_one_step(dt, shear);
+        if (i % save_every == 0)
+            hist.update(this);
     }
+    hist.finish();
+    return hist;
 }
 
-
-History::History(const SimulationState *s_) {
-    s = s_;
+void SimulationState::reseed(unsigned int seed) {
+    generator = generator_t{seed};
 }
-
-void History::update() {
-    const set<size_t> & curr_blis = s->bd_lig_ind;
-
-    vector<size_t>::iterator it;
-
-    // bon_lis = curr_blis \ prev_blis
-    bon_lis.resize(curr_blis.size());
-    it = std::set_difference(
-            curr_blis.cbegin(), curr_blis.cend(),
-            prev_blis.cbegin(), prev_blis.cend(),
-            bon_lis.begin()
-    );
-    bon_lis.resize(it - bon_lis.begin());
-
-    // rup_lis = prev_blis \ curr_blis
-    rup_lis.resize(prev_blis.size());
-    it = std::set_difference(
-            prev_blis.cbegin(), prev_blis.cend(),
-            curr_blis.cbegin(), curr_blis.cend(),
-            rup_lis.begin()
-    );
-    rup_lis.resize(it - rup_lis.begin());
-
-    for (size_t bli : bon_lis)
-        active_trajs_map.emplace(bli, active_traj_t(hist_i));
-
-    for (size_t rli : rup_lis) {
-        auto active_traj_map_it = active_trajs_map.find(rli);
-        // not found, shouldn't happen
-        if (active_traj_map_it == active_trajs_map.end())
-            abort();
-        auto &active_traj = (*active_traj_map_it).second;
-        final_trajs_vec.emplace_back(active_traj);
-        active_trajs_map.erase(active_traj_map_it);
-    }
-
-    for (size_t cli : curr_blis) {
-        auto active_traj_it = active_trajs_map.find(cli);
-        // not found, shouldn't happen
-        if (active_traj_it == active_trajs_map.end())
-            abort();
-        vector<xy_t> &active_traj_pos = (*active_traj_it).second.positions;
-        const Ligand &ligand = s->ligands[cli];
-        active_traj_pos.emplace_back(ligand.x_pos(s->rot), ligand.y_pos(s->rot));
-    }
-
-    prev_blis = curr_blis;
-    hist_i++;
-}
-
-void History::finish() {
-    for (auto &value_p : active_trajs_map)
-        final_trajs_vec.emplace_back(value_p.second);
-    active_trajs_map.clear();
-}
-

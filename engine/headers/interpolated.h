@@ -28,6 +28,7 @@ namespace interpolated {
 
     double t_t(double h_over_r);
 
+    // TODO: use get function with static variables
     // ignore static storage initialization warnings, begin
     #pragma clang diagnostic push
     #pragma ide diagnostic ignored "cert-err58-cpp"
@@ -38,6 +39,7 @@ namespace interpolated {
     const vector<double> F_R_DATA_Y {5.1326e-01, 4.5582e-01, 1.9403e-01, 9.8291e-02,
                                      1.9532e-02, 3.5231e-03, 5.6214e-04, 1.1699e-05};
 
+    // TODO: cast overloaded function
     const vector<double> LOG_F_R_DATA_Y = helpers::transform_vector(F_R_DATA_Y, helpers::log_dbl);
 
     const vector<double> F_S_DATA_X {0.0000e+00, 3.2020e-03, 5.0040e-03, 4.5300e-02, 1.2760e-01,
@@ -46,6 +48,7 @@ namespace interpolated {
     const vector<double> F_S_DATA_Y {1.7005e+00, 1.6982e+00, 1.6969e+00, 1.6682e+00, 1.6160e+00,
                                      1.4391e+00, 1.2780e+00, 1.1671e+00, 1.0587e+00};
 
+    // TODO: use lambda
     const vector<double> LOG_F_S_DATA_Y_MINUS_1 = helpers::transform_vector(F_S_DATA_Y, helpers::log_x_minus_one);
 
 

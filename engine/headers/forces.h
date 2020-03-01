@@ -1,7 +1,7 @@
 #pragma once
 
 #include "types.h"
-#include "Settings.h"
+#include "Parameters.h"
 
 
 namespace forces {
@@ -12,7 +12,7 @@ namespace forces {
      * @param h distance between sphere and surface
      * @param p model's parameters
      */
-    forces_t non_bond_forces(double shear_rate, double h, const ModelParameters *p);
+    forces_t non_bond_forces(double shear_rate, double h, const Parameters *p);
 
     /**
      * Computes forces that shear flow exerts on the sphere.
@@ -21,7 +21,7 @@ namespace forces {
      * @param h distance between sphere and surface
      * @param p model's parameters
      */
-    forces_t shear_forces(double shear_rate, double h, const ModelParameters *p);
+    forces_t shear_forces(double shear_rate, double h, const Parameters *p);
 
     /**
      * Computes repulsive force between sphere and surface.
@@ -29,7 +29,7 @@ namespace forces {
      * @param h distance between sphere and surface
      * @param p model's parameters
      */
-    double repulsive_force(double h, const ModelParameters *p);
+    double repulsive_force(double h, const Parameters *p);
 
     /**
      * Compute gravitational force acting in y direction, with correct sign.
@@ -37,5 +37,5 @@ namespace forces {
      *
      * @param p model's parameters
      */
-    double grav_force(const ModelParameters *p);
+    double grav_force(const Parameters *p);
 }
