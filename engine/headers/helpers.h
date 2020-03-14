@@ -74,5 +74,16 @@ namespace helpers {
     /**
      * Returns vector with elements transformed by f.
      */
-    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> f);
+    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> & f);
+
+    /**
+     * Find root of continuous function
+     *
+     * @param a left side of interval
+     * @param b right side of interval
+     * @param f function for which we want to find a root
+     * @param tol tolerance
+     * @return argument x of function for which |f(x)| < tol
+     */
+    double bisection(double a, double b, const std::function<double(double)> &f, double tol = 1e-6);
 }

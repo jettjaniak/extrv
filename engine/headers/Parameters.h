@@ -16,6 +16,8 @@ struct Parameters {
         Parameters* p = nullptr;
         /// types of bonds that a ligand of this type can form
         vector<AbstractBondType*> bonds_types;
+        /// TODO: documentation
+        double max_surf_dist;
 
         /**
          * Add type of bond that a ligand of this type can form.
@@ -29,6 +31,13 @@ struct Parameters {
          * @return vector of binding rates for each bond type, in the same order they were added
          */
         vector<double> binding_rates(double surface_dist);
+
+        double max_binding_rate(double surf_dist);
+
+        /**
+         * Return maximal surface distance for which any binding rate is higher than MIN_RATE.
+         */
+        double compute_max_surf_dist();
     };
 
     /// cell (sphere) radius in μm
@@ -51,6 +60,9 @@ struct Parameters {
 
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
+
+    // TODO: documentation
+    double max_surf_dist = 0.0;
 
     /**
      * @param r_cell cell (sphere) radius in μm

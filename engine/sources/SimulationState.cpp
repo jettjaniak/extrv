@@ -12,23 +12,28 @@
 SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : h(h_0), p(p) {
     reseed(seed);
 
-    Parameters::LigandType* lig_p;
+    Parameters::LigandType* lig_type;
     size_t n_of_lig;
-    for (auto& lig_type : p->lig_types_and_nrs) {
-        lig_p = lig_type.first;
-        n_of_lig = lig_type.second;
+    for (auto& lig_type_and_nr : p->lig_types_and_nrs) {
+        lig_type = lig_type_and_nr.first;
+        n_of_lig = lig_type_and_nr.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-            xyz_t lig_xyz = helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator);
-            // TODO: do it wisely, use EPS_PROB
-            if (std::abs(lig_xyz.z) < 0.1) {
-                xy_t lig_xy{lig_xyz};
-                ligands.emplace_back(lig_xy, lig_p);
-            }
+            xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
+            Ligand new_ligand {lig_xy, lig_type};
+            // If ligand will be always far from surface it will never bind, so we ignore it.
+            double min_surf_dist = p->r_cell - new_ligand.r_cir;
+            if (min_surf_dist < lig_type->max_surf_dist)
+                ligands.push_back(new_ligand);
         }
-        // TODO: sort ligands by rot_inc
-        // TODO @Kajetan: indicate which ligands have chance of bonding,
-        //   by specifying range of indices (or iterators)
     }
+
+    std::sort(ligands.begin(), ligands.end(),
+         [](const Ligand & a, const Ligand & b) -> bool
+         {
+             return a.rot_inc < b.rot_inc;
+         });
+
+    // TODO: find slice of ligands that have chance of binding for h = 0
 }
 
 void SimulationState::simulate_one_step(double dt, double shear_rate) {

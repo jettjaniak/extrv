@@ -82,11 +82,30 @@ namespace helpers {
         return log(- x + 1);
     }
 
-    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> f)
+    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> & f)
     {
         vector<double> ret;
         std::transform(std::begin(c), std::end(c), std::inserter(ret, std::end(ret)), f);
         return ret;
+    }
+
+    double bisection(double a, double b, const std::function<double(double)> &f, double tol) {
+        double f_a = f(a);
+        double f_b = f(b);
+        if (f_a * f_b > 0 || a > b)
+            abort();
+
+        while (std::abs(f_b) > tol) {
+            double new_point = a + (b - a) / 2;
+            if (f(new_point) * f_b > 0) {
+                b = new_point;
+                f_b = f(b);
+            }
+            else
+                a = new_point;
+        }
+
+        return b;
     }
 
 }
