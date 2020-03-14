@@ -9,7 +9,7 @@
 Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_type) {
     pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
-    alpha_inc = r_alpha_pair.second;
+    rot_inc = r_alpha_pair.second;
 }
 
 bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
@@ -76,11 +76,11 @@ forces_t Ligand::bond_forces(double h, double rot) {
 // Private methods
 
 double Ligand::x_pos(double rot) const {
-    return r_cir * sin(rot + alpha_inc);
+    return r_cir * sin(rot + rot_inc);
 }
 
 double Ligand::y_pos(double rot) const {
-    return - r_cir * cos(rot + alpha_inc);
+    return - r_cir * cos(rot + rot_inc);
 }
 
 double Ligand::surface_dist(double h, double rot) {

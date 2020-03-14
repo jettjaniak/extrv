@@ -25,7 +25,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
                 ligands.emplace_back(lig_xy, lig_p);
             }
         }
-        // TODO: sort ligands by alpha_inc
+        // TODO: sort ligands by rot_inc
         // TODO @Kajetan: indicate which ligands have chance of bonding,
         //   by specifying range of indices (or iterators)
     }

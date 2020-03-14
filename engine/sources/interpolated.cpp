@@ -1,5 +1,7 @@
 #include "interpolated.h"
 
+#include "helpers.h"
+
 
 namespace interpolated {
     double f_r(double h_over_r)

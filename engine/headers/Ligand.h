@@ -17,9 +17,9 @@ struct Ligand {
     /**
      * alpha - rot, where alpha is the angle
      * from the bottommost circle point to the ligand
-     * alpha_inc is in [-π, π]
+     * rot_inc is in [-π, π]
      */
-    double alpha_inc;
+    double rot_inc;
     /// value 0 indicates no bonding, higher values indicate bonding to different receptors
     int bond_state = 0;
     /// -1 indicates there is no prepared state

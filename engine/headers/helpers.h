@@ -38,14 +38,6 @@ namespace helpers {
     double draw_from_uniform_dist(generator_t &generator);
 
     /**
-     * Draw from Normal(0, 1) distribution.
-     *
-     * @param generator random number generator
-     * @return real number
-     */
-    double draw_from_normal_dist(generator_t &generator);
-
-    /**
      * Draw from Uniform(S^2(0, radius)) distribution.
      *
      * @param generator random number generator

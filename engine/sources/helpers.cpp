@@ -27,25 +27,17 @@ namespace helpers {
         return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
     }
 
-    // TODO: use it as static variable inside function
-    std::uniform_real_distribution<double> uniform_dist {};
-
     double draw_from_uniform_dist(generator_t &generator) {
+        static std::uniform_real_distribution<double> uniform_dist {};
         return uniform_dist(generator);
     }
 
-    // TODO: use it as static variable inside function
-    std::normal_distribution<double> normal_dist {};
-
-    double draw_from_normal_dist(generator_t &generator) {
-        return normal_dist(generator);
-    }
-
     xyz_t draw_from_uniform_dist_on_sphere(double radius, generator_t &generator) {
+        static std::normal_distribution<double> normal_dist {};
         xyz_t ret {
-            draw_from_normal_dist(generator),
-            draw_from_normal_dist(generator),
-            draw_from_normal_dist(generator)
+            normal_dist(generator),
+            normal_dist(generator),
+            normal_dist(generator)
         };
 
         return ret * (radius / ret.length());
