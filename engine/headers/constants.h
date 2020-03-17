@@ -10,4 +10,4 @@ constexpr double K_B = 1.38064852e-11;
 constexpr double G = 9806650.;
 constexpr double INFTY = std::numeric_limits<double>::infinity();
 constexpr int LAMBDA_SERIES_MAX_N = 50;
-constexpr double MIN_RATE = 1e-5;
+constexpr double MIN_RATE = 1e-10;

@@ -15,14 +15,17 @@ vector<double> Parameters::LigandType::binding_rates(double surface_dist) {
 
 void Parameters::LigandType::add_bond_type(AbstractBondType *bond_type) {
     bonds_types.push_back(bond_type);
-    max_surf_dist = compute_max_surf_dist();
 }
 
-double Parameters::LigandType::compute_max_surf_dist() {
-    return helpers::bisection(1e-6, 1.0,
+void Parameters::LigandType::update_max_surf_dist() {
+    double max_sd_for_bond_type;
+    for (const auto &bond_type : bonds_types) {
+        max_sd_for_bond_type = helpers::bisection(bond_type->eq_bond_len, 1.0,
             [&](double sd) -> double {
-                return max_binding_rate(sd) - MIN_RATE;
+                return bond_type->binding_rate(sd, p->temp) - MIN_RATE;
             });
+        max_surf_dist = std::max(max_surf_dist, max_sd_for_bond_type);
+    }
 }
 
 double Parameters::LigandType::max_binding_rate(double surf_dist) {
@@ -43,6 +46,7 @@ Parameters::Parameters(double r_cell, double visc, double temp, double dens_diff
 
 void Parameters::add_ligands(LigandType *lig_type, size_t n_of_lig) {
     lig_type->p = this;
+    lig_type->update_max_surf_dist();
     lig_types_and_nrs.emplace_back(lig_type, n_of_lig);
     max_surf_dist = std::max(max_surf_dist, lig_type->max_surf_dist);
 }

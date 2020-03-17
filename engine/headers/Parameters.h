@@ -16,7 +16,7 @@ struct Parameters {
         Parameters* p = nullptr;
         /// types of bonds that a ligand of this type can form
         vector<AbstractBondType*> bonds_types;
-        /// TODO: documentation
+        /// maximal distance from surface s.t. rate of binding is >= MIN_RATE
         double max_surf_dist;
 
         /**
@@ -37,7 +37,7 @@ struct Parameters {
         /**
          * Return maximal surface distance for which any binding rate is higher than MIN_RATE.
          */
-        double compute_max_surf_dist();
+        void update_max_surf_dist();
     };
 
     /// cell (sphere) radius in μm

@@ -74,7 +74,7 @@ namespace helpers {
     /**
      * Returns vector with elements transformed by f.
      */
-    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> & f);
+    vector<double> transform_vector(const vector<double> &c, const std::function<double(double)> &f);
 
     /**
      * Find root of continuous function

@@ -25,14 +25,14 @@ AbstractBondType::AbstractBondType(
 
 
 double AbstractBondType::binding_rate(double surface_dist, double temp) {
-    double deviation = abs(surface_dist - eq_bond_len);
+    double deviation = std::abs(surface_dist - eq_bond_len);
     double rate_0 = rec_dens * binding_rate_0;
     // Here we assume that binding is subject to reactive compliance of slip part of bond.
     return helpers::bell_binding_rate(deviation, rate_0, spring_const, react_compl_slip, temp);
 }
 
 double AbstractBondType::bond_force(double bond_length) {
-    return spring_const * abs(bond_length - eq_bond_len);
+    return spring_const * std::abs(bond_length - eq_bond_len);
 }
 
 

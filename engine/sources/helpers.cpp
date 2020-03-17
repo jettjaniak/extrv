@@ -82,7 +82,7 @@ namespace helpers {
         return log(- x + 1);
     }
 
-    vector<double> transform_vector(const vector<double> &c, std::function<double(double)> & f)
+    vector<double> transform_vector(const vector<double> &c, const std::function<double(double)> &f)
     {
         vector<double> ret;
         std::transform(std::begin(c), std::end(c), std::inserter(ret, std::end(ret)), f);

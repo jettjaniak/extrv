@@ -28,15 +28,17 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
     }
 
     std::sort(ligands.begin(), ligands.end(),
-         [](const Ligand & a, const Ligand & b) -> bool
-         {
-             return a.rot_inc < b.rot_inc;
+         [](const Ligand & a, const Ligand & b) -> bool {
+            // TODO: make rot_inc from 0 to 2 pi
+            return std::fmod(a.rot_inc + 2 * PI, 2 * PI) < std::fmod(b.rot_inc + 2 * PI, 2 * PI);
          });
 
-    // TODO: find slice of ligands that have chance of binding for h = 0
 }
 
 void SimulationState::simulate_one_step(double dt, double shear_rate) {
+
+    update_one_side_of_range(right_lig_ind, 1);
+    update_one_side_of_range(left_lig_ind, -1);
 
     ///////////////////////////////////
     // Compute forces and velocities //
@@ -57,7 +59,7 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     vector<size_t> new_bondings_lig_ind;
     // We try with all ligands, including those already bonded!
     // But `prepare_binding` will check it.
-    for (size_t i = 0; i < ligands.size(); i++)
+    for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
         if (ligands[i].prepare_binding(h, rot, dt, generator))
             new_bondings_lig_ind.push_back(i);
 
@@ -120,3 +122,30 @@ History SimulationState::simulate_with_history(size_t n_steps, double dt, double
 void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
+
+bool SimulationState::surf_dist_small(size_t lig_ind) {
+    double rhs = 1 - p->max_surf_dist / p->r_cell;
+    return cos(rot + ligands[lig_ind].rot_inc) > rhs;
+}
+
+void SimulationState::update_one_side_of_range(size_t & curr_ind, int step) {
+    size_t next_ind = (ligands.size() + curr_ind + step) % ligands.size();
+    bool curr_ok = surf_dist_small(curr_ind);
+    bool next_ok = surf_dist_small(next_ind);
+
+    // As long as current and next ligands are close to surface we can widen the range.
+    while (curr_ok && next_ok) {
+        curr_ind = next_ind;
+        next_ind = (ligands.size() + curr_ind + step) % ligands.size();
+        curr_ok = next_ok;
+        next_ok = surf_dist_small(next_ind);
+    }
+
+    // If current ligand is not close to surface we should shrink the range.
+    while (!curr_ok ) {
+        curr_ind = (ligands.size() + curr_ind - step) % ligands.size();
+        curr_ok = surf_dist_small(curr_ind);
+    }
+}
+
+
