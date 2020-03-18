@@ -53,7 +53,7 @@ struct SimulationState {
      * @param dt time step in seconds
      * @param shear_rate fluid shear rate in 1/s
      */
-    void simulate(size_t n_steps, double dt, double shear_rate);
+    void simulate(size_t n_steps, double dt, double shear_rate, bool stop_if_no_bonds = false);
 
     /**
      * Do n_steps of simulation and return history updated every save_every steps.
@@ -64,7 +64,8 @@ struct SimulationState {
      * @param save_every number of steps between history updates
      * @return simulation history
      */
-    History simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every = 1000);
+    History simulate_with_history(size_t n_steps, double dt, double shear, bool stop_if_no_bonds = false,
+            size_t save_every = 1000);
 
     /// reseed random number generator
     void reseed(unsigned int seed);

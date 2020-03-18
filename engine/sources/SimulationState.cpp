@@ -22,7 +22,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
             Ligand new_ligand {lig_xy, lig_type};
             // If ligand will be always far from surface it will never bind, so we ignore it.
             double min_surf_dist = p->r_cell - new_ligand.r_cir;
-            if (min_surf_dist < lig_type->max_surf_dist)
+            if (min_surf_dist < lig_type->max_surf_dist && std::abs(new_ligand.rot_inc) < 0.1)
                 ligands.push_back(new_ligand);
         }
     }
@@ -37,8 +37,8 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
 
 void SimulationState::simulate_one_step(double dt, double shear_rate) {
 
-    update_one_side_of_range(right_lig_ind, 1);
-    update_one_side_of_range(left_lig_ind, -1);
+//    update_one_side_of_range(right_lig_ind, 1);
+//    update_one_side_of_range(left_lig_ind, -1);
 
     ///////////////////////////////////
     // Compute forces and velocities //
@@ -59,7 +59,8 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     vector<size_t> new_bondings_lig_ind;
     // We try with all ligands, including those already bonded!
     // But `prepare_binding` will check it.
-    for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
+    for (size_t i = 0; i < ligands.size(); i++)
+//    for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
         if (ligands[i].prepare_binding(h, rot, dt, generator))
             new_bondings_lig_ind.push_back(i);
 
@@ -102,18 +103,24 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     }
 }
 
-void SimulationState::simulate(size_t n_steps, double dt, double shear_rate) {
-    for (int i = 0; i < n_steps; ++i)
+void SimulationState::simulate(size_t n_steps, double dt, double shear_rate, bool stop_if_no_bonds) {
+    for (int i = 0; i < n_steps; ++i) {
         simulate_one_step(dt, shear_rate);
+        if (stop_if_no_bonds && bd_lig_ind.empty())
+            break;
+    }
 }
 
-History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
+History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, bool stop_if_no_bonds,
+                                               size_t save_every) {
     History hist;
     hist.update(this);
     for (int i = 0; i < n_steps; ++i) {
         simulate_one_step(dt, shear);
         if (i % save_every == 0)
             hist.update(this);
+        if (stop_if_no_bonds && bd_lig_ind.empty())
+            break;
     }
     hist.finish();
     return hist;

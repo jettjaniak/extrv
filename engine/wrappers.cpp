@@ -142,9 +142,10 @@ PYBIND11_MODULE(extrv_engine, m) {
     );
 
     s.def("simulate_one_step", &SimulationState::simulate_one_step, "dt"_a, "shear"_a)
-     .def("simulate", &SimulationState::simulate, "n_steps"_a, "dt"_a, "shear"_a)
+     .def("simulate", &SimulationState::simulate,
+             "n_steps"_a, "dt"_a, "shear"_a,"stop_if_no_bonds"_a=false)
      .def("simulate_with_history", &SimulationState::simulate_with_history,
-          "n_steps"_a, "dt"_a, "shear"_a, "save_every"_a=1000);
+          "n_steps"_a, "dt"_a, "shear"_a, "stop_if_no_bonds"_a=false, "save_every"_a=1000);
 
     s.def_readwrite("h", &SimulationState::h)
      .def_readwrite("rot", &SimulationState::rot)
