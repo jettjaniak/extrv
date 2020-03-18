@@ -10,13 +10,14 @@ Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_typ
     pair<double, double> r_alpha_pair = helpers::parametrize_ligand(lig_xy);
     r_cir = r_alpha_pair.first;
     rot_inc = r_alpha_pair.second;
+    binding_rates.resize(lig_type->bonds_types.size());
 }
 
 bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
     if (bond_state != 0)
         return false;
 
-    vector<double> binding_rates = lig_type->binding_rates(surface_dist(h, rot));
+    lig_type->compute_binding_rates(surface_dist(h, rot), binding_rates);
 
     double any_binding_rate = 0.0;
     for (double binding_rate : binding_rates)

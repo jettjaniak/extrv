@@ -30,7 +30,7 @@ struct Parameters {
          * @param surface_dist ligand's distance from surface in μm
          * @return vector of binding rates for each bond type, in the same order they were added
          */
-        vector<double> binding_rates(double surface_dist);
+        void compute_binding_rates(double surface_dist, vector<double> &binding_rates);
 
         double max_binding_rate(double surf_dist);
 

@@ -74,8 +74,9 @@ if __name__ == '__main__':
     """
 
     s = SimulationState(h_0=0.075, p=p, seed=12345)
-    # You will need more steps.
-    sim_hist = s.simulate_with_history(n_steps=int(1e5), dt=1e-6, shear=0.0)
+    # You will need more steps and smaller dt
+    s.simulate(n_steps=int(1e5), dt=1e-5, shear=0.0)
+    sim_hist = s.simulate_with_history(n_steps=int(5e5), dt=1e-5, shear=100)
 
     plt.subplot(211)
     plt.plot(sim_hist.h)

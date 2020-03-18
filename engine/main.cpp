@@ -13,6 +13,7 @@ int main() {
 
     p->add_ligands(psgl_lig_t, 10000);
 
-    auto s = SimulationState(0.0745478, p, 1234567);
-    s.simulate_with_history(size_t(1e5), 1e-5, 0);
+    auto s = SimulationState(0.0745478, p, 123456);
+    s.simulate(size_t(1e5), 1e-5, 0);
+    s.simulate_with_history(size_t(5e5), 1e-5, 100);
 }

@@ -3,14 +3,12 @@
 #include "helpers.h"
 
 
-vector<double> Parameters::LigandType::binding_rates(double surface_dist) {
-    vector<double> ret(bonds_types.size());
+void Parameters::LigandType::compute_binding_rates(double surface_dist, vector<double> &binding_rates) {
     AbstractBondType* bond_type;
     for (int i = 0; i < bonds_types.size(); i++) {
         bond_type = bonds_types[i];
-        ret[i] = bond_type->binding_rate(surface_dist, p->temp);
+        binding_rates[i] = bond_type->binding_rate(surface_dist, p->temp);
     }
-    return ret;
 }
 
 void Parameters::LigandType::add_bond_type(AbstractBondType *bond_type) {
@@ -29,7 +27,8 @@ void Parameters::LigandType::update_max_surf_dist() {
 }
 
 double Parameters::LigandType::max_binding_rate(double surf_dist) {
-    vector<double> rates = binding_rates(surf_dist);
+    vector<double> rates(bonds_types.size());
+    compute_binding_rates(surf_dist, rates);
     return *std::max_element(rates.begin(), rates.end());
 }
 

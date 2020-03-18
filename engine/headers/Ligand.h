@@ -25,6 +25,8 @@ struct Ligand {
     /// -1 indicates there is no prepared state
     int prepared_bond_state = -1;
 
+    vector<double> binding_rates;
+
     /**
      * x coordinate of receptor currently bonded to the ligand,
      * valid only when ligand is bonded

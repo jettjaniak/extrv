@@ -124,8 +124,7 @@ void SimulationState::reseed(unsigned int seed) {
 }
 
 bool SimulationState::surf_dist_small(size_t lig_ind) {
-    double rhs = 1 - p->max_surf_dist / p->r_cell;
-    return cos(rot + ligands[lig_ind].rot_inc) > rhs;
+    return ligands[lig_ind].surface_dist(h, rot) < p->max_surf_dist;
 }
 
 void SimulationState::update_one_side_of_range(size_t & curr_ind, int step) {
