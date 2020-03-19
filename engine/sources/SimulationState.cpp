@@ -18,7 +18,8 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
         lig_type = lig_type_and_nr.first;
         n_of_lig = lig_type_and_nr.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-            xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
+//            xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
+            xy_t lig_xy{0.01, - p->r_cell};
             Ligand new_ligand {lig_xy, lig_type};
             // If ligand will be always far from surface it will never bind, so we ignore it.
             double min_surf_dist = p->r_cell - new_ligand.r_cir;

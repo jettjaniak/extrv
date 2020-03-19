@@ -25,7 +25,7 @@ int main() {
         );
     psgl->add_bond_type(psgl_plus_esel_bond);
 
-    p->add_ligands(psgl, 10000);
+    p->add_ligands(psgl, 1);
 
     auto s = SimulationState(0.0242, p, 788);
     std::cout << s.ligands.size() << std::endl;
