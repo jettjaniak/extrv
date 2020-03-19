@@ -27,8 +27,8 @@ int main() {
 
     p->add_ligands(psgl, 10000);
 
-    auto s = SimulationState(0.0745478, p, 123456);
+    auto s = SimulationState(0.0242, p, 788);
     std::cout << s.ligands.size() << std::endl;
-    s.simulate(size_t(1e5), 1e-5, 0, false);
-    s.simulate_with_history(size_t(5e5), 1e-5, 100, false, 0);
+//    s.simulate(size_t(1e5), 1e-5, 0, false);
+    s.simulate_with_history(size_t(2e4), 0.1 / psgl_plus_esel_bond->binding_rate_0, 0, false, 100);
 }

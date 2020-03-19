@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from extrv_engine import Parameters, SimulationState, SlipBondType, CatchSlipPselBondType, CatchSlipIntegrinBondType
 
 
@@ -32,10 +33,12 @@ if __name__ == '__main__':
     COEFF = 1e-5 * psgl_plus_esel_bond.binding_rate_0
     DT = 0.1 / psgl_plus_esel_bond.binding_rate_0
 
-    s = SimulationState(h_0=0.0225, p=p, seed=1234)
+    seed = np.random.randint(1000)
+    print("seed", seed)
+    s = SimulationState(h_0=0.0242, p=p, seed=seed)
     # You will need more steps and smaller dt
     # s.simulate(n_steps=int(1e5), dt=DT, shear=0.0)
-    sim_hist = s.simulate_with_history(n_steps=int(1e5), dt=DT, shear=0)#2*COEFF)
+    sim_hist = s.simulate_with_history(n_steps=int(2e5), dt=DT, shear=0)#2*COEFF)
     print(len(s.bd_lig_ind))
 
     plt.subplot(211)

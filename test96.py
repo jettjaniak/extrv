@@ -44,7 +44,7 @@ def iteration(test_nr, force, seed):
     ss.simulate(n_steps=N_STEPS_TEST, dt=DT, shear=force * COEFF, stop_if_no_bonds=True)
 
     detached = False if ss.bd_lig_ind else True
-    print("iteration returning")
+    print("iteration returning", )
     return test_nr, force, detached, seed
 
 
@@ -90,7 +90,7 @@ def many_tests(n_tests, n_trials, pool):
 if __name__ == '__main__':
     N_TRIALS = 4
     N_TESTS = 1
-    uint_info = np.iinfo(np.uint)
+    uint_info = np.iinfo(np.uint32)
     test_results = ([Counter() for _ in range(N_TESTS)], N_TRIALS)
 
     pool = multiprocessing.Pool()
