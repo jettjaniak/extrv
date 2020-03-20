@@ -4,16 +4,13 @@ from extrv_engine import Parameters, SimulationState, SlipBondType, CatchSlipPse
 
 
 if __name__ == '__main__':
-    N_STEPS_FALLING = int(1e5)
-    N_STEPS_TEST = int(5e6)
-
     p = Parameters(
-        r_c=4.5,
+        r_cell=4.5,
         visc=0.01,
         temp=310,
         dens_diff=0.05,
         f_rep_0=1e3,
-        tau=5  # TODO: use old nonspecific forces
+        tau=5
     )
 
     # For this parameters simulation makes sense.
@@ -29,17 +26,17 @@ if __name__ == '__main__':
     psgl.add_bond_type(psgl_plus_esel_bond)
     p.add_ligands(psgl, 10000)
 
-    FORCES = [2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8]
-    COEFF = 1e-5 * psgl_plus_esel_bond.binding_rate_0
-    DT = 0.1 / psgl_plus_esel_bond.binding_rate_0
 
-    seed = np.random.randint(1000)
-    print("seed", seed)
-    s = SimulationState(h_0=0.0242, p=p, seed=seed)
+    s = SimulationState(h_0=0.0225, p=p, seed=788)
     # You will need more steps and smaller dt
     # s.simulate(n_steps=int(1e5), dt=DT, shear=0.0)
-    sim_hist = s.simulate_with_history(n_steps=int(2e5), dt=DT, shear=0)#2*COEFF)
-    print(len(s.bd_lig_ind))
+    sim_hist = s.simulate_with_history(
+        n_steps=int(1e5),
+        dt=0.1 / psgl_plus_esel_bond.binding_rate_0,
+        shear=0.0,
+        stop_if_no_bonds=False,
+        save_every=100
+    )
 
     plt.subplot(211)
     plt.plot(sim_hist.h)

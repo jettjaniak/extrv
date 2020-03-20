@@ -29,6 +29,20 @@ int main() {
 
     auto s = SimulationState(0.0242, p, 788);
     std::cout << s.ligands.size() << std::endl;
-//    s.simulate(size_t(1e5), 1e-5, 0, false);
-    s.simulate_with_history(size_t(2e4), 0.1 / psgl_plus_esel_bond->binding_rate_0, 0, false, 100);
+    History hist = s.simulate_with_history(
+            size_t(2e4),
+            0.1 / psgl_plus_esel_bond->binding_rate_0,
+            0,
+            false,
+            100
+        );
+    std::cout << "h:" << std::endl;
+    for (const auto h : hist.h) {
+        std::cout << " " << h << std::endl;
+    }
+    std::cout << std::endl;
+    std::cout << "rot:" << std::endl;
+    for (const auto rot : hist.rot) {
+        std::cout << " " << rot << std::endl;
+    }
 }

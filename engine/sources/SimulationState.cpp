@@ -18,12 +18,14 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
         lig_type = lig_type_and_nr.first;
         n_of_lig = lig_type_and_nr.second;
         for (size_t i = 0; i < n_of_lig; i++) {
-//            xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
-            xy_t lig_xy{0.01, - p->r_cell};
+            xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
+//            xy_t lig_xy{0.01, - p->r_cell};
             Ligand new_ligand {lig_xy, lig_type};
+//            new_ligand.r_cir = p->r_cell;
+//            new_ligand.rot_inc = 0.1;
             // If ligand will be always far from surface it will never bind, so we ignore it.
             double min_surf_dist = p->r_cell - new_ligand.r_cir;
-            if (min_surf_dist < lig_type->max_surf_dist && std::abs(new_ligand.rot_inc) < 0.1)
+            if (min_surf_dist < lig_type->max_surf_dist && std::abs(new_ligand.rot_inc) <= 0.1)
                 ligands.push_back(new_ligand);
         }
     }
@@ -61,7 +63,7 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     // We try with all ligands, including those already bonded!
     // But `prepare_binding` will check it.
     for (size_t i = 0; i < ligands.size(); i++)
-//    for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
+//    TODO: for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
         if (ligands[i].prepare_binding(h, rot, dt, generator))
             new_bondings_lig_ind.push_back(i);
 

@@ -100,7 +100,7 @@ PYBIND11_MODULE(extrv_engine, m) {
 
     p.def(
             py::init<double, double, double, double, double, double>(),
-            "r_c"_a, "visc"_a, "temp"_a, "dens_diff"_a, "f_rep_0"_a, "tau"_a
+            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a, "f_rep_0"_a, "tau"_a
     );
 
     p.def("add_ligands", &Parameters::add_ligands, "lig_type"_a, "n_of_lig"_a);
