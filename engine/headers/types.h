@@ -66,4 +66,4 @@ struct xy_t {
 
 
 
-typedef std::default_random_engine generator_t;
+typedef std::mt19937 generator_t;
