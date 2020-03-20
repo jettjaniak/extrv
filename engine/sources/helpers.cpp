@@ -24,7 +24,7 @@ namespace helpers {
     }
 
     double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl, double temp) {
-        return rate_0 * exp((spring_const * deviation * (react_compl - 0.5 * deviation)) / (K_B * temp));
+        return rate_0 * exp(-(0.5 * spring_const * deviation * deviation) / (2 * K_B * temp));
     }
 
     double draw_from_uniform_dist(generator_t &generator) {

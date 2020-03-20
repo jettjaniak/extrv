@@ -51,8 +51,10 @@ SlipBondType::SlipBondType(
 
 
 double SlipBondType::rupture_rate(double bond_length, double temp) {
-    double bond_f = bond_force(bond_length);
-    return rup_rate_0_slip * exp((react_compl_slip * bond_f) / (K_B * temp));
+//    double bond_f = bond_force(bond_length);
+//    return rup_rate_0_slip * exp((react_compl_slip * bond_f) / (K_B * temp));
+
+    return rup_rate_0_slip * exp((0.5 * spring_const * pow(bond_length - eq_bond_len, 2)) / (2 * K_B * temp));
 }
 
 
