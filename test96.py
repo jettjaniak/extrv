@@ -33,7 +33,7 @@ psgl_plus_esel_bond = SlipBondType(
 psgl.add_bond_type(psgl_plus_esel_bond)
 p.add_ligands(psgl, 10000)
 
-FORCES = [2,]# 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8]
+FORCES = [3.5, ] # [2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8]
 COEFF = 1e-5 * psgl_plus_esel_bond.binding_rate_0
 DT = 0.1 / psgl_plus_esel_bond.binding_rate_0
 
@@ -72,8 +72,8 @@ def iteration_error_callback(error):
 
 
 def one_test(test_nr, n_trials, pool):
-    seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint32')
-    # seeds = np.arange(n_trials) + 100
+    # seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint32')
+    seeds = np.arange(n_trials) + 100
     for force in FORCES:
         # each seed represents one trial
         for seed in seeds:

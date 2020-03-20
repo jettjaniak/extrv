@@ -27,13 +27,13 @@ if __name__ == '__main__':
     p.add_ligands(psgl, 10000)
 
 
-    s = SimulationState(h_0=0.0225, p=p, seed=788)
+    s = SimulationState(h_0=0.0225, p=p, seed=101)
     # You will need more steps and smaller dt
-    # s.simulate(n_steps=int(1e5), dt=DT, shear=0.0)
+    s.simulate(n_steps=int(1e5), dt=0.1 / psgl_plus_esel_bond.binding_rate_0, shear=0.0)
     sim_hist = s.simulate_with_history(
-        n_steps=int(1e5),
+        n_steps=int(5e6),
         dt=0.1 / psgl_plus_esel_bond.binding_rate_0,
-        shear=0.0,
+        shear=3.5 * 1e-5 * psgl_plus_esel_bond.binding_rate_0,
         stop_if_no_bonds=False,
         save_every=100
     )
