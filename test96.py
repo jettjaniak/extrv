@@ -11,7 +11,7 @@ N_STEPS_FALLING = int(1e5)
 N_STEPS_TEST = int(5e6)
 
 p = Parameters(
-    r_c=4.5,
+    r_cell=4.5,
     visc=0.01,
     temp=310,
     dens_diff=0.05,
@@ -72,8 +72,7 @@ def iteration_error_callback(error):
 
 
 def one_test(test_nr, n_trials, pool):
-    # TODO: seed type
-    seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint')
+    seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint32')
     # seeds = np.arange(n_trials) + 100
     for force in FORCES:
         # each seed represents one trial
