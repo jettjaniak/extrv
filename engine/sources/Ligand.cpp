@@ -14,7 +14,7 @@ Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_typ
 }
 
 bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
-    if (bond_state != 0)
+    if (bond_state != 0)  // TODO: why not > 0?
         return false;
 
     lig_type->compute_binding_rates(surface_dist(h, rot), binding_rates);

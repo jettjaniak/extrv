@@ -81,7 +81,7 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     // move surface in x direction (sphere's center is always at origin),
     // i.e. move bonded receptors on surface in opposite direction
     for (auto & bd_i : bd_lig_ind)
-        ligands[bd_i].move_bd_rec(- dt * v.v_x);
+        ligands[bd_i].move_bd_rec(dt * v.v_x);
 
     // rotate sphere
     rot += dt * v.o_z;
