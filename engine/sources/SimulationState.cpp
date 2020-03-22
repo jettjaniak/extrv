@@ -17,6 +17,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
     for (auto& lig_type_and_nr : p->lig_types_and_nrs) {
         lig_type = lig_type_and_nr.first;
         n_of_lig = lig_type_and_nr.second;
+        std::cout << "n_of_lig = " << n_of_lig << std::endl;
         for (size_t i = 0; i < n_of_lig; i++) {
             xy_t lig_xy{helpers::draw_from_uniform_dist_on_sphere(p->r_cell, generator)};
             Ligand new_ligand {lig_xy, lig_type};
@@ -26,7 +27,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
                 ligands.push_back(new_ligand);
         }
     }
-
+    std::cout << "before sort" << std::endl;
     std::sort(ligands.begin(), ligands.end(),
          [](const Ligand & a, const Ligand & b) -> bool {
             // TODO: make rot_inc from 0 to 2 pi
