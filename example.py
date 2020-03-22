@@ -4,7 +4,7 @@ from extrv_engine import Parameters, SimulationState, SlipBondType, CatchSlipPse
 
 if __name__ == '__main__':
     p = Parameters(
-        r_c=4.5,
+        r_cell=4.5,
         visc=0.01,
         temp=310,
         dens_diff=0.05,
