@@ -29,6 +29,8 @@ public:
     vector<double> h;
     /// vector of sphere's rotation in radians
     vector<double> rot;
+    /// distances traveled in direction of fluid flow (x)
+    vector<double> dist;
     /// here we move values from active_trajs_map after rupture or finish
     vector<BondTrajectory> bond_trajectories;
 

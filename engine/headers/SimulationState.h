@@ -12,6 +12,8 @@ struct SimulationState {
     double h;
     /// sphere's rotation in radians
     double rot = 0.0;
+    /// distance traveled in direction of flow (x)
+    double dist = 0.0;
 
     /// ligands on sphere
     vector<Ligand> ligands;

@@ -127,6 +127,7 @@ PYBIND11_MODULE(extrv_engine, m) {
 
     hist.def_readonly("h", &History::h)
             .def_readonly("rot", &History::rot)
+            .def_readonly("dist", &History::dist)
             .def_readonly("bond_trajectories", &History::bond_trajectories);
 
 
@@ -148,6 +149,7 @@ PYBIND11_MODULE(extrv_engine, m) {
 
     s.def_readwrite("h", &SimulationState::h)
      .def_readwrite("rot", &SimulationState::rot)
+     .def_readwrite("dist", &SimulationState::dist)
      .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
      .def_readwrite("p", &SimulationState::p);
 }

@@ -4,7 +4,6 @@
 #include <algorithm>
 
 #include "velocities.h"
-#include "forces.h"
 #include "SimulationState.h"
 
 
@@ -14,6 +13,7 @@ void History::update(const SimulationState *s) {
     update_bond_trajectories(s);
     h.push_back(s->h);
     rot.push_back(s->rot);
+    dist.push_back(s->dist);
     hist_i++;
 }
 
