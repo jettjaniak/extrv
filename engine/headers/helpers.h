@@ -85,5 +85,5 @@ namespace helpers {
      * @param tol tolerance
      * @return argument x of function for which |f(x)| < tol
      */
-    double bisection(double a, double b, const std::function<double(double)> &f, double tol = 1e-6);
+    double bisection(double a, double b, const std::function<double(double)> &f, double tol);
 }

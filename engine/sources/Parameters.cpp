@@ -21,7 +21,7 @@ void Parameters::LigandType::update_max_surf_dist() {
         max_sd_for_bond_type = helpers::bisection(bond_type->eq_bond_len, 1.0,
             [&](double sd) -> double {
                 return bond_type->binding_rate(sd, p->temp) - MIN_RATE;
-            });
+            }, MIN_RATE / 10);
         max_surf_dist = std::max(max_surf_dist, max_sd_for_bond_type);
     }
 }
