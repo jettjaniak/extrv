@@ -36,8 +36,10 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
 
 void SimulationState::simulate_one_step(double dt, double shear_rate) {
 
-    update_one_side_of_range(right_lig_ind, 1);
-    update_one_side_of_range(left_lig_ind, -1);
+    update_rot_inc_range();
+
+//    update_one_side_of_range(right_lig_ind, 1);
+//    update_one_side_of_range(left_lig_ind, -1);
 
     ///////////////////////////////////
     // Compute forces and velocities //
@@ -111,7 +113,7 @@ void SimulationState::simulate(size_t n_steps, double dt, double shear_rate) {
 History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
     History hist;
     hist.update(this);
-    for (int i = 0; i < n_steps; ++i) {
+    for (int i = 1; i <= n_steps; ++i) {
         simulate_one_step(dt, shear);
         if (i % save_every == 0)
             hist.update(this);
@@ -124,28 +126,38 @@ void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-bool SimulationState::surf_dist_small(size_t lig_ind) {
-    return ligands[lig_ind].surface_dist(h, rot) < p->max_surf_dist;
+void SimulationState::update_one_side_of_range(size_t & curr_ind, int step) {
+//    size_t next_ind = (ligands.size() + curr_ind + step) % ligands.size();
+//    bool curr_ok = surf_dist_small(curr_ind);
+//    bool next_ok = surf_dist_small(next_ind);
+//
+//    // As long as current and next ligands are close to surface we can widen the range.
+//    while (curr_ok && next_ok) {
+//        curr_ind = next_ind;
+//        next_ind = (ligands.size() + curr_ind + step) % ligands.size();
+//        curr_ok = next_ok;
+//        next_ok = surf_dist_small(next_ind);
+//    }
+//
+//    // If current ligand is not close to surface we should shrink the range.
+//    while (!curr_ok ) {
+//        curr_ind = (ligands.size() + curr_ind - step) % ligands.size();
+//        curr_ok = surf_dist_small(curr_ind);
+//    }
 }
 
-void SimulationState::update_one_side_of_range(size_t & curr_ind, int step) {
-    size_t next_ind = (ligands.size() + curr_ind + step) % ligands.size();
-    bool curr_ok = surf_dist_small(curr_ind);
-    bool next_ok = surf_dist_small(next_ind);
-
-    // As long as current and next ligands are close to surface we can widen the range.
-    while (curr_ok && next_ok) {
-        curr_ind = next_ind;
-        next_ind = (ligands.size() + curr_ind + step) % ligands.size();
-        curr_ok = next_ok;
-        next_ok = surf_dist_small(next_ind);
+void SimulationState::update_rot_inc_range() {
+    if (p->max_surf_dist <= h) {
+        left_rot_inc = right_rot_inc = -rot;
+        return;
     }
-
-    // If current ligand is not close to surface we should shrink the range.
-    while (!curr_ok ) {
-        curr_ind = (ligands.size() + curr_ind - step) % ligands.size();
-        curr_ok = surf_dist_small(curr_ind);
-    }
+    // rot + rot_inc, in [0, π]
+    double beta = acos(1 - (p->max_surf_dist - h) / p->r_cell);
+    right_rot_inc = beta - rot;
+    left_rot_inc = 2 * PI - beta - rot;
+    // projecting on [0, 2π]
+    right_rot_inc = std::fmod(right_rot_inc + 2 * PI, 2 * PI);
+    left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
 }
 
 

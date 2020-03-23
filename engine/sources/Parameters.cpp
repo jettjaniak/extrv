@@ -26,12 +26,6 @@ void Parameters::LigandType::update_max_surf_dist() {
     }
 }
 
-double Parameters::LigandType::max_binding_rate(double surf_dist) {
-    vector<double> rates(bonds_types.size());
-    compute_binding_rates(surf_dist, rates);
-    return *std::max_element(rates.begin(), rates.end());
-}
-
 Parameters::Parameters(double r_cell, double visc, double temp, double dens_diff, double f_rep_0, double tau) :
         r_cell(r_cell),
         // conversion to kg/(μm s)

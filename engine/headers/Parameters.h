@@ -32,10 +32,8 @@ struct Parameters {
          */
         void compute_binding_rates(double surface_dist, vector<double> &binding_rates);
 
-        double max_binding_rate(double surf_dist);
-
         /**
-         * Return maximal surface distance for which any binding rate is higher than MIN_RATE.
+         * Update maximal surface distance for which any binding rate is higher than MIN_RATE.
          */
         void update_max_surf_dist();
     };
