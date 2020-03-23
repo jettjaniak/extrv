@@ -27,11 +27,9 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
                 ligands.push_back(new_ligand);
         }
     }
-    std::cout << "before sort" << std::endl;
     std::sort(ligands.begin(), ligands.end(),
          [](const Ligand & a, const Ligand & b) -> bool {
-            // TODO: make rot_inc from 0 to 2 pi
-            return std::fmod(a.rot_inc + 2 * PI, 2 * PI) < std::fmod(b.rot_inc + 2 * PI, 2 * PI);
+            return a.rot_inc < b.rot_inc;
          });
 
 }
