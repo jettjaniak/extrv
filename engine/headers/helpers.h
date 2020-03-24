@@ -86,4 +86,10 @@ namespace helpers {
      * @return argument x of function for which |f(x)| < tol
      */
     double bisection(double a, double b, const std::function<double(double)> &f, double tol);
+
+    /// (b + a) % b
+    size_t positive_mod(size_t a, size_t b);
+
+    /// (b + a + x) % b
+    size_t cyclic_add(size_t a, int x, size_t b);
 }

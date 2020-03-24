@@ -77,12 +77,5 @@ struct SimulationState {
 
     void update_rot_inc_range();
 
-    /**
-     * Update value of one side of range of ligands that are close to surface.
-     *
-     * @param curr_ind one side of range
-     * @param step +1 for right side of range, -1 for left
-     * @return updated index
-     */
-    void update_one_side_of_range(size_t & curr_ind, int step);
+    void update_rot_inc_ind();
 };

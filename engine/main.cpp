@@ -38,6 +38,7 @@ int main() {
 
         std::cout << i << std::endl;
         auto s = SimulationState(0.03, p, 100 + i);
+        s.rot = - PI / 2;
         s.simulate_with_history(n_steps_falling, dt, 0);
         s.simulate_with_history(n_steps, dt, 1);
     }

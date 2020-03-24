@@ -104,4 +104,12 @@ namespace helpers {
         return b;
     }
 
+    size_t positive_mod(size_t a, size_t b) {
+        return (b + a) % b;
+    }
+
+    size_t cyclic_add(size_t a, int x, size_t b) {
+        return positive_mod(a + x, b);
+    }
+
 }

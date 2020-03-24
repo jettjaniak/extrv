@@ -37,9 +37,17 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
 void SimulationState::simulate_one_step(double dt, double shear_rate) {
 
     update_rot_inc_range();
+    update_rot_inc_ind();
 
-//    update_one_side_of_range(right_lig_ind, 1);
-//    update_one_side_of_range(left_lig_ind, -1);
+    // TODO: just for debug, remove
+    if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
+        Ligand & left_lig = ligands[left_lig_ind];
+        Ligand & right_lig = ligands[right_lig_ind];
+        if (left_lig.rot_inc < left_rot_inc || left_lig.rot_inc > right_rot_inc ||
+            right_lig.rot_inc < left_rot_inc || right_lig.rot_inc > right_rot_inc) {
+            std::cout << "wrong rot_inc indices";
+        }
+    }
 
     ///////////////////////////////////
     // Compute forces and velocities //
@@ -60,7 +68,8 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     vector<size_t> new_bondings_lig_ind;
     // We try with all ligands, including those already bonded!
     // But `prepare_binding` will check it.
-    for (size_t i = left_lig_ind; i != (right_lig_ind + 1) % ligands.size(); i = (i + 1) % ligands.size())
+    size_t after_right_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
+    for (size_t i = left_lig_ind; i != after_right_lig_ind; i = helpers::cyclic_add(i, 1, ligands.size()))
         if (ligands[i].prepare_binding(h, rot, dt, generator))
             new_bondings_lig_ind.push_back(i);
 
@@ -126,25 +135,7 @@ void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-void SimulationState::update_one_side_of_range(size_t & curr_ind, int step) {
-//    size_t next_ind = (ligands.size() + curr_ind + step) % ligands.size();
-//    bool curr_ok = surf_dist_small(curr_ind);
-//    bool next_ok = surf_dist_small(next_ind);
-//
-//    // As long as current and next ligands are close to surface we can widen the range.
-//    while (curr_ok && next_ok) {
-//        curr_ind = next_ind;
-//        next_ind = (ligands.size() + curr_ind + step) % ligands.size();
-//        curr_ok = next_ok;
-//        next_ok = surf_dist_small(next_ind);
-//    }
-//
-//    // If current ligand is not close to surface we should shrink the range.
-//    while (!curr_ok ) {
-//        curr_ind = (ligands.size() + curr_ind - step) % ligands.size();
-//        curr_ok = surf_dist_small(curr_ind);
-//    }
-}
+
 
 void SimulationState::update_rot_inc_range() {
     if (p->max_surf_dist <= h) {
@@ -158,6 +149,90 @@ void SimulationState::update_rot_inc_range() {
     // projecting on [0, 2π]
     right_rot_inc = std::fmod(right_rot_inc + 2 * PI, 2 * PI);
     left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
+}
+
+void SimulationState::update_rot_inc_ind() {
+    if (left_rot_inc <= right_rot_inc) {
+        // R
+        Ligand * right_lig = &ligands[right_lig_ind];
+        if (right_lig->rot_inc <= right_rot_inc) {
+            size_t new_right_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
+            Ligand * new_right_lig = &ligands[new_right_lig_ind];
+            while (new_right_lig->rot_inc >= right_lig->rot_inc &&  // We didn't jump through 2 PI
+                   new_right_lig->rot_inc <= right_rot_inc)         // We didn't jump through R
+            {
+                right_lig_ind = new_right_lig_ind;
+
+                right_lig = &ligands[right_lig_ind];
+                new_right_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
+                new_right_lig = &ligands[new_right_lig_ind];
+            }
+            if (right_lig->rot_inc < left_rot_inc) {
+                // no ligands in [L, R]
+                left_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
+                return;
+            }
+        } else {
+            size_t new_right_lig_ind = helpers::cyclic_add(right_lig_ind, -1, ligands.size());
+            Ligand * new_right_lig = &ligands[new_right_lig_ind];
+            while (right_lig->rot_inc > right_rot_inc &&            // We are too far right
+                   new_right_lig->rot_inc <= right_lig->rot_inc &&  // We didn't jump through 0
+                   new_right_lig->rot_inc >= left_rot_inc)          // We didn't jump through L
+            {
+                right_lig_ind = new_right_lig_ind;
+
+                right_lig = &ligands[right_lig_ind];
+                new_right_lig_ind = helpers::cyclic_add(right_lig_ind, -1, ligands.size());
+                new_right_lig = &ligands[new_right_lig_ind];
+            }
+            if (right_lig->rot_inc > right_rot_inc) {
+                // no ligands in [L, R]
+                left_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
+                return;
+            }
+        }
+
+        // L
+        Ligand * left_lig = &ligands[left_lig_ind];
+        if (left_lig->rot_inc >= left_rot_inc) {
+            size_t new_left_lig_ind = helpers::cyclic_add(left_lig_ind, -1, ligands.size());
+            Ligand * new_left_lig = &ligands[new_left_lig_ind];
+            while (new_left_lig->rot_inc <= left_lig->rot_inc &&  // We didn't jump through 0
+                   new_left_lig->rot_inc >= left_rot_inc)         // We didn't jump through L
+            {
+                left_lig_ind = new_left_lig_ind;
+
+                left_lig = &ligands[left_lig_ind];
+                new_left_lig_ind = helpers::cyclic_add(left_lig_ind, -1, ligands.size());
+                new_left_lig = &ligands[new_left_lig_ind];
+            }
+            if (left_lig->rot_inc > right_rot_inc) {
+                // no ligands in [L, R]
+                right_lig_ind = helpers::cyclic_add(left_lig_ind, -1, ligands.size());
+                return;
+            }
+        } else {
+            size_t new_left_lig_ind = helpers::cyclic_add(left_lig_ind, 1, ligands.size());
+            Ligand * new_left_lig = &ligands[new_left_lig_ind];
+            while (left_lig->rot_inc < left_rot_inc &&            // We are too far left
+                   new_left_lig->rot_inc >= left_lig->rot_inc &&  // We didn't jump through 2 PI
+                   new_left_lig->rot_inc <= right_rot_inc)        // We didn't jump through R
+            {
+                left_lig_ind = new_left_lig_ind;
+
+                left_lig = &ligands[left_lig_ind];
+                new_left_lig_ind = helpers::cyclic_add(left_lig_ind, 1, ligands.size());
+                new_left_lig = &ligands[new_left_lig_ind];
+            }
+            if (left_lig->rot_inc < left_rot_inc) {
+                // no ligands in [L, R]
+                right_lig_ind = helpers::cyclic_add(left_lig_ind, -1, ligands.size());
+                return;
+            }
+        }
+    } else {
+        // TODO
+    }
 }
 
 
