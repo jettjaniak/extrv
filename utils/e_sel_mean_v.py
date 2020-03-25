@@ -11,7 +11,6 @@ REC_DENS_0 = 750
 BINDING_RATE_0 = 0.06
 
 
-
 def setup_parameters(fold_change):
     p = Parameters(
         r_cell=4.5,
@@ -37,7 +36,7 @@ def setup_parameters(fold_change):
     return p, psgl, psgl_plus_esel_bond
 
 
-def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-6,
+def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
               shear=1, initial_height=0.03, save_every=1000):
     try:
         return iteration(fold_change, seed, max_time, falling_time, max_dt,
@@ -46,8 +45,8 @@ def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_
         print("ERROR")
         raise e
 
-# def iteration(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
-def iteration(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-6,
+
+def iteration(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
               shear=1, initial_height=0.03, save_every=1000):
     p, psgl, psgl_plus_esel_bond = setup_parameters(fold_change)
     k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0
@@ -57,14 +56,14 @@ def iteration(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-
 
     ss = SimulationState(initial_height, p, seed)
 
-    print("ss created for seed", seed)
     ss.simulate(n_steps_falling, dt, shear=0.0)  # falling
-    print("falling done for seed", seed)
     sim_hist = ss.simulate_with_history(n_steps, dt, shear, save_every=save_every)
     print("simulation done for seed", seed)
 
-    # TODO: discard first 20% of velocity data
-    return fold_change, np.mean(np.diff(sim_hist.dist))
+    vel = np.diff(sim_hist.dist)
+    # discard first 20% of velocity data
+    vel = vel[len(vel) // 5:]
+    return fold_change, np.mean(vel)
 
 
 def iteration_callback(result):
@@ -78,8 +77,8 @@ def iteration_error_callback(error):
 
 
 def one_test(fold_change, n_trials, pool, max_time):
-    # seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint')
-    seeds = np.arange(n_trials) + 100
+    seeds = np.random.randint(uint_info.max, size=n_trials, dtype='uint')
+    # seeds = np.arange(n_trials) + 100
     for seed in seeds:
         pool.apply_async(iteration_wrapper, (fold_change, seed, max_time),
                          callback=iteration_callback, error_callback=iteration_error_callback)
@@ -91,20 +90,15 @@ def many_tests(n_trials, pool, max_time):
 
 
 if __name__ == '__main__':
-    # N_TRIALS = 100
-    # MAX_TIME = 5
-    # FOLD_CHANGES = [
-    #     0.714285714285713,
-    #     1.07142857142856,
-    #     1.78571428571428,
-    #     2.14285714285713,
-    #     3.57142857142856,
-    #     4, 5, 6, 7, 8, 9, 10,
-    # ]
-    N_TRIALS = 4
-    MAX_TIME = 0.1#1
+    N_TRIALS = 100
+    MAX_TIME = 5
     FOLD_CHANGES = [
-        0.714285714285713,# 10
+        0.714285714285713,
+        1.07142857142856,
+        1.78571428571428,
+        2.14285714285713,
+        3.57142857142856,
+        4, 5, 6, 7, 8, 9, 10,
     ]
 
     uint_info = np.iinfo(np.uint32)
