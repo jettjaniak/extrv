@@ -43,9 +43,16 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
         Ligand & left_lig = ligands[left_lig_ind];
         Ligand & right_lig = ligands[right_lig_ind];
-        if (left_lig.rot_inc < left_rot_inc || left_lig.rot_inc > right_rot_inc ||
-            right_lig.rot_inc < left_rot_inc || right_lig.rot_inc > right_rot_inc) {
-            std::cout << "wrong rot_inc indices";
+        if (left_rot_inc <= right_rot_inc) {
+            if (left_lig.rot_inc < left_rot_inc || left_lig.rot_inc > right_rot_inc ||
+                right_lig.rot_inc < left_rot_inc || right_lig.rot_inc > right_rot_inc) {
+                std::cout << "wrong rot_inc indices";
+            }
+        } else {
+            if ((left_lig.rot_inc > right_rot_inc && left_lig.rot_inc < left_rot_inc) ||
+                (right_lig.rot_inc > right_rot_inc && right_lig.rot_inc < left_rot_inc)) {
+                std::cout << "wrong rot_inc indices";
+            }
         }
     }
 
@@ -152,6 +159,8 @@ void SimulationState::update_rot_inc_range() {
 }
 
 void SimulationState::update_rot_inc_ind() {
+    // |----[------]----|
+    // 0    L      R   2 PI
     if (left_rot_inc <= right_rot_inc) {
         // R
         Ligand * right_lig = &ligands[right_lig_ind];
@@ -230,8 +239,88 @@ void SimulationState::update_rot_inc_ind() {
                 return;
             }
         }
+    // |----]------[----|
+    // 0    R      L   2 PI
     } else {
-        // TODO
+        // R
+        Ligand * right_lig = &ligands[right_lig_ind];
+        // Try to find largest index for which rot_inc <= R
+
+        // Case 1.
+        // |--x-]------[----|
+        // 0    R      L   2 PI
+        if (right_lig->rot_inc <= right_rot_inc) {
+            for (size_t i = right_lig_ind + 1; i < ligands.size(); i++) {
+                if (ligands[i].rot_inc <= right_rot_inc)
+                    right_lig_ind = i;
+                else
+                    break;
+            }
+        // Case 2.
+        // |----]--x---[----|
+        // 0    R      L   2 PI
+        } else {
+            // size_t is unsigned, hence workaround with i_plus_1
+            size_t i;
+            for (size_t i_plus_1 = right_lig_ind; i_plus_1 != 0; i_plus_1--) {
+                i = i_plus_1 - 1;
+                right_lig_ind = i;
+                // We are satisfied with first ligand with rot_inc <= R
+                if (ligands[i].rot_inc <= right_rot_inc)
+                    break;
+            }
+            // There are no ligands with rot_inc <= R
+            if (ligands[right_lig_ind].rot_inc > right_rot_inc) {
+                // We should look for rightmost ligand with rot_inc >= L
+                if (ligands.back().rot_inc >= left_rot_inc) {
+                    right_lig_ind = ligands.size() - 1;
+                } else {
+                    // no ligands in [0, R] or [L, 2 PI]
+                    right_lig_ind = 0;
+                    left_lig_ind = 1;
+                    return;
+                }
+            }
+        }
+
+        // L
+        Ligand * left_lig = &ligands[left_lig_ind];
+        // Try to find the smallest index for which rot_inc >= L
+
+        // Case 1.
+        // |----]------[-x--|
+        // 0    R      L   2 PI
+        if (left_lig->rot_inc >= left_rot_inc) {
+            size_t i;
+            for (size_t i_plus_1 = left_lig_ind; i_plus_1 != 0; i_plus_1--) {
+                i = i_plus_1 - 1;
+                if (ligands[i].rot_inc >= left_rot_inc)
+                    left_lig_ind = i;
+                else
+                    break;
+            }
+        // Case 2.
+        // |----]----x-[----|
+        // 0    R      L   2 PI
+        } else {
+            for (size_t i = left_lig_ind + 1; i < ligands.size(); i++) {
+                left_lig_ind = i;
+                if (ligands[i].rot_inc >= left_rot_inc)
+                    break;
+            }
+            // There are no ligands with rot_ind >= L
+            if (ligands[left_lig_ind].rot_inc < left_rot_inc) {
+                // We should look for leftmost ligand with rot_inc <= R
+                if (ligands.front().rot_inc <= right_rot_inc) {
+                    left_lig_ind = 0;
+                } else {
+                    // no ligands in [0, R] or [L, 2 PI]
+                    right_lig_ind = 0;
+                    left_lig_ind = 1;
+                    return;
+                }
+            }
+        }
     }
 }
 
