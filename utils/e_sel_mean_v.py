@@ -11,6 +11,7 @@ REC_DENS_0 = 750
 BINDING_RATE_0 = 0.06
 
 
+
 def setup_parameters(fold_change):
     p = Parameters(
         r_cell=4.5,
@@ -21,7 +22,6 @@ def setup_parameters(fold_change):
         f_rep_0=1e3,
         tau=5
     )
-    psgl = Parameters.LigandType()
     psgl_plus_esel_bond = SlipBondType(
         eq_bond_len=27,
         spring_const=100,
@@ -30,9 +30,11 @@ def setup_parameters(fold_change):
         react_compl_slip=0.18,
         rup_rate_0_slip=2.6
     )
+    psgl = Parameters.LigandType()
     psgl.add_bond_type(psgl_plus_esel_bond)
     p.add_ligands(lig_type=psgl, n_of_lig=20000)
-    return p
+    # Don't let them be garbage collected!
+    return p, psgl, psgl_plus_esel_bond
 
 
 def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-6,
@@ -44,17 +46,17 @@ def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_
         print("ERROR")
         raise e
 
-
 # def iteration(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
 def iteration(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-6,
               shear=1, initial_height=0.03, save_every=1000):
-    p = setup_parameters(fold_change)
+    p, psgl, psgl_plus_esel_bond = setup_parameters(fold_change)
     k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0
     dt = min(0.1 / k_on_0, max_dt)
     n_steps = int(max_time / dt)
     n_steps_falling = int(falling_time / dt)
 
     ss = SimulationState(initial_height, p, seed)
+
     print("ss created for seed", seed)
     ss.simulate(n_steps_falling, dt, shear=0.0)  # falling
     print("falling done for seed", seed)
@@ -62,7 +64,7 @@ def iteration(fold_change=1., seed=0, max_time=5, falling_time=0.1, max_dt=10**-
     print("simulation done for seed", seed)
 
     # TODO: discard first 20% of velocity data
-    return fold_change#, np.mean(np.diff(sim_hist.dist))
+    return fold_change, np.mean(np.diff(sim_hist.dist))
 
 
 def iteration_callback(result):
