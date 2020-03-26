@@ -47,15 +47,6 @@ struct Parameters {
     /// density difference between cell and fluid (cell is more dense) in kg/μm^3
     double dens_diff;
 
-    /// repulsive force coefficient in kg μm / s^2
-    double f_rep_0;
-
-    /**
-     * Reciprocal length scale of repulsive force in Å.
-     * We keep original unit because the formula for repulsive force is constructed for angstroms.
-     */
-    double tau;
-
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
@@ -67,10 +58,8 @@ struct Parameters {
      * @param visc fluid viscosity in g / (cm s)
      * @param temp temperature in K
      * @param dens_diff density difference between cell and fluid (cell is more dense) in g/cm^3
-     * @param f_rep_0 repulsive force coefficient in N
-     * @param tau reciprocal length scale of repulsive force in Å
      */
-    Parameters(double r_cell, double visc, double temp, double dens_diff, double f_rep_0, double tau);
+    Parameters(double r_cell, double visc, double temp, double dens_diff);
 
     /**
      * Add n_of_lig ligands of lig_type type.

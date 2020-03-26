@@ -99,8 +99,8 @@ PYBIND11_MODULE(extrv_engine, m) {
 
 
     p.def(
-            py::init<double, double, double, double, double, double>(),
-            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a, "f_rep_0"_a, "tau"_a
+            py::init<double, double, double, double>(),
+            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a
     );
 
     p.def("add_ligands", &Parameters::add_ligands, "lig_type"_a, "n_of_lig"_a);
@@ -109,8 +109,6 @@ PYBIND11_MODULE(extrv_engine, m) {
      .def_readwrite("visc", &Parameters::visc)
      .def_readwrite("temp", &Parameters::temp)
      .def_readwrite("dens_diff", &Parameters::dens_diff)
-     .def_readwrite("f_rep_0", &Parameters::f_rep_0)
-     .def_readwrite("tau", &Parameters::tau)
      .def_readwrite("lig_types_and_nrs", &Parameters::lig_types_and_nrs);
 
 

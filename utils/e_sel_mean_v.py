@@ -17,9 +17,6 @@ def setup_parameters(fold_change):
         visc=0.01,
         temp=310,
         dens_diff=0.05,
-        # we're not using it
-        f_rep_0=1e3,
-        tau=5
     )
     psgl_plus_esel_bond = SlipBondType(
         eq_bond_len=27,
