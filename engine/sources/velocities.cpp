@@ -5,7 +5,7 @@
 
 namespace velocities {
 
-    velocities_t compute_velocities(double h, const forces_t &f, const Parameters *p) {
+    Position compute_velocities(double h, const forces_t &f, const Parameters *p) {
         double h_over_r = h / p->r_cell;
         double t_t_val = interpolated::t_t(h_over_r);
         double f_r_val = interpolated::f_r(h_over_r);
@@ -19,7 +19,8 @@ namespace velocities {
         double v_y = f.f_y / (6 * PI * lambda * p->visc * p->r_cell);
         double o_z = (4 * p->r_cell * f.f_x * t_t_val + 3 * f_t_val * f.t_z) / d_24pi_mu_r3;
 
-        return {v_x, v_y, o_z};
+        //       h   dist  rot
+        return {v_y, v_x, o_z};
     }
 
     double lambda_fun(double h_over_r) {

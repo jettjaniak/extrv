@@ -1,7 +1,6 @@
 #include "AbstractBondType.h"
 
 #include "helpers.h"
-#include "Parameters.h"
 
 
 ////////////////////////

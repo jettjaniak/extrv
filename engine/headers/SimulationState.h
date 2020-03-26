@@ -8,19 +8,22 @@
 
 
 struct SimulationState {
-    /// distance from sphere to surface in μm
-    double h;
+    /// local height, distance and rotation
+    Position pos;
+
     /// sphere's rotation in radians
-    double rot = 0.0;
+    double global_rot = 0.0;
     /// distance traveled in direction of flow (x)
-    double dist = 0.0;
+    double global_dist = 0.0;
+
+    double shear_rate = 0.0;
 
     /// ligands on sphere
     vector<Ligand> ligands;
 
-    /// range of ligands' rot_inc's for which ligands can bond at given step
-    double left_rot_inc;
-    double right_rot_inc;
+    /// range of ligands' rot_incs for which ligands can bond at given step
+    double left_rot_inc = 0.0;
+    double right_rot_inc = 0.0;
 
     /// indices of leftmost and rightmost ligands that are close enough to surface to bond
     size_t left_lig_ind = 0;
@@ -50,7 +53,7 @@ struct SimulationState {
      * @param dt time step in seconds
      * @param shear_rate fluid shear rate in 1/s
      */
-    void simulate_one_step(double dt, double shear_rate);
+    void simulate_one_step();
 
     /**
      * Do n_steps of simulation.
@@ -59,7 +62,7 @@ struct SimulationState {
      * @param dt time step in seconds
      * @param shear_rate fluid shear rate in 1/s
      */
-    void simulate(size_t n_steps, double dt, double shear_rate);
+    void simulate(size_t n_steps);
 
     /**
      * Do n_steps of simulation and return history updated every save_every steps.
@@ -70,7 +73,7 @@ struct SimulationState {
      * @param save_every number of steps between history updates
      * @return simulation history
      */
-    History simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every = 1000);
+    History simulate_with_history(size_t n_steps, size_t save_every);
 
     /// reseed random number generator
     void reseed(unsigned int seed);
@@ -78,4 +81,6 @@ struct SimulationState {
     void update_rot_inc_range();
 
     void update_rot_inc_ind();
+
+    void rhs(const Position & x, Position & dxdt, double /*t*/);
 };

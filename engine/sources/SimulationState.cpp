@@ -9,7 +9,8 @@
 #include "helpers.h"
 
 
-SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : h(h_0), p(p) {
+SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
+    pos.h = h_0;
     reseed(seed);
 
     Parameters::LigandType* lig_type;
@@ -33,7 +34,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
 
 }
 
-void SimulationState::simulate_one_step(double dt, double shear_rate) {
+void SimulationState::simulate_one_step() {
 
     update_rot_inc_range();
     update_rot_inc_ind();
@@ -55,81 +56,23 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
         }
     }
 
-    ///////////////////////////////////
-    // Compute forces and velocities //
-    ///////////////////////////////////
+//    // move surface in x direction (sphere's center is always at origin),
+//    // i.e. move bonded receptors on surface in opposite direction
+//    for (auto & bd_i : bd_lig_ind)
+//        ligands[bd_i].move_bd_rec(x_dist);
 
-    forces_t f = forces::non_bond_forces(shear_rate, h, p);
-    // add forces of each bond
-    for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(h, rot);
-
-    velocities_t v = velocities::compute_velocities(h, f, p);
-
-
-    //////////////////////////////
-    // Prepare changes in bonds //
-    //////////////////////////////
-
-    vector<size_t> new_bondings_lig_ind;
-    // We try with all ligands, including those already bonded!
-    // But `prepare_binding` will check it.
-    size_t after_right_lig_ind = helpers::cyclic_add(right_lig_ind, 1, ligands.size());
-    for (size_t i = left_lig_ind; i != after_right_lig_ind; i = helpers::cyclic_add(i, 1, ligands.size()))
-        if (ligands[i].prepare_binding(h, rot, dt, generator))
-            new_bondings_lig_ind.push_back(i);
-
-    // Here we try only with bonded ligands.
-    vector<size_t> new_ruptures_lig_ind;
-    for (auto & bd_i : bd_lig_ind)
-        if(ligands[bd_i].prepare_rupture(h, rot, dt, generator))
-            new_ruptures_lig_ind.push_back(bd_i);
-
-
-    //////////
-    // Move //
-    //////////
-
-    // update height
-    h += dt * v.v_y;
-    if (h < 0) abort();  // TODO: use throw / configure CLion to catch aborts
-
-    double x_dist = dt * v.v_x;
-    dist += x_dist;
-    // move surface in x direction (sphere's center is always at origin),
-    // i.e. move bonded receptors on surface in opposite direction
-    for (auto & bd_i : bd_lig_ind)
-        ligands[bd_i].move_bd_rec(x_dist);
-
-    // rotate sphere
-    rot += dt * v.o_z;
-
-
-    ////////////////////////
-    // Apply bond changes //
-    ////////////////////////
-
-    for (auto & new_bon_i : new_bondings_lig_ind) {
-        bd_lig_ind.insert(new_bon_i);
-        ligands[new_bon_i].bond(rot);
-    }
-
-    for (auto & new_rup_i : new_ruptures_lig_ind) {
-        bd_lig_ind.erase(new_rup_i);
-        ligands[new_rup_i].rupture();
-    }
 }
 
-void SimulationState::simulate(size_t n_steps, double dt, double shear_rate) {
+void SimulationState::simulate(size_t n_steps) {
     for (int i = 0; i < n_steps; ++i)
-        simulate_one_step(dt, shear_rate);
+        simulate_one_step();
 }
 
-History SimulationState::simulate_with_history(size_t n_steps, double dt, double shear, size_t save_every) {
+History SimulationState::simulate_with_history(size_t n_steps, size_t save_every) {
     History hist;
     hist.update(this);
     for (int i = 1; i <= n_steps; ++i) {
-        simulate_one_step(dt, shear);
+        simulate_one_step();
         if (i % save_every == 0)
             hist.update(this);
     }
@@ -141,17 +84,15 @@ void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-
-
 void SimulationState::update_rot_inc_range() {
-    if (p->max_surf_dist <= h) {
-        left_rot_inc = right_rot_inc = -rot;
+    if (p->max_surf_dist <= pos.h) {
+        left_rot_inc = right_rot_inc = - pos.rot;  // it has to be local rotation in [0, 2 PI]
         return;
     }
     // rot + rot_inc, in [0, π]
-    double beta = acos(1 - (p->max_surf_dist - h) / p->r_cell);
-    right_rot_inc = beta - rot;
-    left_rot_inc = 2 * PI - beta - rot;
+    double beta = acos(1 - (p->max_surf_dist - pos.h) / p->r_cell);
+    right_rot_inc = beta - pos.rot;
+    left_rot_inc = 2 * PI - beta - pos.rot;
     // projecting on [0, 2π]
     right_rot_inc = std::fmod(right_rot_inc + 2 * PI, 2 * PI);
     left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
@@ -321,6 +262,15 @@ void SimulationState::update_rot_inc_ind() {
             }
         }
     }
+}
+
+void SimulationState::rhs(const Position &x, Position &dxdt, double /*t*/) {
+    forces_t f = forces::non_bond_forces(shear_rate, x.h, p);
+    // add forces of each bond
+    for (auto & bd_i : bd_lig_ind)
+        f += ligands[bd_i].bond_forces(x.h, x.rot);
+
+    dxdt = velocities::compute_velocities(x.h, f, p);
 }
 
 

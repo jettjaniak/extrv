@@ -64,4 +64,11 @@ struct xy_t {
     }
 };
 
+struct Position {
+    /// distance from sphere to surface in μm
+    double h = 0.0;
+    double dist = 0.0;
+    double rot = 0.0;
+};
+
 typedef std::mt19937 generator_t;
