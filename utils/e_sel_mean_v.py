@@ -60,7 +60,7 @@ def iteration(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
     sim_hist = ss.simulate_with_history(n_steps, dt, shear, save_every=save_every)
     print("simulation done for seed", seed)
 
-    vel = np.diff(sim_hist.dist)
+    vel = np.diff(sim_hist.dist) / (dt * save_every)
     # discard first 20% of velocity data
     vel = vel[len(vel) // 5:]
     return fold_change, np.mean(vel)
