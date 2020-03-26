@@ -18,7 +18,11 @@ struct SimulationState {
     /// ligands on sphere
     vector<Ligand> ligands;
 
-    // indices of leftmost and rightmost ligands that are close enough to surface to bond
+    /// range of ligands' rot_inc's for which ligands can bond at given step
+    double left_rot_inc;
+    double right_rot_inc;
+
+    /// indices of leftmost and rightmost ligands that are close enough to surface to bond
     size_t left_lig_ind = 0;
     size_t right_lig_ind = 0;
 
@@ -71,15 +75,7 @@ struct SimulationState {
     /// reseed random number generator
     void reseed(unsigned int seed);
 
-    /// Check if given ligand is close enough to surface to consider its binding.
-    bool surf_dist_small(size_t lig_ind);
+    void update_rot_inc_range();
 
-    /**
-     * Update value of one side of range of ligands that are close to surface.
-     *
-     * @param curr_ind one side of range
-     * @param step +1 for right side of range, -1 for left
-     * @return updated index
-     */
-    void update_one_side_of_range(size_t & curr_ind, int step);
+    void update_rot_inc_ind();
 };

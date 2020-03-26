@@ -3,24 +3,20 @@
 
 namespace helpers {
     pair<double, double> parametrize_ligand(xy_t lig_xy) {
-        double r_cir = lig_xy.length();
-        double alpha;
-        // x = r sin(alpha)
-        if (lig_xy.y < 0)
-            // We are in the bottom half, where alpha is in [-π/2, π/2],
-            // which corresponds to asin return value range.
-            alpha = asin(lig_xy.x / r_cir);
-        else {
-            // We are in the top half, where alpha is in
-            // [-π, -π/2] or [π/2, π].
-
-            // sin(alpha - π) = - x / r
-            alpha = PI - asin(lig_xy.x / r_cir);
-            // but we want alpha to stay in [-π, π]
-            if (alpha > PI)
-                alpha -= 2.0 * PI;
+        double r_cir = lig_xy.length();  // by definition
+        double rot_inc;
+        // x = r sin(rot_inc)
+        if (lig_xy.y < 0) {
+            // We are in the bottom half, where rot_inc is in [3/2 π, 2π] or [0, π/2].
+            // asin, which returns values in [-π/2, π/2] gives correct angle up to 2π
+            rot_inc = asin(lig_xy.x / r_cir);                  // in [-π/2, π/2]
+            rot_inc = std::fmod(rot_inc + 2 * PI, 2 * PI);  // in [0, 2π]
+        } else {
+            // We are in the top half, where rot_inc is in [π/2, 3/2 π]
+            // sin(rot_inc - π) = - x / r
+            rot_inc = PI - asin(lig_xy.x / r_cir);  // in [0, 2π]
         }
-        return {r_cir, alpha};
+        return {r_cir, rot_inc};
     }
 
     double bell_binding_rate(double deviation, double rate_0, double spring_const, double react_compl, double temp) {
@@ -106,6 +102,14 @@ namespace helpers {
         }
 
         return b;
+    }
+
+    size_t positive_mod(size_t a, size_t b) {
+        return (b + a) % b;
+    }
+
+    size_t cyclic_add(size_t a, int x, size_t b) {
+        return positive_mod(a + x, b);
     }
 
 }

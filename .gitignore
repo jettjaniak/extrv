@@ -7,3 +7,5 @@ wrappers/*.cpp
 *.ilk
 
 *.pdb
+
+engine/cmake-build-release/

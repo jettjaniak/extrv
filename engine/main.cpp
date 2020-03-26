@@ -5,15 +5,40 @@
 #include <iostream>
 
 int main() {
-    auto p = new Parameters(4.5, 0.01, 310, 0.05, 1e3, 5);
+    for (int i = 0; i < 1; i++) {
+        auto p = new Parameters(
+                4.5,
+                0.01,
+                310,
+                0.05,
+                // not using it
+                1e3,
+                5
+        );
 
-    auto psgl_lig_t = new Parameters::LigandType();
-    auto esel_bond_t = new SlipBondType(77, 100, 0.06, 3600, 0.18, 2.6);
-    psgl_lig_t->add_bond_type(esel_bond_t);
+        auto psgl = new Parameters::LigandType();
+        double fold_change = 0.714285714285713;
+        double REC_DENS_0 = 750;
+        double BINDING_RATE_0 = 0.06;
+        auto psgl_plus_esel_bond = new SlipBondType(
+                27,
+                100,
+                BINDING_RATE_0,
+                REC_DENS_0 * fold_change,
+                0.18,
+                2.6
+        );
+        psgl->add_bond_type(psgl_plus_esel_bond);
+        p->add_ligands(psgl, 20000);
 
-    p->add_ligands(psgl_lig_t, 10000);
+        double k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0;
+        double dt = std::min(0.1 / k_on_0, 1e-6);
+        size_t n_steps = 5.0 / dt;
+        size_t n_steps_falling = 1.0 / dt;
 
-    auto s = SimulationState(0.0745478, p, 123456);
-    s.simulate(size_t(1e5), 1e-5, 0);
-    s.simulate_with_history(size_t(5e5), 1e-5, 100);
+        std::cout << i << std::endl;
+        auto s = SimulationState(0.03, p, 100 + i);
+        s.simulate_with_history(n_steps_falling, dt, 0);
+        s.simulate_with_history(n_steps, dt, 1);
+    }
 }

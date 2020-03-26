@@ -8,8 +8,6 @@ if __name__ == '__main__':
         visc=0.01,
         temp=310,
         dens_diff=0.05,
-        f_rep_0=1e3,
-        tau=5
     )
 
     # For this parameters simulation makes sense.
