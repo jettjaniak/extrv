@@ -14,7 +14,7 @@ Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_typ
 }
 
 bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &generator) {
-    if (bond_state != 0)  // TODO: why not > 0?
+    if (bond_state != 0)
         return false;
 
     lig_type->compute_binding_rates(surface_dist(h, rot), binding_rates);
@@ -26,7 +26,7 @@ bool Ligand::prepare_binding(double h, double rot, double dt, generator_t &gener
     double any_binding_probability = 1.0 - exp(-any_binding_rate * dt);
     if (helpers::draw_from_uniform_dist(generator) < any_binding_probability) {
         std::discrete_distribution<int> which_bond_distr {binding_rates.begin(), binding_rates.end()};
-        prepared_bond_state = which_bond_distr(generator) + 1;
+//        prepared_bond_state = which_bond_distr(generator) + 1;
         return true;
     } else
         return false;
@@ -41,8 +41,8 @@ bool Ligand::prepare_rupture(double h, double rot, double dt, generator_t &gener
 }
 
 void Ligand::bond(double rot) {
-    bond_state = prepared_bond_state;
-    prepared_bond_state = -1;
+//    bond_state = prepared_bond_state;
+//    prepared_bond_state = -1;
     bd_rec_x = x_pos(rot);
 }
 
@@ -102,6 +102,22 @@ AbstractBondType* Ligand::get_curr_bond_type() {
     if (bond_state < 1 || bond_state > lig_type->bonds_types.size())
         abort();
     return lig_type->bonds_types[bond_state - 1];
+}
+
+double Ligand::update_binding_rates(double h, double rot) {
+    double any_binding_rate = 0.0;
+    AbstractBondType* bond_type;
+    for (int i = 0; i < lig_type->bonds_types.size(); i++) {
+        bond_type = lig_type->bonds_types[i];
+        binding_rates[i] = bond_type->binding_rate(surface_dist(h, rot), lig_type->p->temp);
+        any_binding_rate += binding_rates[i];
+    }
+    return any_binding_rate;
+}
+
+double Ligand::rupture_rate(double h, double rot) {
+    AbstractBondType* bond_type = get_curr_bond_type();  // will abort if not bonded
+    return bond_type->rupture_rate(bond_length(h, rot), lig_type->p->temp);
 }
 
 

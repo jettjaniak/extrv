@@ -10,10 +10,7 @@ int main() {
                 4.5,
                 0.01,
                 310,
-                0.05,
-                // not using it
-                1e3,
-                5
+                0.05
         );
 
         auto psgl = new Parameters::LigandType();
@@ -38,7 +35,8 @@ int main() {
 
         std::cout << i << std::endl;
         auto s = SimulationState(0.03, p, 100 + i);
-        s.simulate_with_history(n_steps_falling, 0);
-        s.simulate_with_history(n_steps, 0);
+        s.simulate_one_step();
+//        s.simulate_with_history(n_steps_falling, 0);
+//        s.simulate_with_history(n_steps, 0);
     }
 }

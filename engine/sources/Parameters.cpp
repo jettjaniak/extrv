@@ -3,13 +3,6 @@
 #include "helpers.h"
 
 
-void Parameters::LigandType::compute_binding_rates(double surface_dist, vector<double> &binding_rates) {
-    AbstractBondType* bond_type;
-    for (int i = 0; i < bonds_types.size(); i++) {
-        bond_type = bonds_types[i];
-        binding_rates[i] = bond_type->binding_rate(surface_dist, p->temp);
-    }
-}
 
 void Parameters::LigandType::add_bond_type(AbstractBondType *bond_type) {
     bonds_types.push_back(bond_type);

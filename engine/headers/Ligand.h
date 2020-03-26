@@ -22,8 +22,6 @@ struct Ligand {
     double rot_inc;
     /// value 0 indicates no bonding, higher values indicate bonding to different receptors
     int bond_state = 0;
-    /// -1 indicates there is no prepared state
-    int prepared_bond_state = -1;
 
     vector<double> binding_rates;
 
@@ -81,6 +79,10 @@ struct Ligand {
      * Returns parameters of current bond.
      */
     AbstractBondType* get_curr_bond_type();
+
+    double update_binding_rates(double h, double rot);
+
+    double rupture_rate(double h, double rot);
 
     /**
      * Computes bonding probability and draws if bonding will happen.

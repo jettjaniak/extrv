@@ -3,7 +3,13 @@ project(extrv)
 set(CMAKE_CXX_STANDARD 17)
 include_directories(headers)
 
-add_subdirectory(pybind11)
+add_subdirectory(libs/pybind11)
+
+set(Boost_INCLUDE_DIR "C:/Program Files/boost_1_72_0")
+find_package(Boost 1.72.0)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
+endif()
 
 pybind11_add_module(extrv_engine wrappers.cpp
         sources/helpers.cpp
@@ -26,5 +32,4 @@ add_executable(extrv main.cpp
         sources/Parameters.cpp
         sources/History.cpp
         sources/AbstractBondType.cpp)
-
 

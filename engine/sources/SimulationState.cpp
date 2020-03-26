@@ -4,12 +4,18 @@
 #include <utility>
 #include <iostream>
 
+
 #include "forces.h"
 #include "velocities.h"
 #include "helpers.h"
 
+namespace pl = std::placeholders;
+
 
 SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
+
+    stepper = make_controlled<error_stepper_type>(1e-10, 1e-6);
+
     pos.h = h_0;
     reseed(seed);
 
@@ -31,7 +37,6 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
          [](const Ligand & a, const Ligand & b) -> bool {
             return a.rot_inc < b.rot_inc;
          });
-
 }
 
 void SimulationState::simulate_one_step() {
@@ -55,6 +60,50 @@ void SimulationState::simulate_one_step() {
             }
         }
     }
+
+
+    double any_event_rate = 0.0;
+    size_t rates_i = 0;
+    rates.resize(n_active_lig + bd_lig_ind.size());
+
+    // binding events
+    for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size(), rates_i++) {
+        // ignore bonded ligands
+        if (ligands[i].bond_state != 0) {
+            rates[rates_i] = 0.0;
+            continue;
+        }
+        rates[rates_i] = ligands[i].update_binding_rates(pos.h, pos.rot);
+        any_event_rate += rates[rates_i];
+    }
+
+    // rupture events
+    for (const auto &i : bd_lig_ind) {
+        rates_i++;
+        rates[rates_i] = ligands[i].rupture_rate(pos.h, pos.rot);
+        any_event_rate += rates[rates_i];
+    }
+
+    std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
+    double dt_bonds = dt_bonds_distribution(generator);
+
+    double try_dt = dt_bonds;
+    // TODO: define as class parameter or define operator()
+    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+
+    controlled_step_result result;
+    do result = stepper.try_step(rhs_system, pos, time, try_dt);
+    while (result == fail);
+
+    if (try_dt == dt_bonds) {
+        std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
+        size_t event_nr = which_event_distribution(generator);
+        // TODO: make bond changes
+        // TODO: update global / local rot and dist
+        // TODO: update bd_rec_x
+    }
+
+
 
 //    // move surface in x direction (sphere's center is always at origin),
 //    // i.e. move bonded receptors on surface in opposite direction
@@ -262,6 +311,12 @@ void SimulationState::update_rot_inc_ind() {
             }
         }
     }
+
+    if (left_lig_ind <= right_lig_ind)
+        n_active_lig = right_lig_ind - left_lig_ind + 1;
+    else
+        n_active_lig = right_lig_ind + ligands.size() - left_lig_ind + 1;
+
 }
 
 void SimulationState::rhs(const Position &x, Position &dxdt, double /*t*/) {

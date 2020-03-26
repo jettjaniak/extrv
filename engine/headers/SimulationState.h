@@ -1,16 +1,24 @@
 #pragma once
 
+//#include <boost/numeric/odeint.hpp>
+#include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
+#include <boost/numeric/odeint/stepper/controlled_runge_kutta.hpp>
+#include <boost/numeric/odeint/stepper/generation.hpp>
+
 #include "types.h"
 #include "Ligand.h"
 #include "Parameters.h"
 #include "helpers.h"
 #include "History.h"
 
+using namespace boost::numeric::odeint;
 
 struct SimulationState {
     /// local height, distance and rotation
     Position pos;
+    // TODO: use array as state type for odeint
 
+    double time = 0.0;
     /// sphere's rotation in radians
     double global_rot = 0.0;
     /// distance traveled in direction of flow (x)
@@ -26,8 +34,12 @@ struct SimulationState {
     double right_rot_inc = 0.0;
 
     /// indices of leftmost and rightmost ligands that are close enough to surface to bond
-    size_t left_lig_ind = 0;
+    size_t left_lig_ind = 1;
     size_t right_lig_ind = 0;
+    size_t after_right_lig_ind = 1;
+    size_t n_active_lig = 0;
+
+    vector<double> rates;  // TODO: resize at each simulation step
 
     /// indices of bonded ligands
     set<size_t> bd_lig_ind;
@@ -37,6 +49,10 @@ struct SimulationState {
 
     /// model parameters
     Parameters* p;
+
+    typedef runge_kutta_cash_karp54<Position> error_stepper_type;
+    typedef controlled_runge_kutta<error_stepper_type> controlled_stepper_type;
+    controlled_stepper_type stepper;
 
     /**
      * Initialize simulation.
