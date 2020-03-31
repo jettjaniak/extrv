@@ -14,9 +14,9 @@
 using namespace boost::numeric::odeint;
 
 struct SimulationState {
-    /// local height, distance and rotation
-    Position pos;
-    // TODO: use array as state type for odeint
+    /// log height, rotation and distance
+    array<double, 3> pos {};
+    double try_dt = MAX_DT;
 
     double time = 0.0;
     /// sphere's rotation in radians
@@ -39,7 +39,7 @@ struct SimulationState {
     size_t after_right_lig_ind = 1;
     size_t n_active_lig = 0;
 
-    vector<double> rates;  // TODO: resize at each simulation step
+    vector<double> rates;
 
     /// indices of bonded ligands
     set<size_t> bd_lig_ind;
@@ -50,7 +50,7 @@ struct SimulationState {
     /// model parameters
     Parameters* p;
 
-    typedef runge_kutta_cash_karp54<Position> error_stepper_type;
+    typedef runge_kutta_dopri5<array<double, 3>> error_stepper_type;
     typedef controlled_runge_kutta<error_stepper_type> controlled_stepper_type;
     controlled_stepper_type stepper;
 
@@ -74,22 +74,22 @@ struct SimulationState {
     /**
      * Do n_steps of simulation.
      *
-     * @param n_steps number of simulation steps
+     * @param max_steps number of simulation steps
      * @param dt time step in seconds
      * @param shear_rate fluid shear rate in 1/s
      */
-    void simulate(size_t n_steps);
+    void simulate(double max_time, size_t max_steps);
 
     /**
      * Do n_steps of simulation and return history updated every save_every steps.
      *
-     * @param n_steps number of simulation steps
+     * @param max_steps number of simulation steps
      * @param dt time step in seconds
      * @param shear_rate fluid shear rate in 1/s
      * @param save_every number of steps between history updates
      * @return simulation history
      */
-    History simulate_with_history(size_t n_steps, size_t save_every);
+    History simulate_with_history(double max_time, size_t max_steps, double save_every);
 
     /// reseed random number generator
     void reseed(unsigned int seed);
@@ -98,5 +98,5 @@ struct SimulationState {
 
     void update_rot_inc_ind();
 
-    void rhs(const Position & x, Position & dxdt, double /*t*/);
+    void rhs(const array<double, 3> & x, array<double, 3> & dxdt, double /*t*/);
 };

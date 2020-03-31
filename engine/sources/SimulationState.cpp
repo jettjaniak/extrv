@@ -16,7 +16,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
 
     stepper = make_controlled<error_stepper_type>(1e-10, 1e-6);
 
-    pos.h = h_0;
+    pos[POS_H] = log(h_0);
     reseed(seed);
 
     Parameters::LigandType* lig_type;
@@ -73,57 +73,108 @@ void SimulationState::simulate_one_step() {
             rates[rates_i] = 0.0;
             continue;
         }
-        rates[rates_i] = ligands[i].update_binding_rates(pos.h, pos.rot);
+        rates[rates_i] = ligands[i].update_binding_rates(pos);
         any_event_rate += rates[rates_i];
     }
 
     // rupture events
     for (const auto &i : bd_lig_ind) {
-        rates_i++;
-        rates[rates_i] = ligands[i].rupture_rate(pos.h, pos.rot);
+        rates[rates_i] = ligands[i].rupture_rate(pos);
         any_event_rate += rates[rates_i];
+        rates_i++;
     }
 
-    std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
-    double dt_bonds = dt_bonds_distribution(generator);
+    try_dt = std::min(try_dt, MAX_DT);
+    double dt_bonds = INFTY;
+    if (any_event_rate > 0.0) {
+        std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
+        dt_bonds = dt_bonds_distribution(generator);
+        if (dt_bonds <= try_dt) {
+            try_dt = dt_bonds;
+        }
+    }
 
-    double try_dt = dt_bonds;
     // TODO: define as class parameter or define operator()
     auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
 
     controlled_step_result result;
-    do result = stepper.try_step(rhs_system, pos, time, try_dt);
-    while (result == fail);
+    double dt_inout = 0.0, time_inout = 0.0;
+    array<double, 3> pos_inout {};
 
-    if (try_dt == dt_bonds) {
-        std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
-        size_t event_nr = which_event_distribution(generator);
-        // TODO: make bond changes
-        // TODO: update global / local rot and dist
-        // TODO: update bd_rec_x
+    bool step_done = false;
+    while (!step_done) {
+        dt_inout = try_dt;
+        pos_inout = pos;
+        time_inout = time;
+        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
+        // If solver is in the world of NaNs and infinities
+        if (helpers::pos_not_ok(pos_inout)) {
+            // we have to reset it
+            stepper = make_controlled<error_stepper_type>(ABS_ERR, REL_ERR);
+            // and reduce the step size
+            try_dt /= 2;
+            continue;
+        }
+        if (result == fail) {
+            // solver made dt_inout smaller
+            try_dt = dt_inout;
+            continue;
+        }
+        step_done = true;
     }
 
+    bool bonds = dt_bonds == try_dt;
+    try_dt = dt_inout;  // possibly larger after successful step
+    pos = pos_inout;
+    time = time_inout;
 
+    if (bonds) {
+        std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
+        size_t event_nr = which_event_distribution(generator);
+        // binding event
+        if (event_nr < n_active_lig) {
+            bd_lig_ind.insert(event_nr);
+            ligands[event_nr].bond(pos[POS_ROT], generator);
+        }
+        // rupture event
+        else {
+            auto it = bd_lig_ind.begin();
+            std::advance(it, event_nr - n_active_lig);
+            ligands[*it].rupture();
+            bd_lig_ind.erase(*it);
+        }
 
-//    // move surface in x direction (sphere's center is always at origin),
-//    // i.e. move bonded receptors on surface in opposite direction
-//    for (auto & bd_i : bd_lig_ind)
-//        ligands[bd_i].move_bd_rec(x_dist);
+        // ODE has changed, reset stepper
+        stepper = make_controlled<error_stepper_type>(ABS_ERR, REL_ERR);
 
+        double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
+        global_rot += pos[POS_ROT] - rot_reminder;
+        pos[POS_ROT] = rot_reminder;
+
+        for (const auto &i : bd_lig_ind)
+            ligands[i].bd_rec_x -= pos[POS_DIST];
+        global_dist += pos[POS_DIST];
+        pos[POS_DIST] = 0.0;
+    }
 }
 
-void SimulationState::simulate(size_t n_steps) {
-    for (int i = 0; i < n_steps; ++i)
+void SimulationState::simulate(double max_time, size_t max_steps) {
+    for (size_t i = 0; i < max_steps && time < max_time; ++i) {
         simulate_one_step();
+    }
 }
 
-History SimulationState::simulate_with_history(size_t n_steps, size_t save_every) {
+History SimulationState::simulate_with_history(double max_time, size_t max_steps, double save_every) {
     History hist;
     hist.update(this);
-    for (int i = 1; i <= n_steps; ++i) {
+
+    double last_time = time;
+    for (size_t i = 1; i <= max_steps && time < max_time; ++i) {
         simulate_one_step();
-        if (i % save_every == 0)
+        if (time - last_time >= save_every) {
+            last_time = time;
             hist.update(this);
+        }
     }
     hist.finish();
     return hist;
@@ -134,19 +185,20 @@ void SimulationState::reseed(unsigned int seed) {
 }
 
 void SimulationState::update_rot_inc_range() {
-    if (p->max_surf_dist <= pos.h) {
-        left_rot_inc = right_rot_inc = - pos.rot;  // it has to be local rotation in [0, 2 PI]
+    if (p->max_surf_dist <= exp(pos[POS_H])) {
+        left_rot_inc = right_rot_inc = - pos[POS_ROT];
         return;
     }
     // rot + rot_inc, in [0, π]
-    double beta = acos(1 - (p->max_surf_dist - pos.h) / p->r_cell);
-    right_rot_inc = beta - pos.rot;
-    left_rot_inc = 2 * PI - beta - pos.rot;
+    double beta = acos(1 - (p->max_surf_dist - exp(pos[POS_H])) / p->r_cell);
+    right_rot_inc = beta - pos[POS_ROT];
+    left_rot_inc = 2 * PI - beta - pos[POS_ROT];
     // projecting on [0, 2π]
     right_rot_inc = std::fmod(right_rot_inc + 2 * PI, 2 * PI);
     left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
 }
 
+// TODO: move it somewhere else
 void SimulationState::update_rot_inc_ind() {
     // |----[------]----|
     // 0    L      R   2 PI
@@ -312,6 +364,8 @@ void SimulationState::update_rot_inc_ind() {
         }
     }
 
+    after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
+
     if (left_lig_ind <= right_lig_ind)
         n_active_lig = right_lig_ind - left_lig_ind + 1;
     else
@@ -319,13 +373,14 @@ void SimulationState::update_rot_inc_ind() {
 
 }
 
-void SimulationState::rhs(const Position &x, Position &dxdt, double /*t*/) {
-    forces_t f = forces::non_bond_forces(shear_rate, x.h, p);
+void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
+    forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_H]), p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(x.h, x.rot);
+        f += ligands[bd_i].bond_forces(pos);
 
-    dxdt = velocities::compute_velocities(x.h, f, p);
+    dxdt = velocities::compute_velocities(x[POS_H], f, p);
+    return;
 }
 
 

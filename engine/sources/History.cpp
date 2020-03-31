@@ -11,9 +11,10 @@ History::BondTrajectory::BondTrajectory(size_t start_i) : start_i(start_i) {}
 
 void History::update(const SimulationState *s) {
     update_bond_trajectories(s);
-    h.push_back(s->h);
-    rot.push_back(s->rot);
-    dist.push_back(s->dist);
+    time.push_back(s->time);
+    h.push_back(exp(s->pos[POS_H]));
+    rot.push_back(s->global_rot + s->pos[POS_ROT]);
+    dist.push_back(s->global_dist + s->pos[POS_DIST]);
     hist_i++;
 }
 
@@ -68,7 +69,7 @@ void History::update_bond_trajectories(const SimulationState *s) {
             abort();
         vector<xy_t> &active_traj_pos = (*active_traj_it).second.positions;
         const Ligand &ligand = s->ligands[cli];
-        active_traj_pos.emplace_back(ligand.x_pos(s->rot), ligand.y_pos(s->rot));
+        active_traj_pos.emplace_back(ligand.x_pos(s->pos[POS_ROT]), ligand.y_pos(s->pos[POS_ROT]));
     }
 
     prev_blis = curr_blis;

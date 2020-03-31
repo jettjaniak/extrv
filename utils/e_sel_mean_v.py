@@ -17,6 +17,8 @@ def setup_parameters(fold_change):
         visc=0.01,
         temp=310,
         dens_diff=0.05,
+        rep_0=5074.616349947093,
+        rep_scale=1146.409200818891
     )
     psgl_plus_esel_bond = SlipBondType(
         eq_bond_len=27,
@@ -43,24 +45,22 @@ def iteration_wrapper(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt
         raise e
 
 
-def iteration(fold_change=1., seed=0, max_time=5, falling_time=1, max_dt=10**-6,
-              shear=1, initial_height=0.03, save_every=1000):
+def iteration(fold_change=1., seed=0, shear=1, initial_height=0.03, save_every=1e-4, max_time=5.0):
     p, psgl, psgl_plus_esel_bond = setup_parameters(fold_change)
-    k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0
-    dt = min(0.1 / k_on_0, max_dt)
-    n_steps = int(max_time / dt)
-    n_steps_falling = int(falling_time / dt)
-
     ss = SimulationState(initial_height, p, seed)
 
-    ss.simulate(n_steps_falling, dt, shear=0.0)  # falling
-    sim_hist = ss.simulate_with_history(n_steps, dt, shear, save_every=save_every)
+    # ss.simulate(max_time=1.0, max_steps=int(1e6))  # falling
+    # ss.shear_rate = shear
+    sim_hist = ss.simulate_with_history(max_time=1.0, max_steps=int(1e6), save_every=save_every)
+    ss.shear_rate = shear
+    sim_hist = ss.simulate_with_history(max_time=max_time, max_steps=int(max_time * 1e6), save_every=save_every)
     print("simulation done for seed", seed)
 
-    vel = np.diff(sim_hist.dist) / (dt * save_every)
-    # discard first 20% of velocity data
-    vel = vel[len(vel) // 5:]
-    return fold_change, np.mean(vel)
+    # vel = np.diff(sim_hist.dist) / np.diff(sim_hist.time)
+    # # discard first 20% of velocity data
+    # vel = vel[len(vel) // 5:]
+    return fold_change, 0, sim_hist
+    # return fold_change, np.mean(vel), sim_hist
 
 
 def iteration_callback(result):

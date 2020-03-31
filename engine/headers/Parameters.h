@@ -25,14 +25,6 @@ struct Parameters {
         void add_bond_type(AbstractBondType* bond_type);
 
         /**
-         * Compute rates of binding for each bond type that a ligand of this type can form.
-         *
-         * @param surface_dist ligand's distance from surface in μm
-         * @return vector of binding rates for each bond type, in the same order they were added
-         */
-        void compute_binding_rates(double surface_dist, vector<double> &binding_rates);
-
-        /**
          * Update maximal surface distance for which any binding rate is higher than MIN_RATE.
          */
         void update_max_surf_dist();
@@ -47,6 +39,11 @@ struct Parameters {
     /// density difference between cell and fluid (cell is more dense) in kg/μm^3
     double dens_diff;
 
+    /// repulsive force coefficient in kg μm / s^2
+    double rep_0;
+    /// scale in repulsive force in 1 (no unit)
+    double rep_scale;
+
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
@@ -58,8 +55,10 @@ struct Parameters {
      * @param visc fluid viscosity in g / (cm s)
      * @param temp temperature in K
      * @param dens_diff density difference between cell and fluid (cell is more dense) in g/cm^3
+     * @param rep_0 repulsive force coefficient in kg μm / s^2
+     * @param rep_scale scale in repulsive force in 1 (no unit)
      */
-    Parameters(double r_cell, double visc, double temp, double dens_diff);
+    Parameters(double r_cell, double visc, double temp, double dens_diff, double rep_0, double rep_scale);
 
     /**
      * Add n_of_lig ligands of lig_type type.

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include <set>
 #include <unordered_map>
 #include <random>
@@ -9,6 +10,7 @@
 #include "constants.h"
 
 using std::vector;
+using std::array;
 using std::set;
 using std::unordered_map;
 using std::pair;

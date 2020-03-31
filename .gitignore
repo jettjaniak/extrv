@@ -1,7 +1,4 @@
-cmake-build-debug/
 .idea/
-wrappers/build/
-wrappers/*.cpp
 *.pyd
 *.pyc
 *.ilk
@@ -9,3 +6,6 @@ wrappers/*.cpp
 *.pdb
 
 engine/cmake-build-release/
+engine/cmake-build-debug/
+
+engine/libs/boost_1_72_0

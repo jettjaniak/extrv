@@ -48,16 +48,28 @@ namespace helpers {
      * Could be O(log n).
      */
     double linear_interpolation(const vector<double> &points_x, const vector<double> &points_y, double x) {
-        if (x < points_x.front() || x > points_x.back())
+        if (x < points_x.front())
             abort();
 
-        size_t i = 1;
-        while (x > points_x[i])
-            i++;
+        size_t i;
+        double y_0, dist, slope;
 
-        double y_0 = points_y[i - 1];
-        double dist = x - points_x[i - 1];
-        double slope = (points_y[i] - points_y[i - 1]) / (points_x[i] - points_x[i - 1]);
+        // interpolate
+        if (x <= points_x.back()) {
+            i = 1;
+            while (x > points_x[i])
+                i++;
+            y_0 = points_y[i - 1];
+            dist = x - points_x[i - 1];
+            slope = (points_y[i] - points_y[i - 1]) / (points_x[i] - points_x[i - 1]);
+        }
+        // extrapolate
+        else {
+            i = points_x.size() - 1;
+            y_0 = points_y.back();
+            dist = x - points_x.back();
+            slope = (points_y[i] - points_y[i - 1]) / (points_x[i] - points_x[i - 1]);
+        }
 
         return y_0 + dist * slope;
     }
@@ -110,6 +122,10 @@ namespace helpers {
 
     size_t cyclic_add(size_t a, int x, size_t b) {
         return positive_mod(a + x, b);
+    }
+
+    bool pos_not_ok(const array<double, 3> &pos) {
+        return std::any_of(pos.begin(), pos.end(), [](double y){return std::isnan(y) || std::isinf(y);});
     }
 
 }

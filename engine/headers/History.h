@@ -25,6 +25,7 @@ public:
         explicit BondTrajectory(size_t start_i);
     };
 
+    vector<double> time;
     /// vector of heights above surface in μm
     vector<double> h;
     /// vector of sphere's rotation in radians

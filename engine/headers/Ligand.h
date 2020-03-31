@@ -59,66 +59,31 @@ struct Ligand {
     /**
      * Compute distance from ligand to surface.
      *
-     * @param h distance from sphere to surface
-     * @param rot sphere's rotation
-     * @return distance from ligand to surface
+     * TODO
      */
-    double surface_dist(double h, double rot);
+    double surface_dist(const array<double, 3> & pos);
 
     /**
      * Compute bond length.
      * Should abort if ligand is not bonded (bond_state == 0).
      *
-     * @param h distance from sphere to surface
-     * @param rot sphere's rotation
-     * @return bond length in μm
+     * TODO
      */
-    double bond_length(double h, double rot);
+    double bond_length(const array<double, 3> & pos);
 
     /**
      * Returns parameters of current bond.
      */
     AbstractBondType* get_curr_bond_type();
 
-    double update_binding_rates(double h, double rot);
+    double update_binding_rates(const array<double, 3> & pos);
 
-    double rupture_rate(double h, double rot);
-
-    /**
-     * Computes bonding probability and draws if bonding will happen.
-     * If ligand is bonded (bond_state != 0), always returns false.
-     * If there are more than one receptor to bond to, it chooses one accordingly to probability distribution.
-     * If bonding happens, it saves all bonding information except for bd_rec_x - it has to be updated after
-     * the sphere is moved, because we assume bonding will happen at the end of time step.
-     *
-     * @param h distance from sphere to surface
-     * @param rot sphere's rotation
-     * @param dt simulation time step
-     * @param generator random number generator
-     * @return true if bonding will happen, false otherwise
-     */
-    bool prepare_binding(double h, double rot, double dt, generator_t &generator);
+    double rupture_rate(const array<double, 3> & pos);
 
     /**
-     * Computes bond rupture probability and draws if rupture will happen.
-     * Should abort if ligand is not bonded (bond_state == 0).
-     *
-     * @param h distance from sphere to surface
-     * @param rot sphere's rotation
-     * @param dt simulation time step
-     * @param generator random number generator
-     * @return true if bond rupture will happen, false otherwise
+     * TODO
      */
-    bool prepare_rupture(double h, double rot, double dt, generator_t &generator);
-
-    /**
-     * Creates previously prepared bond.
-     * It will set `bd_rec_x` and `bond_state` to appropriate values
-     * and `prepared_bond_state` to -1.
-     *
-     * @param rot sphere's rotation
-     */
-    void bond(double rot);
+    void bond(double rot, generator_t &generator);
 
     /**
      * Ruptures current bond.
@@ -127,23 +92,11 @@ struct Ligand {
     void rupture();
 
     /**
-     * Change position of receptor bonded to this ligand.
-     *
-     * In our frame of reference cell center is at (0, 0),
-     * so when we move in x direction by x_dist we have to move receptor by - x_dist.
-     *
-     * @param x_dist how much cell moved in x direction in μm
-     */
-    void move_bd_rec(double x_dist);
-
-    /**
      * Computes forces that bond exerts on the sphere.
      *
-     * @param h distance from sphere to surface
-     * @param rot sphere's rotation
-     * @return forces and torques exerted on the sphere
+     * TODO
      */
-    forces_t bond_forces(double h, double rot);
+    forces_t bond_forces(const array<double, 3> & pos);
 };
 
 

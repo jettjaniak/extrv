@@ -10,7 +10,9 @@ int main() {
                 4.5,
                 0.01,
                 310,
-                0.05
+                0.05,
+                0.004213242356967143,
+                738.979592388574
         );
 
         auto psgl = new Parameters::LigandType();
@@ -28,15 +30,12 @@ int main() {
         psgl->add_bond_type(psgl_plus_esel_bond);
         p->add_ligands(psgl, 20000);
 
-        double k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0;
-        double dt = std::min(0.1 / k_on_0, 1e-6);
-        size_t n_steps = 5.0 / dt;
-        size_t n_steps_falling = 1.0 / dt;
-
         std::cout << i << std::endl;
         auto s = SimulationState(0.03, p, 100 + i);
-        s.simulate_one_step();
-//        s.simulate_with_history(n_steps_falling, 0);
+//        for (int j = 0; j < 10000; j++)
+//            s.simulate_one_step();
+        s.simulate_with_history(1.0, size_t(1e5), 1e-2);
+        s.simulate_with_history(1.0, size_t(1e5), 1e-2);
 //        s.simulate_with_history(n_steps, 0);
     }
 }
