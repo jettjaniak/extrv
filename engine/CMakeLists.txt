@@ -21,14 +21,14 @@ pybind11_add_module(extrv_engine wrappers.cpp
         sources/History.cpp
         sources/AbstractBondType.cpp)
 
-#add_executable(extrv main.cpp
-#        sources/helpers.cpp
-#        sources/Ligand.cpp
-#        sources/SimulationState.cpp
-#        sources/velocities.cpp
-#        sources/forces.cpp
-#        sources/interpolated.cpp
-#        sources/Parameters.cpp
-#        sources/History.cpp
-#        sources/AbstractBondType.cpp)
+add_executable(extrv main.cpp
+        sources/helpers.cpp
+        sources/Ligand.cpp
+        sources/SimulationState.cpp
+        sources/velocities.cpp
+        sources/forces.cpp
+        sources/interpolated.cpp
+        sources/Parameters.cpp
+        sources/History.cpp
+        sources/AbstractBondType.cpp)
 

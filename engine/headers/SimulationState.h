@@ -14,6 +14,16 @@
 using namespace boost::numeric::odeint;
 
 struct SimulationState {
+    struct Diagnostic {
+        /// stores frequencies of -int(log10(try_dt))
+        vector<size_t> dt_freq;
+        /// how many times position was NaN or outside allowed range
+        size_t n_pos_not_ok = 0;
+
+        void add_dt(double dt);
+    };
+    Diagnostic diag;
+
     /// log height, rotation and distance
     array<double, 3> pos {};
     double try_dt = MAX_DT;

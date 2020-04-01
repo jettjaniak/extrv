@@ -24,7 +24,7 @@ namespace velocities {
         double o_z = (4 * p->r_cell * f.f_x * t_t_val + 3 * f_t_val * f.t_z) / d_24pi_mu_r3;
 
         array<double, 3> ret {};
-        ret[POS_H] = v_y / h;  // d log(h) / dt = (1/h) * (d h / dt)
+        ret[POS_LOG_H] = v_y / h;  // d log(h) / dt = (1/h) * (d h / dt)
         ret[POS_ROT] = o_z;
         ret[POS_DIST] = v_x;
 

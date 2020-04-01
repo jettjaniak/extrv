@@ -12,7 +12,7 @@ History::BondTrajectory::BondTrajectory(size_t start_i) : start_i(start_i) {}
 void History::update(const SimulationState *s) {
     update_bond_trajectories(s);
     time.push_back(s->time);
-    h.push_back(exp(s->pos[POS_H]));
+    h.push_back(exp(s->pos[POS_LOG_H]));
     rot.push_back(s->global_rot + s->pos[POS_ROT]);
     dist.push_back(s->global_dist + s->pos[POS_DIST]);
     hist_i++;

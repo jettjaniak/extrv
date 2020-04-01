@@ -11,12 +11,14 @@ int main() {
                 0.01,
                 310,
                 0.05,
-                0.004213242356967143,
-                738.979592388574
+                5074.616349947093,
+                1146.409200818891,
+                1e-10,
+                1e-6
         );
 
         auto psgl = new Parameters::LigandType();
-        double fold_change = 0.714285714285713;
+        double fold_change = 1.0;
         double REC_DENS_0 = 750;
         double BINDING_RATE_0 = 0.06;
         auto psgl_plus_esel_bond = new SlipBondType(
@@ -30,12 +32,13 @@ int main() {
         psgl->add_bond_type(psgl_plus_esel_bond);
         p->add_ligands(psgl, 20000);
 
-        std::cout << i << std::endl;
-        auto s = SimulationState(0.03, p, 100 + i);
+        auto s = SimulationState(0.03, p, 110);
 //        for (int j = 0; j < 10000; j++)
 //            s.simulate_one_step();
-        s.simulate_with_history(1.0, size_t(1e5), 1e-2);
-        s.simulate_with_history(1.0, size_t(1e5), 1e-2);
+        s.simulate(1.0, size_t(1e6));
+        s.shear_rate = 0.5;
+        s.simulate(5.0, size_t(5e6));
+        s.simulate(5.0, size_t(5e6));
 //        s.simulate_with_history(n_steps, 0);
     }
 }

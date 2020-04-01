@@ -14,9 +14,9 @@ namespace pl = std::placeholders;
 
 SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
 
-    stepper = make_controlled<error_stepper_type>(1e-10, 1e-6);
+    stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
 
-    pos[POS_H] = log(h_0);
+    pos[POS_LOG_H] = log(h_0);
     reseed(seed);
 
     Parameters::LigandType* lig_type;
@@ -109,8 +109,9 @@ void SimulationState::simulate_one_step() {
         result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
         // If solver is in the world of NaNs and infinities
         if (helpers::pos_not_ok(pos_inout)) {
+            diag.n_pos_not_ok++;
             // we have to reset it
-            stepper = make_controlled<error_stepper_type>(ABS_ERR, REL_ERR);
+            stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
             // and reduce the step size
             try_dt /= 2;
             continue;
@@ -124,6 +125,7 @@ void SimulationState::simulate_one_step() {
     }
 
     bool bonds = dt_bonds == try_dt;
+    diag.add_dt(try_dt);  // diagnostics
     try_dt = dt_inout;  // possibly larger after successful step
     pos = pos_inout;
     time = time_inout;
@@ -145,7 +147,7 @@ void SimulationState::simulate_one_step() {
         }
 
         // ODE has changed, reset stepper
-        stepper = make_controlled<error_stepper_type>(ABS_ERR, REL_ERR);
+        stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
 
         double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
         global_rot += pos[POS_ROT] - rot_reminder;
@@ -185,12 +187,12 @@ void SimulationState::reseed(unsigned int seed) {
 }
 
 void SimulationState::update_rot_inc_range() {
-    if (p->max_surf_dist <= exp(pos[POS_H])) {
+    if (p->max_surf_dist <= exp(pos[POS_LOG_H])) {
         left_rot_inc = right_rot_inc = - pos[POS_ROT];
         return;
     }
     // rot + rot_inc, in [0, π]
-    double beta = acos(1 - (p->max_surf_dist - exp(pos[POS_H])) / p->r_cell);
+    double beta = acos(1 - (p->max_surf_dist - exp(pos[POS_LOG_H])) / p->r_cell);
     right_rot_inc = beta - pos[POS_ROT];
     left_rot_inc = 2 * PI - beta - pos[POS_ROT];
     // projecting on [0, 2π]
@@ -374,13 +376,22 @@ void SimulationState::update_rot_inc_ind() {
 }
 
 void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
-    forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_H]), p);
+    forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_LOG_H]), p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
         f += ligands[bd_i].bond_forces(pos);
 
-    dxdt = velocities::compute_velocities(x[POS_H], f, p);
+    dxdt = velocities::compute_velocities(x[POS_LOG_H], f, p);
     return;
 }
 
 
+void SimulationState::Diagnostic::add_dt(double dt) {
+    size_t i = -log10(dt);
+    if (dt_freq.size() < i + 1) {
+        if (i + 1 > dt_freq.max_size())
+            std::cout << i + 1 << " > max_size, dt = " << dt << std::endl;
+        dt_freq.resize(i + 1);
+    }
+    dt_freq[i]++;
+}

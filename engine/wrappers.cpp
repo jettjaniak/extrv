@@ -99,8 +99,9 @@ PYBIND11_MODULE(extrv_engine, m) {
 
 
     p.def(
-            py::init<double, double, double, double, double, double>(),
-            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a, "rep_0"_a, "rep_scale"_a
+            py::init<double, double, double, double, double, double, double, double>(),
+            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a,
+            "rep_0"_a, "rep_scale"_a, "abs_err"_a, "rel_err"_a
     );
 
     p.def("add_ligands", &Parameters::add_ligands, "lig_type"_a, "n_of_lig"_a);
@@ -138,6 +139,12 @@ PYBIND11_MODULE(extrv_engine, m) {
 
     py::class_<SimulationState> s(m, "SimulationState");
 
+    // Diagnostic
+    py::class_<SimulationState::Diagnostic> diag(s, "Diagnostic");
+
+    diag.def_readonly("dt_freq", &SimulationState::Diagnostic::dt_freq)
+        .def_readonly("n_pos_not_ok", &SimulationState::Diagnostic::n_pos_not_ok);
+
     s.def(
         py::init<double, Parameters*, unsigned int>(),
         "h_0"_a, "p"_a, "seed"_a
@@ -151,7 +158,9 @@ PYBIND11_MODULE(extrv_engine, m) {
     s.def_readwrite("pos", &SimulationState::pos)
      .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
      .def_readwrite("p", &SimulationState::p)
-     .def_readwrite("shear_rate", &SimulationState::shear_rate);
+     .def_readwrite("shear_rate", &SimulationState::shear_rate)
+     .def_readonly("diag", &SimulationState::diag)
+     .def_readonly("n_active_lig", &SimulationState::n_active_lig);
 }
 
 
