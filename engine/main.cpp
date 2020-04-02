@@ -5,40 +5,34 @@
 #include <iostream>
 
 int main() {
-    for (int i = 0; i < 1; i++) {
-        auto p = new Parameters(
-                4.5,
-                0.01,
-                310,
-                0.05,
-                // not using it
-                1e3,
-                5
-        );
+    auto p = new Parameters(
+            4.5,
+            0.01,
+            310,
+            0.05,
+            5074.616349947093,
+            1146.409200818891
+    );
 
-        auto psgl = new Parameters::LigandType();
-        double fold_change = 0.714285714285713;
-        double REC_DENS_0 = 750;
-        double BINDING_RATE_0 = 0.06;
-        auto psgl_plus_esel_bond = new SlipBondType(
-                27,
-                100,
-                BINDING_RATE_0,
-                REC_DENS_0 * fold_change,
-                0.18,
-                2.6
-        );
-        psgl->add_bond_type(psgl_plus_esel_bond);
-        p->add_ligands(psgl, 20000);
+    auto psgl = new Parameters::LigandType();
+    double REC_DENS_0 = 750;
+    double BINDING_RATE_0 = 0.06;
+    auto psgl_plus_esel_bond = new SlipBondType(
+            27,
+            100,
+            BINDING_RATE_0,
+            REC_DENS_0,
+            0.18,
+            2.6
+    );
+    psgl->add_bond_type(psgl_plus_esel_bond);
+    p->add_ligands(psgl, 20000);
 
-        double k_on_0 = fold_change * REC_DENS_0 * BINDING_RATE_0;
-        double dt = std::min(0.1 / k_on_0, 1e-6);
-        size_t n_steps = 5.0 / dt;
-        size_t n_steps_falling = 1.0 / dt;
+    double dt = 1e-6;
+    size_t n_steps = 5e6;
+    size_t n_steps_falling = 1e6;
 
-        std::cout << i << std::endl;
-        auto s = SimulationState(0.03, p, 100 + i);
-        s.simulate_with_history(n_steps_falling, dt, 0);
-        s.simulate_with_history(n_steps, dt, 1);
-    }
+    auto s = SimulationState(0.03, p, 104);
+    s.simulate(n_steps_falling, dt, 0);
+    std::cout << s.bd_lig_ind.size() << std::endl;
 }

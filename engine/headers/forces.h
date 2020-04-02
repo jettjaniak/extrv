@@ -38,12 +38,4 @@ namespace forces {
      * @param p model's parameters
      */
     double grav_force(const Parameters *p);
-
-    double van_der_waals_potential(double h, const Parameters* p);
-
-    double electrostatic_potential(double h, const Parameters* p);
-
-    double steric_stabilization_potential(double h, const Parameters* p);
-
-    double nonspecific_force(double h, const Parameters* p);
 }

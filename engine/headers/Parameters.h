@@ -47,6 +47,11 @@ struct Parameters {
     /// density difference between cell and fluid (cell is more dense) in kg/μm^3
     double dens_diff;
 
+    /// repulsive force coefficient in kg μm / s^2
+    double rep_0;
+    /// scale in repulsive force in 1 (no unit)
+    double rep_scale;
+
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
@@ -58,8 +63,10 @@ struct Parameters {
      * @param visc fluid viscosity in g / (cm s)
      * @param temp temperature in K
      * @param dens_diff density difference between cell and fluid (cell is more dense) in g/cm^3
+     * @param rep_0 repulsive force coefficient in kg μm / s^2
+     * @param rep_scale scale in repulsive force in 1 (no unit)
      */
-    Parameters(double r_cell, double visc, double temp, double dens_diff);
+    Parameters(double r_cell, double visc, double temp, double dens_diff, double rep_0, double rep_scale);
 
     /**
      * Add n_of_lig ligands of lig_type type.
