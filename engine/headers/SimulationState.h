@@ -108,5 +108,9 @@ struct SimulationState {
 
     void update_rot_inc_ind();
 
+    void check_rot_ind();
+
     void rhs(const array<double, 3> & x, array<double, 3> & dxdt, double /*t*/);
+
+    double do_ode_step();
 };

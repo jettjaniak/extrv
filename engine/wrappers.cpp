@@ -155,11 +155,13 @@ PYBIND11_MODULE(extrv_engine, m) {
      .def("simulate_with_history", &SimulationState::simulate_with_history,
           "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
 
-    s.def_readwrite("pos", &SimulationState::pos)
+    s.def_readwrite("time", &SimulationState::time)
+     .def_readwrite("pos", &SimulationState::pos)
      .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
      .def_readwrite("p", &SimulationState::p)
      .def_readwrite("shear_rate", &SimulationState::shear_rate)
      .def_readonly("diag", &SimulationState::diag)
+     .def_readwrite("try_dt", &SimulationState::try_dt)
      .def_readonly("n_active_lig", &SimulationState::n_active_lig);
 }
 

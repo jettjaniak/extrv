@@ -18,3 +18,8 @@ constexpr int POS_DIST = 2;
 
 constexpr double MAX_DT = 0.1;
 constexpr double MAX_LOG_H = 2.5;
+
+constexpr double DOUBLE_MIN = std::numeric_limits<double>::min();
+constexpr double DOUBLE_DENORM_MIN = std::numeric_limits<double>::denorm_min();
+
+

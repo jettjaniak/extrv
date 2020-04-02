@@ -44,23 +44,13 @@ void SimulationState::simulate_one_step() {
     update_rot_inc_range();
     update_rot_inc_ind();
 
-    // TODO: just for debug, remove
-    if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
-        Ligand & left_lig = ligands[left_lig_ind];
-        Ligand & right_lig = ligands[right_lig_ind];
-        if (left_rot_inc <= right_rot_inc) {
-            if (left_lig.rot_inc < left_rot_inc || left_lig.rot_inc > right_rot_inc ||
-                right_lig.rot_inc < left_rot_inc || right_lig.rot_inc > right_rot_inc) {
-                std::cout << "wrong rot_inc indices";
-            }
-        } else {
-            if ((left_lig.rot_inc > right_rot_inc && left_lig.rot_inc < left_rot_inc) ||
-                (right_lig.rot_inc > right_rot_inc && right_lig.rot_inc < left_rot_inc)) {
-                std::cout << "wrong rot_inc indices";
-            }
-        }
-    }
+    // just for debug
+    // check_rot_ind();
 
+
+    /////////////////////////////////////
+    //  Gillespie algorithm for bonds  //
+    /////////////////////////////////////
 
     double any_event_rate = 0.0;
     size_t rates_i = 0;
@@ -84,6 +74,7 @@ void SimulationState::simulate_one_step() {
         rates_i++;
     }
 
+
     try_dt = std::min(try_dt, MAX_DT);
     double dt_bonds = INFTY;
     if (any_event_rate > 0.0) {
@@ -94,49 +85,16 @@ void SimulationState::simulate_one_step() {
         }
     }
 
-    // TODO: define as class parameter or define operator()
-    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+    double step_done_with_dt = do_ode_step();
 
-    controlled_step_result result;
-    double dt_inout = 0.0, time_inout = 0.0;
-    array<double, 3> pos_inout {};
-
-    bool step_done = false;
-    while (!step_done) {
-        dt_inout = try_dt;
-        pos_inout = pos;
-        time_inout = time;
-        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
-        // If solver is in the world of NaNs and infinities
-        if (helpers::pos_not_ok(pos_inout)) {
-            diag.n_pos_not_ok++;
-            // we have to reset it
-            stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
-            // and reduce the step size
-            try_dt /= 2;
-            continue;
-        }
-        if (result == fail) {
-            // solver made dt_inout smaller
-            try_dt = dt_inout;
-            continue;
-        }
-        step_done = true;
-    }
-
-    bool bonds = dt_bonds == try_dt;
-    diag.add_dt(try_dt);  // diagnostics
-    try_dt = dt_inout;  // possibly larger after successful step
-    pos = pos_inout;
-    time = time_inout;
-
-    if (bonds) {
+    if (step_done_with_dt == dt_bonds) {
         std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
         size_t event_nr = which_event_distribution(generator);
         // binding event
         if (event_nr < n_active_lig) {
-            bd_lig_ind.insert(event_nr);
-            ligands[event_nr].bond(pos[POS_ROT], generator);
+            size_t lig_nr = (left_lig_ind + event_nr) % ligands.size();
+            bd_lig_ind.insert(lig_nr);
+            ligands[lig_nr].bond(pos[POS_ROT], generator);
         }
         // rupture event
         else {
@@ -383,6 +341,75 @@ void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, dou
 
     dxdt = velocities::compute_velocities(x[POS_LOG_H], f, p);
     return;
+}
+
+void SimulationState::check_rot_ind() {
+    if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
+        Ligand & left_lig = ligands[left_lig_ind];
+        Ligand & right_lig = ligands[right_lig_ind];
+        if (left_rot_inc <= right_rot_inc) {
+            if (left_lig.rot_inc < left_rot_inc || left_lig.rot_inc > right_rot_inc ||
+                right_lig.rot_inc < left_rot_inc || right_lig.rot_inc > right_rot_inc) {
+                std::cout << "wrong rot_inc indices";
+            }
+        } else {
+            if ((left_lig.rot_inc > right_rot_inc && left_lig.rot_inc < left_rot_inc) ||
+                (right_lig.rot_inc > right_rot_inc && right_lig.rot_inc < left_rot_inc)) {
+                std::cout << "wrong rot_inc indices";
+            }
+        }
+    }
+}
+
+double SimulationState::do_ode_step() {
+    // TODO: define as class parameter or define operator()
+    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+
+    controlled_step_result result;
+    double dt_inout = 0.0, time_inout = 0.0;
+    array<double, 3> pos_inout {};
+
+    bool dt_zero = false;
+    bool step_done = false;
+    while (!step_done) {
+        dt_inout = try_dt;
+        pos_inout = pos;
+        time_inout = time;
+        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
+        // If solver is in the world of NaNs and infinities
+        if (helpers::pos_not_ok(pos_inout)) {
+            diag.n_pos_not_ok++;
+            // we have to reset it
+            stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
+            // and reduce the step size
+            try_dt /= 2;
+            continue;
+        }
+        if (result == fail) {
+            // solver made dt_inout smaller
+            try_dt = dt_inout;
+            continue;
+        }
+        if (try_dt == 0) {
+            if (dt_zero) {
+                std::cout << "dt was 0 twice in a row, aborting" << std::endl;
+                abort();
+            } else {
+                dt_zero = true;
+            }
+            try_dt = DOUBLE_MIN; // DOUBLE_DENORM_MIN;
+            continue;
+        }
+        step_done = true;
+    }
+
+    double step_done_with_dt = try_dt;
+    diag.add_dt(step_done_with_dt);  // diagnostics
+    try_dt = dt_inout;  // possibly larger after successful step
+    pos = pos_inout;
+    time = time_inout;
+
+    return step_done_with_dt;
 }
 
 
