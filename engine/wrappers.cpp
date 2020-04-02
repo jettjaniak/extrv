@@ -99,8 +99,9 @@ PYBIND11_MODULE(extrv_engine, m) {
 
 
     p.def(
-            py::init<double, double, double, double>(),
-            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a
+            py::init<double, double, double, double, double, double>(),
+            "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a,
+            "rep_0"_a, "rep_scale"_a
     );
 
     p.def("add_ligands", &Parameters::add_ligands, "lig_type"_a, "n_of_lig"_a);
@@ -109,6 +110,8 @@ PYBIND11_MODULE(extrv_engine, m) {
      .def_readwrite("visc", &Parameters::visc)
      .def_readwrite("temp", &Parameters::temp)
      .def_readwrite("dens_diff", &Parameters::dens_diff)
+     .def_readwrite("rep_0", &Parameters::rep_0)
+     .def_readwrite("rep_scale", &Parameters::rep_scale)
      .def_readwrite("lig_types_and_nrs", &Parameters::lig_types_and_nrs);
 
 
@@ -123,10 +126,11 @@ PYBIND11_MODULE(extrv_engine, m) {
     bond_traj.def_readonly("start_i", &History::BondTrajectory::start_i)
             .def_readonly("positions", &History::BondTrajectory::positions);
 
-    hist.def_readonly("h", &History::h)
-            .def_readonly("rot", &History::rot)
-            .def_readonly("dist", &History::dist)
-            .def_readonly("bond_trajectories", &History::bond_trajectories);
+    hist.def_readonly("time", &History::time)
+        .def_readonly("h", &History::h)
+        .def_readonly("rot", &History::rot)
+        .def_readonly("dist", &History::dist)
+        .def_readonly("bond_trajectories", &History::bond_trajectories);
 
 
     ///////////////////////
@@ -145,7 +149,8 @@ PYBIND11_MODULE(extrv_engine, m) {
      .def("simulate_with_history", &SimulationState::simulate_with_history,
           "n_steps"_a, "dt"_a, "shear"_a, "save_every"_a=1000);
 
-    s.def_readwrite("h", &SimulationState::h)
+    s.def_readwrite("time", &SimulationState::h)
+     .def_readwrite("h", &SimulationState::h)
      .def_readwrite("rot", &SimulationState::rot)
      .def_readwrite("dist", &SimulationState::dist)
      .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
