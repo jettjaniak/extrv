@@ -8,6 +8,7 @@
 
 
 struct SimulationState {
+    double time;
     /// distance from sphere to surface in μm
     double h;
     /// sphere's rotation in radians

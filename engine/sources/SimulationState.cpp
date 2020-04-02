@@ -90,6 +90,8 @@ void SimulationState::simulate_one_step(double dt, double shear_rate) {
     // Move //
     //////////
 
+    time += dt;
+
     // update height
     h += dt * v.v_y;
     if (h < 0) abort();  // TODO: use throw / configure CLion to catch aborts
