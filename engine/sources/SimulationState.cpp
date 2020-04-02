@@ -44,6 +44,13 @@ void SimulationState::simulate_one_step() {
     update_rot_inc_range();
     update_rot_inc_ind();
 
+    after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
+
+    if (left_lig_ind <= right_lig_ind)
+        n_active_lig = right_lig_ind - left_lig_ind + 1;
+    else
+        n_active_lig = (right_lig_ind + ligands.size() - left_lig_ind + 1) % ligands.size();
+
     // just for debug
     // check_rot_ind();
 
@@ -74,6 +81,9 @@ void SimulationState::simulate_one_step() {
         rates_i++;
     }
 
+    static constexpr double max_rate = 1e80;
+    if (any_event_rate > max_rate)
+        std::cout << "EVENT RATE > " << max_rate << std::endl;
 
     try_dt = std::min(try_dt, MAX_DT);
     double dt_bonds = INFTY;
@@ -94,7 +104,7 @@ void SimulationState::simulate_one_step() {
         if (event_nr < n_active_lig) {
             size_t lig_nr = (left_lig_ind + event_nr) % ligands.size();
             bd_lig_ind.insert(lig_nr);
-            ligands[lig_nr].bond(pos[POS_ROT], generator);
+            ligands[lig_nr].bond(pos[POS_ROT], pos[POS_DIST], generator);
         }
         // rupture event
         else {
@@ -323,14 +333,6 @@ void SimulationState::update_rot_inc_ind() {
             }
         }
     }
-
-    after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
-
-    if (left_lig_ind <= right_lig_ind)
-        n_active_lig = right_lig_ind - left_lig_ind + 1;
-    else
-        n_active_lig = right_lig_ind + ligands.size() - left_lig_ind + 1;
-
 }
 
 void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {

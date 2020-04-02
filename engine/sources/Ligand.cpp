@@ -14,11 +14,11 @@ Ligand::Ligand(xy_t lig_xy, Parameters::LigandType *lig_type) : lig_type(lig_typ
 }
 
 
-void Ligand::bond(double rot, generator_t &generator) {
+void Ligand::bond(double rot, double dist, generator_t &generator) {
     std::discrete_distribution<int>
         which_bond_distr {binding_rates.begin(), binding_rates.end()};
     bond_state = which_bond_distr(generator) + 1;
-    bd_rec_x = x_pos(rot);
+    bd_rec_x = x_pos(rot) + dist;
 }
 
 void Ligand::rupture() {

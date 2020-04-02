@@ -83,7 +83,7 @@ struct Ligand {
     /**
      * TODO
      */
-    void bond(double rot, generator_t &generator);
+    void bond(double rot, double dist, generator_t &generator);
 
     /**
      * Ruptures current bond.

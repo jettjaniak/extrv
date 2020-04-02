@@ -21,17 +21,17 @@ def plot_distribution(max_abs_err_exp=-6, min_abs_err_exp=-10,
     max_len = 0
     for rel_err in rel_errs:
         for abs_err in abs_errs:
-            print(f"trying for abs_err={abs_err}, rel_err={rel_err}...", end=' ')
+            print(f"trying for abs_err={abs_err}, rel_err={rel_err}...", end=' ', flush=True)
             p, lig, bond = setup_parameters(abs_err=abs_err, rel_err=rel_err)
             ss = SimulationState(INITIAL_HEIGHT, p, seed)
             ss.simulate(max_time=1.0, max_steps=int(1e6))
             ss.shear_rate = 0.5
             ss.simulate(max_time=3.0, max_steps=int(1e7))
+            print(f"done")
             dt_freqs.append(list(ss.diag.dt_freq))
             max_len = max(max_len, len(ss.diag.dt_freq))
             cumsum = np.cumsum(ss.diag.dt_freq)
             cumsum_normalized = cumsum / cumsum[-1]
-            print(f"done")
             plt.plot(cumsum_normalized, label=f"abs_err={abs_err}, rel_err={rel_err}")
 
     max_ticks = min(10, max_len)
