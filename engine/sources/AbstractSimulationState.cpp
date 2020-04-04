@@ -1,4 +1,4 @@
-#include "SimulationState.h"
+#include "AbstractSimulationState.h"
 
 #include <algorithm>
 #include <utility>
@@ -9,12 +9,8 @@
 #include "velocities.h"
 #include "helpers.h"
 
-namespace pl = std::placeholders;
 
-
-SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
-
-    stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
+AbstractSimulationState::AbstractSimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
 
     pos[POS_LOG_H] = log(h_0);
     reseed(seed);
@@ -39,7 +35,7 @@ SimulationState::SimulationState(double h_0, Parameters* p, unsigned int seed) :
          });
 }
 
-void SimulationState::simulate_one_step() {
+void AbstractSimulationState::simulate_one_step() {
 
     update_rot_inc_range();
     update_rot_inc_ind();
@@ -114,9 +110,6 @@ void SimulationState::simulate_one_step() {
             bd_lig_ind.erase(*it);
         }
 
-        // ODE has changed, reset stepper
-        stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
-
         double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
         global_rot += pos[POS_ROT] - rot_reminder;
         pos[POS_ROT] = rot_reminder;
@@ -125,16 +118,19 @@ void SimulationState::simulate_one_step() {
             ligands[i].bd_rec_x -= pos[POS_DIST];
         global_dist += pos[POS_DIST];
         pos[POS_DIST] = 0.0;
+
+        // ODE has changed
+        reset_stepper();
     }
 }
 
-void SimulationState::simulate(double max_time, size_t max_steps) {
+void AbstractSimulationState::simulate(double max_time, size_t max_steps) {
     for (size_t i = 0; i < max_steps && time < max_time; ++i) {
         simulate_one_step();
     }
 }
 
-History SimulationState::simulate_with_history(double max_time, size_t max_steps, double save_every) {
+History AbstractSimulationState::simulate_with_history(double max_time, size_t max_steps, double save_every) {
     History hist;
     hist.update(this);
 
@@ -150,11 +146,11 @@ History SimulationState::simulate_with_history(double max_time, size_t max_steps
     return hist;
 }
 
-void SimulationState::reseed(unsigned int seed) {
+void AbstractSimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-void SimulationState::update_rot_inc_range() {
+void AbstractSimulationState::update_rot_inc_range() {
     if (p->max_surf_dist <= exp(pos[POS_LOG_H])) {
         left_rot_inc = right_rot_inc = - pos[POS_ROT];
         return;
@@ -169,7 +165,7 @@ void SimulationState::update_rot_inc_range() {
 }
 
 // TODO: move it somewhere else
-void SimulationState::update_rot_inc_ind() {
+void AbstractSimulationState::update_rot_inc_ind() {
     // |----[------]----|
     // 0    L      R   2 PI
     if (left_rot_inc <= right_rot_inc) {
@@ -335,7 +331,7 @@ void SimulationState::update_rot_inc_ind() {
     }
 }
 
-void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
+void AbstractSimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
     forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_LOG_H]), p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
@@ -345,7 +341,7 @@ void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, dou
     return;
 }
 
-void SimulationState::check_rot_ind() {
+void AbstractSimulationState::check_rot_ind() {
     if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
         Ligand & left_lig = ligands[left_lig_ind];
         Ligand & right_lig = ligands[right_lig_ind];
@@ -363,59 +359,7 @@ void SimulationState::check_rot_ind() {
     }
 }
 
-double SimulationState::do_ode_step() {
-    // TODO: define as class parameter or define operator()
-    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
-
-    controlled_step_result result;
-    double dt_inout = 0.0, time_inout = 0.0;
-    array<double, 3> pos_inout {};
-
-    bool dt_zero = false;
-    bool step_done = false;
-    while (!step_done) {
-        dt_inout = try_dt;
-        pos_inout = pos;
-        time_inout = time;
-        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
-        // If solver is in the world of NaNs and infinities
-        if (helpers::pos_not_ok(pos_inout)) {
-            diag.n_pos_not_ok++;
-            // we have to reset it
-            stepper = make_controlled<error_stepper_type>(p->abs_err, p->rel_err);
-            // and reduce the step size
-            try_dt /= 2;
-            continue;
-        }
-        if (result == fail) {
-            // solver made dt_inout smaller
-            try_dt = dt_inout;
-            continue;
-        }
-        if (try_dt == 0) {
-            if (dt_zero) {
-                std::cout << "dt was 0 twice in a row, aborting" << std::endl;
-                abort();
-            } else {
-                dt_zero = true;
-            }
-            try_dt = DOUBLE_MIN; // DOUBLE_DENORM_MIN;
-            continue;
-        }
-        step_done = true;
-    }
-
-    double step_done_with_dt = try_dt;
-    diag.add_dt(step_done_with_dt);  // diagnostics
-    try_dt = dt_inout;  // possibly larger after successful step
-    pos = pos_inout;
-    time = time_inout;
-
-    return step_done_with_dt;
-}
-
-
-void SimulationState::Diagnostic::add_dt(double dt) {
+void AbstractSimulationState::Diagnostic::add_dt(double dt) {
     size_t i = -log10(dt);
     if (dt_freq.size() < i + 1) {
         if (i + 1 > dt_freq.max_size())

@@ -6,7 +6,7 @@
 #include "helpers.h"
 
 
-struct SimulationState;
+struct AbstractSimulationState;
 
 /**
  * Builds and represents simulation history.
@@ -38,7 +38,7 @@ public:
     History() = default;
 
     /// update history using current data from simulation state
-    void update(const SimulationState* s);
+    void update(const AbstractSimulationState* s);
 
     /// before calling this function simulation results are not complete
     void finish();
@@ -54,5 +54,5 @@ private:
     /**
      * Find which bonds are new, which ruptured, update positions etc.
      */
-    void update_bond_trajectories(const SimulationState *s);
+    void update_bond_trajectories(const AbstractSimulationState *s);
 };

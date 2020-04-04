@@ -1,19 +1,13 @@
 #pragma once
 
-//#include <boost/numeric/odeint.hpp>
-#include <boost/numeric/odeint/stepper/runge_kutta_cash_karp54.hpp>
-#include <boost/numeric/odeint/stepper/controlled_runge_kutta.hpp>
-#include <boost/numeric/odeint/stepper/generation.hpp>
-
 #include "types.h"
 #include "Ligand.h"
 #include "Parameters.h"
 #include "helpers.h"
 #include "History.h"
 
-using namespace boost::numeric::odeint;
 
-struct SimulationState {
+struct AbstractSimulationState {
     struct Diagnostic {
         /// stores frequencies of -int(log10(try_dt))
         vector<size_t> dt_freq;
@@ -34,6 +28,7 @@ struct SimulationState {
     /// distance traveled in direction of flow (x)
     double global_dist = 0.0;
 
+    /// fluid flow shear rate in 1/s
     double shear_rate = 0.0;
 
     /// ligands on sphere
@@ -49,6 +44,7 @@ struct SimulationState {
     size_t after_right_lig_ind = 1;
     size_t n_active_lig = 0;
 
+    /// rates of binding and rupture reactions
     vector<double> rates;
 
     /// indices of bonded ligands
@@ -60,10 +56,6 @@ struct SimulationState {
     /// model parameters
     Parameters* p;
 
-    typedef runge_kutta_dopri5<array<double, 3>> error_stepper_type;
-    typedef controlled_runge_kutta<error_stepper_type> controlled_stepper_type;
-    controlled_stepper_type stepper;
-
     /**
      * Initialize simulation.
      *
@@ -71,7 +63,7 @@ struct SimulationState {
      * @param p model parameters
      * @param seed number that random number generator will be seeded with
      */
-    SimulationState(double h_0, Parameters* p, unsigned int seed);
+    AbstractSimulationState(double h_0, Parameters* p, unsigned int seed);
 
     /**
      * Do one step of simulation.
@@ -105,12 +97,12 @@ struct SimulationState {
     void reseed(unsigned int seed);
 
     void update_rot_inc_range();
-
     void update_rot_inc_ind();
-
     void check_rot_ind();
 
+    /// ODE's RHS
     void rhs(const array<double, 3> & x, array<double, 3> & dxdt, double /*t*/);
 
-    double do_ode_step();
+    virtual void reset_stepper() = 0;
+    virtual double do_ode_step() = 0;
 };
