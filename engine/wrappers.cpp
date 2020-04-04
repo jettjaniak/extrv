@@ -6,7 +6,11 @@
 
 #include "types.h"
 #include "Parameters.h"
-#include "SimulationState.h"
+#include "AbstractSimulationState.h"
+#include "AbstractConstStepSimulationState.h"
+#include "EulerSimulationState.h"
+#include "RKSimulationState.h"
+#include "AdaptiveSimulationState.h"
 #include "History.h"
 #include "AbstractBondType.h"
 
@@ -99,9 +103,9 @@ PYBIND11_MODULE(extrv_engine, m) {
 
 
     p.def(
-            py::init<double, double, double, double, double, double, double, double>(),
+            py::init<double, double, double, double, double, double>(),
             "r_cell"_a, "visc"_a, "temp"_a, "dens_diff"_a,
-            "rep_0"_a, "rep_scale"_a, "abs_err"_a, "rel_err"_a
+            "rep_0"_a, "rep_scale"_a
     );
 
     p.def("add_ligands", &Parameters::add_ligands, "lig_type"_a, "n_of_lig"_a);
@@ -133,36 +137,59 @@ PYBIND11_MODULE(extrv_engine, m) {
         .def_readonly("bond_trajectories", &History::bond_trajectories);
 
 
-    ///////////////////////
-    //  SimulationState  //
-    ///////////////////////
+    ///////////////////////////////
+    //  AbstractSimulationState  //
+    ///////////////////////////////
 
-    py::class_<SimulationState> s(m, "SimulationState");
+    py::class_<AbstractSimulationState> a_ss(m, "AbstractSimulationState");
 
     // Diagnostic
-    py::class_<SimulationState::Diagnostic> diag(s, "Diagnostic");
+    py::class_<AbstractSimulationState::Diagnostic> diag(a_ss, "Diagnostic");
 
-    diag.def_readonly("dt_freq", &SimulationState::Diagnostic::dt_freq)
-        .def_readonly("n_pos_not_ok", &SimulationState::Diagnostic::n_pos_not_ok);
+    diag.def_readonly("dt_freq", &AbstractSimulationState::Diagnostic::dt_freq)
+        .def_readonly("n_pos_not_ok", &AbstractSimulationState::Diagnostic::n_pos_not_ok);
 
-    s.def(
-        py::init<double, Parameters*, unsigned int>(),
-        "h_0"_a, "p"_a, "seed"_a
+    a_ss.def("simulate_one_step", &AbstractSimulationState::simulate_one_step)
+        .def("simulate", &AbstractSimulationState::simulate,
+            "max_time"_a, "max_steps"_a)
+        .def("simulate_with_history", &AbstractSimulationState::simulate_with_history,
+            "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
+
+    a_ss.def_readwrite("time", &AbstractSimulationState::time)
+        .def_readwrite("pos", &AbstractSimulationState::pos)
+        .def_readwrite("bd_lig_ind", &AbstractSimulationState::bd_lig_ind)
+        .def_readwrite("p", &AbstractSimulationState::p)
+        .def_readwrite("shear_rate", &AbstractSimulationState::shear_rate)
+        .def_readwrite("try_dt", &AbstractSimulationState::try_dt)
+        .def_readonly("diag", &AbstractSimulationState::diag)
+        .def_readonly("n_active_lig", &AbstractSimulationState::n_active_lig);
+
+    // AbstractConstStepSimulationState
+    py::class_<AbstractConstStepSimulationState> acs_ss(m, "AbstractConstStepSimulationState", a_ss);
+    acs_ss.def_readwrite("dt", &AbstractConstStepSimulationState::dt);
+
+    // EulerSimulationState
+    py::class_<EulerSimulationState> euler_ss(m, "EulerSimulationState", acs_ss);
+    euler_ss.def(
+        py::init<double, Parameters*, unsigned int, double>(),
+        "h_0"_a, "p"_a, "seed"_a, "dt"_a
     );
 
-    s.def("simulate_one_step", &SimulationState::simulate_one_step)
-     .def("simulate", &SimulationState::simulate, "max_time"_a, "max_steps"_a)
-     .def("simulate_with_history", &SimulationState::simulate_with_history,
-          "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
+    // RKSimulationState
+    py::class_<RKSimulationState> rk_ss(m, "RKSimulationState", acs_ss);
+    rk_ss.def(
+            py::init<double, Parameters*, unsigned int, double>(),
+            "h_0"_a, "p"_a, "seed"_a, "dt"_a
+    );
 
-    s.def_readwrite("time", &SimulationState::time)
-     .def_readwrite("pos", &SimulationState::pos)
-     .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
-     .def_readwrite("p", &SimulationState::p)
-     .def_readwrite("shear_rate", &SimulationState::shear_rate)
-     .def_readonly("diag", &SimulationState::diag)
-     .def_readwrite("try_dt", &SimulationState::try_dt)
-     .def_readonly("n_active_lig", &SimulationState::n_active_lig);
+    // AdaptiveSimulationState
+    py::class_<AdaptiveSimulationState> adap_ss(m, "AdaptiveSimulationState", a_ss);
+    adap_ss.def_readwrite("max_dt", &AdaptiveSimulationState::max_dt);
+    adap_ss.def(
+            py::init<double, Parameters*, unsigned int, double, double, double>(),
+            "h_0"_a, "p"_a, "seed"_a,
+            "max_dt"_a = 0.1, "abs_err"_a=1e-10, "rel_err"_a=1e-6
+    );
 }
 
 
