@@ -17,6 +17,7 @@ pybind11_add_module(extrv_engine wrappers.cpp
         sources/AdaptiveSimulationState.cpp
         sources/AbstractConstStepSimulationState.cpp
         sources/RKSimulationState.cpp
+        sources/EulerSimulationState.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp
@@ -31,6 +32,7 @@ add_executable(extrv main.cpp
         sources/AdaptiveSimulationState.cpp
         sources/AbstractConstStepSimulationState.cpp
         sources/RKSimulationState.cpp
+        sources/EulerSimulationState.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp

@@ -2,6 +2,7 @@
 #include "AbstractBondType.h"
 #include "AdaptiveSimulationState.h"
 #include "RKSimulationState.h"
+#include "EulerSimulationState.h"
 
 #include <iostream>
 
@@ -31,9 +32,13 @@ int main() {
         psgl.add_bond_type(&psgl_plus_esel_bond);
         p.add_ligands(&psgl, 20000);
 
-        auto s = RKSimulationState(0.03, &p, i, 1e-5);
+        auto s = EulerSimulationState(0.03, &p, i, 1e-5);
         size_t max_steps_falling = 2e5;
         size_t max_steps_rolling = 6e5;
+
+//        auto s = RKSimulationState(0.03, &p, i, 1e-5);
+//        size_t max_steps_falling = 2e5;
+//        size_t max_steps_rolling = 6e5;
 
 //        auto s = AdaptiveSimulationState(0.03, &p, i);
 //        size_t max_steps_falling = 1e6;
