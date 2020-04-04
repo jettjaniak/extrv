@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from extrv_engine import SimulationState
+from extrv_engine import AdaptiveSimulationState
 from params import setup_parameters
 
 INITIAL_HEIGHT = 0.03
@@ -22,8 +22,8 @@ def plot_distribution(max_abs_err_exp=-6, min_abs_err_exp=-10,
     for rel_err in rel_errs:
         for abs_err in abs_errs:
             print(f"trying for abs_err={abs_err}, rel_err={rel_err}...", end=' ', flush=True)
-            p, lig, bond = setup_parameters(abs_err=abs_err, rel_err=rel_err)
-            ss = SimulationState(INITIAL_HEIGHT, p, seed)
+            p, lig, bond = setup_parameters()
+            ss = AdaptiveSimulationState(INITIAL_HEIGHT, p, seed, abs_err=abs_err, rel_err=rel_err)
             ss.simulate(max_time=1.0, max_steps=int(1e6))
             ss.shear_rate = 0.5
             ss.simulate(max_time=3.0, max_steps=int(1e7))
