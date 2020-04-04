@@ -44,11 +44,6 @@ struct Parameters {
     /// scale in repulsive force in 1 (no unit)
     double rep_scale;
 
-    /// limit on absolute error of ODE solver
-    double abs_err;
-    /// limit on relative error of ODE solver
-    double rel_err;
-
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
@@ -62,11 +57,8 @@ struct Parameters {
      * @param dens_diff density difference between cell and fluid (cell is more dense) in g/cm^3
      * @param rep_0 repulsive force coefficient in kg μm / s^2
      * @param rep_scale scale in repulsive force in 1 (no unit)
-     * @param abs_err limit on absolute error of ODE solver
-     * @param rel_err limit on relative error of ODE solver
      */
-    Parameters(double r_cell, double visc, double temp, double dens_diff, double rep_0, double rep_scale,
-            double abs_err, double rel_err);
+    Parameters(double r_cell, double visc, double temp, double dens_diff, double rep_0, double rep_scale);
 
     /**
      * Add n_of_lig ligands of lig_type type.

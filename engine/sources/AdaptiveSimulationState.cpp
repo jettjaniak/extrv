@@ -4,10 +4,13 @@
 
 
 AdaptiveSimulationState::AdaptiveSimulationState(
-        double h_0, Parameters *p, unsigned int seed, double max_dt) :
+        double h_0, Parameters *p, unsigned int seed,
+        double max_dt, double abs_err, double rel_err) :
 
         AbstractSimulationState(h_0, p, seed),
-        max_dt(max_dt)
+        max_dt(max_dt),
+        abs_err(abs_err),
+        rel_err(rel_err)
 
 {
     reset_stepper();

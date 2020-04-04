@@ -14,9 +14,7 @@ int main() {
                 310,
                 0.05,
                 5074.616349947093,
-                1146.409200818891,
-                1e-10,
-                1e-6
+                1146.409200818891
         );
 
         Parameters::LigandType psgl = Parameters::LigandType();
