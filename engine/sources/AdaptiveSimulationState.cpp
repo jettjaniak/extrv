@@ -1,14 +1,22 @@
 #include "AdaptiveSimulationState.h"
 
+#include <boost/numeric/odeint/stepper/generation.hpp>
 
-AdaptiveSimulationState::AdaptiveSimulationState(double h_0, Parameters *p, unsigned int seed) :
-    AbstractSimulationState(h_0, p, seed)
+
+AdaptiveSimulationState::AdaptiveSimulationState(
+        double h_0, Parameters *p, unsigned int seed, double max_dt) :
+
+        AbstractSimulationState(h_0, p, seed),
+        max_dt(max_dt)
+
 {
     reset_stepper();
+    try_dt = max_dt;
 }
 
 
 double AdaptiveSimulationState::do_ode_step() {
+    try_dt = std::min(try_dt, max_dt);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
     auto rhs_system = std::bind(&AbstractSimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);

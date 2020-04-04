@@ -81,15 +81,12 @@ void AbstractSimulationState::simulate_one_step() {
     if (any_event_rate > max_rate)
         std::cout << "EVENT RATE > " << max_rate << std::endl;
 
-    try_dt = std::min(try_dt, MAX_DT);
     double dt_bonds = INFTY;
     if (any_event_rate > 0.0) {
         std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
         dt_bonds = dt_bonds_distribution(generator);
-        if (dt_bonds <= try_dt) {
-            try_dt = dt_bonds;
-        }
     }
+    try_dt = std::min(try_dt, dt_bonds);
 
     double step_done_with_dt = do_ode_step();
 

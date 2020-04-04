@@ -20,7 +20,7 @@ struct AbstractSimulationState {
 
     /// log height, rotation and distance
     array<double, 3> pos {};
-    double try_dt = MAX_DT;
+    double try_dt;
 
     double time = 0.0;
     /// sphere's rotation in radians
