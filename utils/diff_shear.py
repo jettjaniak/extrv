@@ -10,14 +10,14 @@ from extrv_engine import EulerSimulationState, RKSimulationState, AdaptiveSimula
 
 CONST_DT = 1e-6
 FALLING_TIME = 1
-ROLLING_TIME = 10
+ROLLING_TIME = 9
 N_TRIALS = 100
 SOLVERS = ['euler', 'rk', 'adap']
 SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 MAX_STEPS_FALLING = int(2 * FALLING_TIME * 1e6)
 MAX_STEPS_ROLLING = int(2 * ROLLING_TIME * 1e6)
-ADAP_MAX_DT = 0.1
+ADAP_MAX_DT = 0.01
 ADAP_ABS_ERR = 1e-10
 ADAP_REL_ERR = 1e-6
 INITIAL_HEIGHT = 0.03
@@ -84,10 +84,10 @@ def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
         raise ValueError
 
     # falling
-    ss.simulate(ROLLING_TIME, MAX_STEPS_ROLLING)
+    ss.simulate(FALLING_TIME, MAX_STEPS_FALLING)
     # rolling
     ss.shear_rate = shear_rate
-    sim_hist = ss.simulate_with_history(ROLLING_TIME + FALLING_TIME, MAX_STEPS_FALLING, save_every=save_every)
+    sim_hist = ss.simulate_with_history(FALLING_TIME + ROLLING_TIME, MAX_STEPS_ROLLING, save_every=save_every)
     print("simulation done for solver", solver_name, "seed", seed, "shear", shear_rate)
 
     # TODO: pickle History object
