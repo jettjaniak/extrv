@@ -7,7 +7,7 @@
 #include "History.h"
 
 
-struct AbstractSimulationState {
+struct AbstrSS {
     struct Diagnostic {
         /// stores frequencies of -int(log10(try_dt))
         vector<size_t> dt_freq;
@@ -56,6 +56,7 @@ struct AbstractSimulationState {
     /// model parameters
     Parameters* p;
 
+    AbstrSS() = default;
     /**
      * Initialize simulation.
      *
@@ -63,7 +64,7 @@ struct AbstractSimulationState {
      * @param p model parameters
      * @param seed number that random number generator will be seeded with
      */
-    AbstractSimulationState(double h_0, Parameters* p, unsigned int seed);
+    AbstrSS(double h_0, Parameters* p, unsigned int seed);
 
     /**
      * Do one step of simulation.
@@ -105,4 +106,6 @@ struct AbstractSimulationState {
 
     virtual void reset_stepper() = 0;
     virtual double do_ode_step() = 0;
+    virtual double compute_dt_bonds() = 0;
+    virtual vector<size_t> compute_event_nrs(double dt) = 0;
 };

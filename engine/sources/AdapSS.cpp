@@ -1,13 +1,9 @@
-#include "AdaptiveSimulationState.h"
+#include "AdapSS.h"
 
 #include <boost/numeric/odeint/stepper/generation.hpp>
 
 
-AdaptiveSimulationState::AdaptiveSimulationState(
-        double h_0, Parameters *p, unsigned int seed,
-        double max_dt, double abs_err, double rel_err) :
-
-        AbstractSimulationState(h_0, p, seed),
+AbstrAdapSS::AbstrAdapSS(double max_dt, double abs_err, double rel_err) :
         max_dt(max_dt),
         abs_err(abs_err),
         rel_err(rel_err)
@@ -18,11 +14,11 @@ AdaptiveSimulationState::AdaptiveSimulationState(
 }
 
 
-double AdaptiveSimulationState::do_ode_step() {
+double AbstrAdapSS::do_ode_step() {
     try_dt = std::min(try_dt, max_dt);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
-    auto rhs_system = std::bind(&AbstractSimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+    auto rhs_system = std::bind(&AbstrSS::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
 
     controlled_step_result result;
     double dt_inout = 0.0, time_inout = 0.0;
@@ -63,14 +59,29 @@ double AdaptiveSimulationState::do_ode_step() {
     }
 
     double step_done_with_dt = try_dt;
-    diag.add_dt(step_done_with_dt);  // diagnostics
-    try_dt = dt_inout;  // possibly larger after successful step
+    try_dt = std::min(dt_inout, max_dt);  // possibly larger after successful step
     pos = pos_inout;
     time = time_inout;
 
     return step_done_with_dt;
 }
 
-void AdaptiveSimulationState::reset_stepper() {
+void AbstrAdapSS::reset_stepper() {
     stepper = make_controlled<error_stepper_type>(abs_err, rel_err);
 }
+
+AdapGillSS::AdapGillSS(
+        double h_0, Parameters* p, unsigned int seed,
+        double max_dt, double abs_err, double rel_err) :
+
+        AbstrSS(h_0, p, seed),
+        AbstrAdapSS(max_dt, abs_err, rel_err),
+        AbstrGillSS() {}
+
+AdapProbSS::AdapProbSS(
+        double h_0, Parameters* p, unsigned int seed,
+        double max_dt, double abs_err, double rel_err) :
+
+        AbstrSS(h_0, p, seed),
+        AbstrAdapSS(max_dt, abs_err, rel_err),
+        AbstrProbSS() {}

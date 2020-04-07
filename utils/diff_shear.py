@@ -6,22 +6,24 @@ from datetime import datetime
 from collections import defaultdict
 
 
-from extrv_engine import EulerSimulationState, RKSimulationState, AdaptiveSimulationState, SlipBondType, Parameters
+from extrv_engine import EulerGillSS, EulerProbSS, RKGillSS, RKProbSS, AdapGillSS, AdapProbSS, SlipBondType, Parameters
 
 CONST_DT = 1e-6
 FALLING_TIME = 1
-ROLLING_TIME = 9
-N_TRIALS = 100
-SOLVERS = ['euler', 'rk', 'adap']
+ROLLING_TIME = 10
+N_TRIALS = 10
+SOLVERS = ['euler_gill', 'euler_prob', 'rk_gill', 'rk_prob', 'adap_gill', 'adap_prob']
 SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 MAX_STEPS_FALLING = int(2 * FALLING_TIME * 1e6)
 MAX_STEPS_ROLLING = int(2 * ROLLING_TIME * 1e6)
-ADAP_MAX_DT = 0.01
+
+ADAP_GILL_MAX_DT = 1e-5
+ADAP_PROB_MAX_DT = 1e-6
 ADAP_ABS_ERR = 1e-10
 ADAP_REL_ERR = 1e-6
 INITIAL_HEIGHT = 0.03
-SAVE_EVERY = 1e-4
+SAVE_EVERY = 0.1
 
 
 def setup_parameters():
@@ -73,13 +75,20 @@ def iteration_wrapper(*args, **kwargs):
 def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
     p, psgl, psgl_plus_esel_bond = setup_parameters()
 
-    if solver_name == 'euler':
-        ss = EulerSimulationState(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
-    elif solver_name == 'rk':
-        ss = RKSimulationState(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
-    elif solver_name == 'adap':
-        ss = AdaptiveSimulationState(INITIAL_HEIGHT, p, seed,
-                                     max_dt=ADAP_MAX_DT, abs_err=ADAP_ABS_ERR, rel_err=ADAP_REL_ERR)
+    if solver_name == 'euler_gill':
+        ss = EulerGillSS(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
+    elif solver_name == 'euler_prob':
+        ss = EulerProbSS(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
+    elif solver_name == 'rk_gill':
+        ss = RKGillSS(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
+    elif solver_name == 'rk_prob':
+        ss = RKProbSS(INITIAL_HEIGHT, p, seed, dt=CONST_DT)
+    elif solver_name == 'adap_gill':
+        ss = AdapGillSS(INITIAL_HEIGHT, p, seed,
+                        max_dt=ADAP_GILL_MAX_DT, abs_err=ADAP_ABS_ERR, rel_err=ADAP_REL_ERR)
+    elif solver_name == 'adap_prob':
+        ss = AdapProbSS(INITIAL_HEIGHT, p, seed,
+                        max_dt=ADAP_PROB_MAX_DT, abs_err=ADAP_ABS_ERR, rel_err=ADAP_REL_ERR)
     else:
         raise ValueError
 
@@ -91,8 +100,8 @@ def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
     print("simulation done for solver", solver_name, "seed", seed, "shear", shear_rate)
 
     # TODO: pickle History object
-    vel = np.diff(sim_hist.dist) / np.diff(sim_hist.time)
-    return solver_name, shear_rate, np.mean(vel)
+    mean_vel = (sim_hist.dist[-1] - sim_hist.dist[0]) / (sim_hist.time[-1] - sim_hist.time[0])
+    return solver_name, shear_rate, mean_vel#, sim_hist, ss
 
 
 def iteration_callback(result):

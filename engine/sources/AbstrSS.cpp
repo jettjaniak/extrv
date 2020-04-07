@@ -1,4 +1,4 @@
-#include "AbstractSimulationState.h"
+#include "AbstrSS.h"
 
 #include <algorithm>
 #include <utility>
@@ -10,7 +10,7 @@
 #include "helpers.h"
 
 
-AbstractSimulationState::AbstractSimulationState(double h_0, Parameters* p, unsigned int seed) : p(p) {
+AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
 
     pos[POS_LOG_H] = log(h_0);
     reseed(seed);
@@ -35,7 +35,9 @@ AbstractSimulationState::AbstractSimulationState(double h_0, Parameters* p, unsi
          });
 }
 
-void AbstractSimulationState::simulate_one_step() {
+void AbstrSS::simulate_one_step() {
+
+    // Optimization - track only ligands that are close to surface
 
     update_rot_inc_range();
     update_rot_inc_ind();
@@ -51,11 +53,10 @@ void AbstractSimulationState::simulate_one_step() {
     // check_rot_ind();
 
 
-    /////////////////////////////////////
-    //  Gillespie algorithm for bonds  //
-    /////////////////////////////////////
+    ///////////////////
+    //  Event rates  //
+    ///////////////////
 
-    double any_event_rate = 0.0;
     size_t rates_i = 0;
     rates.resize(n_active_lig + bd_lig_ind.size());
 
@@ -67,45 +68,54 @@ void AbstractSimulationState::simulate_one_step() {
             continue;
         }
         rates[rates_i] = ligands[i].update_binding_rates(pos);
-        any_event_rate += rates[rates_i];
     }
 
     // rupture events
     for (const auto &i : bd_lig_ind) {
         rates[rates_i] = ligands[i].rupture_rate(pos);
-        any_event_rate += rates[rates_i];
         rates_i++;
     }
 
-    static constexpr double max_rate = 1e80;
-    if (any_event_rate > max_rate)
-        std::cout << "EVENT RATE > " << max_rate << std::endl;
+    double dt_bonds = compute_dt_bonds();
+    if (dt_bonds != -INFTY)
+        try_dt = std::min(try_dt, dt_bonds);
 
-    double dt_bonds = INFTY;
-    if (any_event_rate > 0.0) {
-        std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
-        dt_bonds = dt_bonds_distribution(generator);
-    }
-    try_dt = std::min(try_dt, dt_bonds);
-
+    // ODE step
     double step_done_with_dt = do_ode_step();
+    diag.add_dt(step_done_with_dt);  // diagnostics
 
-    if (step_done_with_dt == dt_bonds) {
-        std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
-        size_t event_nr = which_event_distribution(generator);
-        // binding event
-        if (event_nr < n_active_lig) {
-            size_t lig_nr = (left_lig_ind + event_nr) % ligands.size();
-            bd_lig_ind.insert(lig_nr);
-            ligands[lig_nr].bond(pos[POS_ROT], pos[POS_DIST], generator);
+    if (step_done_with_dt >= dt_bonds) {
+        vector<size_t> event_nrs = compute_event_nrs(step_done_with_dt);
+
+        vector<size_t> ligs_to_erase;
+        vector<size_t> ligs_to_insert;
+        for (const auto &event_nr : event_nrs) {
+            // Apply event
+
+            // binding event
+            if (event_nr < n_active_lig) {
+                size_t lig_nr = (left_lig_ind + event_nr) % ligands.size();
+                // bd_lig_ind.insert(lig_nr);
+                ligs_to_insert.push_back(lig_nr);
+                ligands[lig_nr].bond(pos[POS_ROT], pos[POS_DIST], generator);
+            }
+            // rupture event
+            else {
+                auto it = bd_lig_ind.begin();
+                std::advance(it, event_nr - n_active_lig);
+                ligands[*it].rupture();
+                // bd_lig_ind.erase(*it);
+                ligs_to_erase.push_back(*it);
+            }
         }
-        // rupture event
-        else {
-            auto it = bd_lig_ind.begin();
-            std::advance(it, event_nr - n_active_lig);
-            ligands[*it].rupture();
-            bd_lig_ind.erase(*it);
-        }
+
+        for (const auto &lig_to_erase : ligs_to_erase)
+            bd_lig_ind.erase(lig_to_erase);
+
+        for (const auto &lig_to_insert : ligs_to_insert)
+            bd_lig_ind.insert(lig_to_insert);
+
+        // Update positions after events
 
         double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
         global_rot += pos[POS_ROT] - rot_reminder;
@@ -121,13 +131,13 @@ void AbstractSimulationState::simulate_one_step() {
     }
 }
 
-void AbstractSimulationState::simulate(double max_time, size_t max_steps) {
+void AbstrSS::simulate(double max_time, size_t max_steps) {
     for (size_t i = 0; i < max_steps && time < max_time; ++i) {
         simulate_one_step();
     }
 }
 
-History AbstractSimulationState::simulate_with_history(double max_time, size_t max_steps, double save_every) {
+History AbstrSS::simulate_with_history(double max_time, size_t max_steps, double save_every) {
     History hist;
     hist.update(this);
 
@@ -143,11 +153,11 @@ History AbstractSimulationState::simulate_with_history(double max_time, size_t m
     return hist;
 }
 
-void AbstractSimulationState::reseed(unsigned int seed) {
+void AbstrSS::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-void AbstractSimulationState::update_rot_inc_range() {
+void AbstrSS::update_rot_inc_range() {
     if (p->max_surf_dist <= exp(pos[POS_LOG_H])) {
         left_rot_inc = right_rot_inc = - pos[POS_ROT];
         return;
@@ -162,7 +172,7 @@ void AbstractSimulationState::update_rot_inc_range() {
 }
 
 // TODO: move it somewhere else
-void AbstractSimulationState::update_rot_inc_ind() {
+void AbstrSS::update_rot_inc_ind() {
     // |----[------]----|
     // 0    L      R   2 PI
     if (left_rot_inc <= right_rot_inc) {
@@ -328,7 +338,7 @@ void AbstractSimulationState::update_rot_inc_ind() {
     }
 }
 
-void AbstractSimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
+void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
     forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_LOG_H]), p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
@@ -338,7 +348,7 @@ void AbstractSimulationState::rhs(const array<double, 3> &x, array<double, 3> &d
     return;
 }
 
-void AbstractSimulationState::check_rot_ind() {
+void AbstrSS::check_rot_ind() {
     if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
         Ligand & left_lig = ligands[left_lig_ind];
         Ligand & right_lig = ligands[right_lig_ind];
@@ -356,8 +366,8 @@ void AbstractSimulationState::check_rot_ind() {
     }
 }
 
-void AbstractSimulationState::Diagnostic::add_dt(double dt) {
-    size_t i = -log10(dt);
+void AbstrSS::Diagnostic::add_dt(double dt) {
+    size_t i = size_t(-log10(dt));
     if (dt_freq.size() < i + 1) {
         if (i + 1 > dt_freq.max_size())
             std::cout << i + 1 << " > max_size, dt = " << dt << std::endl;

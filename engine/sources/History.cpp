@@ -4,12 +4,12 @@
 #include <algorithm>
 
 #include "velocities.h"
-#include "AbstractSimulationState.h"
+#include "AbstrSS.h"
 
 
 History::BondTrajectory::BondTrajectory(size_t start_i) : start_i(start_i) {}
 
-void History::update(const AbstractSimulationState *s) {
+void History::update(const AbstrSS *s) {
     update_bond_trajectories(s);
     time.push_back(s->time);
     h.push_back(exp(s->pos[POS_LOG_H]));
@@ -24,7 +24,7 @@ void History::finish() {
     active_trajs_map.clear();
 }
 
-void History::update_bond_trajectories(const AbstractSimulationState *s) {
+void History::update_bond_trajectories(const AbstrSS *s) {
 
     const set<size_t> & curr_blis = s->bd_lig_ind;
     vector<size_t>::iterator it;
