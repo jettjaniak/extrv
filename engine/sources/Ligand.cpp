@@ -69,7 +69,7 @@ double Ligand::bond_length(const array<double, 3> & pos) {
         abort();
 
     xy_t bond_vector = helpers::compute_bond_vector(
-            surface_dist(pos), x_pos(pos[POS_ROT]), bd_rec_x);
+            surface_dist(pos), x_pos(pos[POS_ROT]), bd_rec_x - pos[POS_DIST]);
 
     return bond_vector.length();
 }
