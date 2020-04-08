@@ -3,8 +3,9 @@
 #include <boost/numeric/odeint/stepper/generation.hpp>
 
 
-AbstrAdapSS::AbstrAdapSS(double max_dt, double abs_err, double rel_err) :
+AbstrAdapSS::AbstrAdapSS(double max_dt, double max_dt_with_bonds, double abs_err, double rel_err) :
         max_dt(max_dt),
+        max_dt_with_bonds(max_dt_with_bonds),
         abs_err(abs_err),
         rel_err(rel_err)
 
@@ -15,7 +16,10 @@ AbstrAdapSS::AbstrAdapSS(double max_dt, double abs_err, double rel_err) :
 
 
 double AbstrAdapSS::do_ode_step() {
-    try_dt = std::min(try_dt, max_dt);
+    if (bd_lig_ind.empty())
+        try_dt = std::min(try_dt, max_dt);
+    else
+        try_dt = std::min(try_dt, max_dt_with_bonds);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
     auto rhs_system = std::bind(&AbstrSS::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
@@ -59,7 +63,7 @@ double AbstrAdapSS::do_ode_step() {
     }
 
     double step_done_with_dt = try_dt;
-    try_dt = std::min(dt_inout, max_dt);  // possibly larger after successful step
+    try_dt = dt_inout;  // possibly larger after successful step
     pos = pos_inout;
     time = time_inout;
 
@@ -72,16 +76,18 @@ void AbstrAdapSS::reset_stepper() {
 
 AdapGillSS::AdapGillSS(
         double h_0, Parameters* p, unsigned int seed,
-        double max_dt, double abs_err, double rel_err) :
+        double max_dt, double max_dt_with_bonds,
+        double abs_err, double rel_err) :
 
         AbstrSS(h_0, p, seed),
-        AbstrAdapSS(max_dt, abs_err, rel_err),
+        AbstrAdapSS(max_dt, max_dt_with_bonds, abs_err, rel_err),
         AbstrGillSS() {}
 
 AdapProbSS::AdapProbSS(
         double h_0, Parameters* p, unsigned int seed,
-        double max_dt, double abs_err, double rel_err) :
+        double max_dt, double max_dt_with_bonds,
+        double abs_err, double rel_err) :
 
         AbstrSS(h_0, p, seed),
-        AbstrAdapSS(max_dt, abs_err, rel_err),
+        AbstrAdapSS(max_dt, max_dt_with_bonds, abs_err, rel_err),
         AbstrProbSS() {}

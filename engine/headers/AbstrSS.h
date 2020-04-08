@@ -13,6 +13,7 @@ struct AbstrSS {
         /// how many times position was NaN or outside allowed range
         size_t n_pos_not_ok = 0;
         vector<double> new_bonds_rup_rate;
+        size_t n_bonds_created;
 
         void add_dt(double dt);
     };
@@ -65,6 +66,11 @@ struct AbstrSS {
      * @param seed number that random number generator will be seeded with
      */
     AbstrSS(double h_0, Parameters* p, unsigned int seed);
+
+
+    double h() const;
+    double rot() const;
+    double dist() const;
 
     /**
      * Do one step of simulation.

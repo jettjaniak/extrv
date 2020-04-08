@@ -145,13 +145,17 @@ PYBIND11_MODULE(extrv_engine, m) {
     py::class_<AbstrSS::Diagnostic>(a_ss, "Diagnostic")
         .def_readonly("dt_freq", &AbstrSS::Diagnostic::dt_freq)
         .def_readonly("n_pos_not_ok", &AbstrSS::Diagnostic::n_pos_not_ok)
-        .def_readonly("new_bonds_rup_rate", &AbstrSS::Diagnostic::new_bonds_rup_rate);
+        .def_readonly("n_bonds_created", &AbstrSS::Diagnostic::n_bonds_created);
 
-    a_ss.def("simulate_one_step", &AbstrSS::simulate_one_step)
+    a_ss.def("h", &AbstrSS::h)
+        .def("rot", &AbstrSS::rot)
+        .def("dist", &AbstrSS::dist)
+
+        .def("simulate_one_step", &AbstrSS::simulate_one_step)
         .def("simulate", &AbstrSS::simulate,
-            "max_time"_a, "max_steps"_a)
+             "max_time"_a, "max_steps"_a)
         .def("simulate_with_history", &AbstrSS::simulate_with_history,
-            "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
+             "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
 
     a_ss.def_readwrite("time", &AbstrSS::time)
         .def_readwrite("pos", &AbstrSS::pos)
@@ -202,23 +206,26 @@ PYBIND11_MODULE(extrv_engine, m) {
     // AbstrAdapSS
     py::class_<AbstrAdapSS, AbstrSS>(m, "AbstrAdapSS")
         .def_readwrite("max_dt", &AbstrAdapSS::max_dt)
+        .def_readwrite("max_dt_with_bonds", &AbstrAdapSS::max_dt_with_bonds)
         .def_readwrite("abs_err", &AbstrAdapSS::abs_err)
         .def_readwrite("rel_err", &AbstrAdapSS::rel_err);
 
     // AdapGillSS
     py::class_<AdapGillSS, AbstrAdapSS, AbstrGillSS>(m, "AdapGillSS")
         .def(
-            py::init<double, Parameters*, unsigned int, double, double, double>(),
+            py::init<double, Parameters*, unsigned int, double, double, double, double>(),
             "h_0"_a, "p"_a, "seed"_a,
-            "max_dt"_a = 0.1, "abs_err"_a=1e-10, "rel_err"_a=1e-6
+            "max_dt"_a = 0.1, "max_dt_with_bonds"_a = 1e-4,
+            "abs_err"_a=1e-10, "rel_err"_a=1e-6
         );
 
     // AdapProbSS
     py::class_<AdapProbSS, AbstrAdapSS, AbstrProbSS>(m, "AdapProbSS")
         .def(
-            py::init<double, Parameters*, unsigned int, double, double, double>(),
+            py::init<double, Parameters*, unsigned int, double, double, double, double>(),
             "h_0"_a, "p"_a, "seed"_a,
-            "max_dt"_a = 0.1, "abs_err"_a=1e-10, "rel_err"_a=1e-6
+            "max_dt"_a = 0.1, "max_dt_with_bonds"_a = 1e-4,
+            "abs_err"_a=1e-10, "rel_err"_a=1e-6
         );
 }
 

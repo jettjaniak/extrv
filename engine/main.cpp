@@ -55,11 +55,6 @@ int main() {
         s.shear_rate = 0.9;
         double max_time = 11.0;
         s.simulate(max_time, max_steps_rolling);
-        std::cout << "rates: ";
-        for (const auto &rate : s.diag.new_bonds_rup_rate) {
-            std::cout << rate << ", ";
-        }
-        std::cout << std::endl;
 //        if (s.time < max_time)
 //            std::cout << "only " << s.time << " seconds done!" << std::endl;
         std::cout << "seed " << seed << " done" << std::endl;

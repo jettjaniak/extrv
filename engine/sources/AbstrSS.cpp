@@ -35,6 +35,18 @@ AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
          });
 }
 
+double AbstrSS::h() const {
+    return exp(pos[POS_LOG_H]);
+}
+
+double AbstrSS::rot() const {
+    return global_rot + pos[POS_ROT];
+}
+
+double AbstrSS::dist() const {
+    return global_dist + pos[POS_DIST];
+}
+
 void AbstrSS::simulate_one_step() {
 
     // Optimization - track only ligands that are close to surface
@@ -98,7 +110,6 @@ void AbstrSS::simulate_one_step() {
                 // bd_lig_ind.insert(lig_nr);
                 ligs_to_insert.push_back(lig_nr);
                 ligands[lig_nr].bond(pos[POS_ROT], pos[POS_DIST], generator);
-//                diag.new_bonds_rup_rate.push_back(ligands[lig_nr].rupture_rate(pos));
             }
             // rupture event
             else {
@@ -113,13 +124,9 @@ void AbstrSS::simulate_one_step() {
         for (const auto &lig_to_erase : ligs_to_erase)
             bd_lig_ind.erase(lig_to_erase);
 
-        double new_rup_rate;
+        diag.n_bonds_created += ligs_to_insert.size();
         for (const auto &lig_to_insert : ligs_to_insert) {
             bd_lig_ind.insert(lig_to_insert);
-            new_rup_rate = ligands[lig_to_insert].rupture_rate(pos);
-            diag.new_bonds_rup_rate.push_back(new_rup_rate);
-            if (new_rup_rate > 1e80)
-                std::cout << "new_rup_rate > 1e80" << std::endl;
         }
 
         // Update positions after events
@@ -352,7 +359,6 @@ void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*
         f += ligands[bd_i].bond_forces(pos);
 
     dxdt = velocities::compute_velocities(x[POS_LOG_H], f, p);
-    return;
 }
 
 void AbstrSS::check_rot_ind() {
@@ -374,7 +380,7 @@ void AbstrSS::check_rot_ind() {
 }
 
 void AbstrSS::Diagnostic::add_dt(double dt) {
-    size_t i = size_t(-log10(dt));
+    auto i = size_t(-log10(dt));
     if (dt_freq.size() < i + 1) {
         if (i + 1 > dt_freq.max_size())
             std::cout << i + 1 << " > max_size, dt = " << dt << std::endl;
