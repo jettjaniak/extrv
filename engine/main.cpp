@@ -29,12 +29,16 @@ int main() {
         );
         psgl.add_bond_type(&psgl_plus_esel_bond);
         p.add_ligands(&psgl, 20000);
+//        unsigned int seed = i;
+        unsigned int seed = 751134721;
 
 //        auto s = EulerGillSS(0.03, &p, i, 1e-5);
 //        auto s = EulerProbSS(0.03, &p, i, 1e-5);
 //        auto s = RKGillSS(0.03, &p, i, 1e-5);
 //        auto s = RKProbSS(0.03, &p, i, 1e-5);
-        auto s = AdapProbSS(0.03, &p, i, 1e-5);
+//        auto s = AdapProbSS(0.03, &p, i, 1e-5);
+
+        auto s = AdapGillSS(0.03, &p, seed, 1e-5);
         size_t max_steps_falling = 2e6;
         size_t max_steps_rolling = 6e6;
 
@@ -48,11 +52,16 @@ int main() {
 
         s.simulate(1, max_steps_falling);
         std::cout << s.bd_lig_ind.size() << " bonds" << std::endl;
-//        s.shear_rate = 0.5;
-//        double max_time = 4.0;
-//        s.simulate(max_time, max_steps_rolling);
+        s.shear_rate = 0.9;
+        double max_time = 11.0;
+        s.simulate(max_time, max_steps_rolling);
+        std::cout << "rates: ";
+        for (const auto &rate : s.diag.new_bonds_rup_rate) {
+            std::cout << rate << ", ";
+        }
+        std::cout << std::endl;
 //        if (s.time < max_time)
 //            std::cout << "only " << s.time << " seconds done!" << std::endl;
-        std::cout << "seed " << i << " done" << std::endl;
+        std::cout << "seed " << seed << " done" << std::endl;
     }
 }
