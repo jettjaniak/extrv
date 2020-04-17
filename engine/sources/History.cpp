@@ -69,7 +69,7 @@ void History::update_bond_trajectories(const SimulationState *s) {
             abort();
         vector<xy_t> &active_traj_pos = (*active_traj_it).second.positions;
         const Ligand &ligand = s->ligands[cli];
-        active_traj_pos.emplace_back(ligand.x_pos(s->pos[POS_ROT]), ligand.y_pos(s->pos[POS_ROT]));
+        active_traj_pos.emplace_back(ligand.x_pos(s->ode_x[POS_ROT]), ligand.y_pos(s->ode_x[POS_ROT]));
     }
 
     prev_blis = curr_blis;

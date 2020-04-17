@@ -159,7 +159,7 @@ PYBIND11_MODULE(extrv_engine, m) {
              "max_time"_a, "max_steps"_a, "save_every"_a=1e-2);
 
     ss.def_readwrite("time", &SimulationState::time)
-        .def_readwrite("pos", &SimulationState::pos)
+        .def_readwrite("ode_x", &SimulationState::ode_x)
         .def_readwrite("bd_lig_ind", &SimulationState::bd_lig_ind)
         .def_readwrite("p", &SimulationState::p)
         .def_readwrite("shear_rate", &SimulationState::shear_rate)

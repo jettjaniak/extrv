@@ -24,8 +24,8 @@ SimulationState::SimulationState(
 {
     reset_stepper();
     try_dt = max_dt;
-    pos[POS_H] = h_0;
     reseed(seed);
+    u = helpers::draw_from_uniform_dist(generator);
 
     Parameters::LigandType* lig_type;
     size_t n_of_lig;
@@ -45,18 +45,28 @@ SimulationState::SimulationState(
          [](const Ligand & a, const Ligand & b) -> bool {
             return a.rot_inc < b.rot_inc;
          });
+
+    ode_x.resize(ligands.size() + 1 + 3, 0.0);
+    h_ode_i = ligands.size() + 1 + POS_H;
+    rot_ode_i = ligands.size() + 1 + POS_ROT;
+    dist_ode_i = ligands.size() + 1 + POS_DIST;
+//    ode_x.resize(3);
+//    h_ode_i = POS_H;
+//    rot_ode_i = POS_ROT;
+//    dist_ode_i = POS_DIST;
+    ode_x[h_ode_i] = h_0;
 }
 
 double SimulationState::h() const {
-    return pos[POS_H];
+    return ode_x[h_ode_i];
 }
 
 double SimulationState::rot() const {
-    return pos[POS_ROT];
+    return ode_x[rot_ode_i];
 }
 
 double SimulationState::dist() const {
-    return pos[POS_DIST];
+    return ode_x[dist_ode_i];
 }
 
 double SimulationState::global_rot() const {
@@ -69,99 +79,43 @@ double SimulationState::global_dist() const {
 
 void SimulationState::simulate_one_step() {
 
-    // Optimization - track only ligands that are close to surface
-
-    update_rot_inc_range();
-    update_rot_inc_ind();
-
-    after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
-
-    if (left_lig_ind <= right_lig_ind)
-        n_active_lig = right_lig_ind - left_lig_ind + 1;
-    else
-        n_active_lig = (right_lig_ind + ligands.size() - left_lig_ind + 1) % ligands.size();
-
-    // just for debug
-    // check_rot_ind();
-
-
-    ///////////////////
-    //  Event rates  //
-    ///////////////////
-
-    size_t rates_i = 0;
-    rates.resize(n_active_lig + bd_lig_ind.size());
-
-    // binding events
-    for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size(), rates_i++) {
-        // ignore bonded ligands
-        if (ligands[i].bond_state != 0) {
-            rates[rates_i] = 0.0;
-            continue;
-        }
-        rates[rates_i] = ligands[i].update_binding_rates(h(), rot());
-    }
-
-    // rupture events
-    for (const auto &i : bd_lig_ind) {
-        rates[rates_i] = ligands[i].rupture_rate(h(), rot(), dist());
-        rates_i++;
-    }
-
-    double dt_bonds = compute_dt_bonds();
-    if (dt_bonds != -INFTY)
-        try_dt = std::min(try_dt, dt_bonds);
-
     // ODE step
     double step_done_with_dt = do_ode_step();
     diag.add_dt(step_done_with_dt);  // diagnostics
 
-    if (step_done_with_dt >= dt_bonds) {
-        vector<size_t> event_nrs = compute_event_nrs(step_done_with_dt);
 
-        vector<size_t> ligs_to_erase;
-        vector<size_t> ligs_to_insert;
-        for (const auto &event_nr : event_nrs) {
-            // Apply event
-
-            // binding event
-            if (event_nr < n_active_lig) {
-                size_t lig_nr = (left_lig_ind + event_nr) % ligands.size();
-                // bd_lig_ind.insert(lig_nr);
-                ligs_to_insert.push_back(lig_nr);
-                ligands[lig_nr].bond(pos[POS_ROT], pos[POS_DIST], generator);
-            }
-            // rupture event
-            else {
-                auto it = bd_lig_ind.begin();
-                std::advance(it, event_nr - n_active_lig);
-                ligands[*it].rupture();
-                // bd_lig_ind.erase(*it);
-                ligs_to_erase.push_back(*it);
-            }
+    if (std::abs(1 - exp(- ode_x[ligands.size()]) - u) < 1e-3) {
+        std::discrete_distribution<size_t> which_event_distribution(ode_x.begin(), ode_x.end() - 4);
+        size_t lig_nr = which_event_distribution(generator);
+        std::fill(ode_x.begin(), ode_x.end() - 3, 0.0);
+        // binding event
+        if (ligands[lig_nr].bond_state == 0) {
+            bd_lig_ind.insert(lig_nr);
+            ligands[lig_nr].bond(rot(), dist(), generator);
+            diag.n_bonds_created++;
         }
-
-        for (const auto &lig_to_erase : ligs_to_erase)
-            bd_lig_ind.erase(lig_to_erase);
-
-        diag.n_bonds_created += ligs_to_insert.size();
-        for (const auto &lig_to_insert : ligs_to_insert) {
-            bd_lig_ind.insert(lig_to_insert);
+        // rupture event
+        else {
+            ligands[lig_nr].rupture();
+            bd_lig_ind.erase(lig_nr);
         }
 
         // Update positions after events
 
-        double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
-        cumulated_rot += pos[POS_ROT] - rot_reminder;
-        pos[POS_ROT] = rot_reminder;
+        double rot_reminder = std::fmod(ode_x[rot_ode_i], 2 * PI);
+        cumulated_rot += ode_x[rot_ode_i] - rot_reminder;
+        ode_x[rot_ode_i] = rot_reminder;
 
         for (const auto &i : bd_lig_ind)
-            ligands[i].bd_rec_x -= pos[POS_DIST];
-        cumulated_dist += pos[POS_DIST];
-        pos[POS_DIST] = 0.0;
+            ligands[i].bd_rec_x -= ode_x[dist_ode_i];
+        cumulated_dist += ode_x[dist_ode_i];
+        ode_x[dist_ode_i] = 0.0;
+
 
         // ODE has changed
         reset_stepper();
+
+        u = helpers::draw_from_uniform_dist(generator);
     }
 }
 
@@ -372,13 +326,45 @@ void SimulationState::update_rot_inc_ind() {
     }
 }
 
-void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
-    forces_t f = forces::non_bond_forces(shear_rate, x[POS_H], p);
+void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double /*t*/) {
+    std::fill(dxdt.begin(), dxdt.end(), 0.0);
+
+    update_rot_inc_range();
+    update_rot_inc_ind();
+
+    after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
+
+    if (left_lig_ind <= right_lig_ind)
+        n_active_lig = right_lig_ind - left_lig_ind + 1;
+    else
+        n_active_lig = (right_lig_ind + ligands.size() - left_lig_ind + 1) % ligands.size();
+
+    double any_event_rate = 0.0;
+    for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
+        // ignore bonded ligands
+        if (ligands[i].bond_state != 0) {
+            continue;
+        }
+        dxdt[i] = ligands[i].update_binding_rates(x[h_ode_i], x[rot_ode_i]);
+        any_event_rate += dxdt[i];
+    }
+
+    // rupture events
+    for (const auto &i : bd_lig_ind) {
+        dxdt[i] = ligands[i].rupture_rate(x[h_ode_i], x[rot_ode_i], x[dist_ode_i]);
+        any_event_rate += dxdt[i];
+    }
+    dxdt[ligands.size()] = any_event_rate;
+
+    forces_t f = forces::non_bond_forces(shear_rate, x[h_ode_i], p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(h(), rot(), dist());
+        f += ligands[bd_i].bond_forces(x[h_ode_i], x[rot_ode_i], x[dist_ode_i]);
 
-    dxdt = velocities::compute_velocities(x[POS_H], f, p);
+    array<double, 3> vel = velocities::compute_velocities(x[h_ode_i], f, p);
+    dxdt[h_ode_i] = vel[POS_H];
+    dxdt[rot_ode_i] = vel[POS_ROT];
+    dxdt[dist_ode_i] = vel[POS_DIST];
 }
 
 void SimulationState::check_rot_ind() {
@@ -410,22 +396,19 @@ void SimulationState::Diagnostic::add_dt(double dt) {
 }
 
 double SimulationState::do_ode_step() {
-    if (bd_lig_ind.empty())
-        try_dt = std::min(try_dt, max_dt);
-    else
-        try_dt = std::min(try_dt, max_dt_with_bonds);
+    try_dt = std::min(try_dt, max_dt);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
     auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
 
     controlled_step_result result;
     double dt_inout = 0.0, time_inout = 0.0;
-    array<double, 3> pos_inout {};
+    vector<double> pos_inout(3);
 
     bool step_done = false;
     while (!step_done) {
         dt_inout = try_dt;
-        pos_inout = pos;
+        pos_inout = ode_x;
         time_inout = time;
         result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
         if (result == fail) {
@@ -433,12 +416,18 @@ double SimulationState::do_ode_step() {
             try_dt = dt_inout;
             continue;
         }
+        double cdf = 1 - exp(- pos_inout[ligands.size()]);
+        if (cdf > u + 1e-3) {
+            reset_stepper();
+            try_dt /= 2;
+            continue;
+        }
         step_done = true;
     }
 
     double step_done_with_dt = try_dt;
     try_dt = dt_inout;  // possibly larger after successful step
-    pos = pos_inout;
+    ode_x = pos_inout;
     time = time_inout;
 
     return step_done_with_dt;

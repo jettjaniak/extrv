@@ -31,7 +31,7 @@ int main() {
         unsigned int seed = 751134721;
 
 
-        auto s = SimulationState(0.03, &p, seed, 1e-5);
+        auto s = SimulationState(0.03, &p, seed, 1e-3);
         size_t max_steps_falling = 2e6;
         size_t max_steps_rolling = 6e6;
 

@@ -11,7 +11,7 @@
 
 using namespace boost::numeric::odeint;
 
-typedef runge_kutta_dopri5<array<double, 3>> error_stepper_type;
+typedef runge_kutta_dopri5<vector<double>> error_stepper_type;
 typedef controlled_runge_kutta<error_stepper_type> adaptive_stepper_type;
 
 
@@ -26,8 +26,13 @@ struct SimulationState {
     Diagnostic diag;
 
     /// height, rotation and distance
-    array<double, 3> pos {};
+    vector<double> ode_x;
+    size_t h_ode_i;
+    size_t rot_ode_i;
+    size_t dist_ode_i;
+
     double try_dt;
+    double u;
 
     double time = 0.0;
     /// sphere's rotation in radians
@@ -128,7 +133,7 @@ struct SimulationState {
     void check_rot_ind();
 
     /// ODE's RHS
-    void rhs(const array<double, 3> & x, array<double, 3> & dxdt, double /*t*/);
+    void rhs(const vector<double> & x, vector<double> & dxdt, double /*t*/);
 
     void reset_stepper();
     double do_ode_step();
