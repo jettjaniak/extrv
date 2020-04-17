@@ -16,15 +16,15 @@ struct AbstrSS {
     };
     Diagnostic diag;
 
-    /// log height, rotation and distance
+    /// height, rotation and distance
     array<double, 3> pos {};
     double try_dt;
 
     double time = 0.0;
     /// sphere's rotation in radians
-    double global_rot = 0.0;
+    double cumulated_rot = 0.0;
     /// distance traveled in direction of flow (x)
-    double global_dist = 0.0;
+    double cumulated_dist = 0.0;
 
     /// fluid flow shear rate in 1/s
     double shear_rate = 0.0;
@@ -68,6 +68,8 @@ struct AbstrSS {
     double h() const;
     double rot() const;
     double dist() const;
+    double global_rot() const;
+    double global_dist() const;
 
     /**
      * Do one step of simulation.

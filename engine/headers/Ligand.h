@@ -61,7 +61,7 @@ struct Ligand {
      *
      * TODO
      */
-    double surface_dist(const array<double, 3> & pos);
+    double surface_dist(double h, double rot);
 
     /**
      * Compute bond length.
@@ -69,16 +69,16 @@ struct Ligand {
      *
      * TODO
      */
-    double bond_length(const array<double, 3> & pos);
+    double bond_length(double h, double rot, double dist);
 
     /**
      * Returns parameters of current bond.
      */
     AbstractBondType* get_curr_bond_type();
 
-    double update_binding_rates(const array<double, 3> & pos);
+    double update_binding_rates(double h, double rot);
 
-    double rupture_rate(const array<double, 3> & pos);
+    double rupture_rate(double h, double rot, double dist);
 
     /**
      * TODO
@@ -96,7 +96,7 @@ struct Ligand {
      *
      * TODO
      */
-    forces_t bond_forces(const array<double, 3> & pos);
+    forces_t bond_forces(double h, double rot, double dist);
 };
 
 

@@ -147,9 +147,8 @@ PYBIND11_MODULE(extrv_engine, m) {
         .def_readonly("n_bonds_created", &AbstrSS::Diagnostic::n_bonds_created);
 
     a_ss.def("h", &AbstrSS::h)
-        .def("rot", &AbstrSS::rot)
-        .def("dist", &AbstrSS::dist)
-
+        .def("global_rot", &AbstrSS::global_rot)
+        .def("global_dist", &AbstrSS::global_dist)
         .def("simulate_one_step", &AbstrSS::simulate_one_step)
         .def("simulate", &AbstrSS::simulate,
              "max_time"_a, "max_steps"_a)

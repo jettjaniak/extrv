@@ -40,11 +40,19 @@ double AbstrSS::h() const {
 }
 
 double AbstrSS::rot() const {
-    return global_rot + pos[POS_ROT];
+    return pos[POS_ROT];
 }
 
 double AbstrSS::dist() const {
-    return global_dist + pos[POS_DIST];
+    return pos[POS_DIST];
+}
+
+double AbstrSS::global_rot() const {
+    return cumulated_rot + rot();
+}
+
+double AbstrSS::global_dist() const {
+    return cumulated_dist + dist();
 }
 
 void AbstrSS::simulate_one_step() {
@@ -79,12 +87,12 @@ void AbstrSS::simulate_one_step() {
             rates[rates_i] = 0.0;
             continue;
         }
-        rates[rates_i] = ligands[i].update_binding_rates(pos);
+        rates[rates_i] = ligands[i].update_binding_rates(h(), rot());
     }
 
     // rupture events
     for (const auto &i : bd_lig_ind) {
-        rates[rates_i] = ligands[i].rupture_rate(pos);
+        rates[rates_i] = ligands[i].rupture_rate(h(), rot(), dist());
         rates_i++;
     }
 
@@ -132,12 +140,12 @@ void AbstrSS::simulate_one_step() {
         // Update positions after events
 
         double rot_reminder = std::fmod(pos[POS_ROT], 2 * PI);
-        global_rot += pos[POS_ROT] - rot_reminder;
+        cumulated_rot += pos[POS_ROT] - rot_reminder;
         pos[POS_ROT] = rot_reminder;
 
         for (const auto &i : bd_lig_ind)
             ligands[i].bd_rec_x -= pos[POS_DIST];
-        global_dist += pos[POS_DIST];
+        cumulated_dist += pos[POS_DIST];
         pos[POS_DIST] = 0.0;
 
         // ODE has changed
@@ -172,14 +180,14 @@ void AbstrSS::reseed(unsigned int seed) {
 }
 
 void AbstrSS::update_rot_inc_range() {
-    if (p->max_surf_dist <= pos[POS_H]) {
-        left_rot_inc = right_rot_inc = - pos[POS_ROT];
+    if (p->max_surf_dist <= h()) {
+        left_rot_inc = right_rot_inc = - rot();
         return;
     }
     // rot + rot_inc, in [0, π]
-    double beta = acos(1 - (p->max_surf_dist - pos[POS_H]) / p->r_cell);
-    right_rot_inc = beta - pos[POS_ROT];
-    left_rot_inc = 2 * PI - beta - pos[POS_ROT];
+    double beta = acos(1 - (p->max_surf_dist - h()) / p->r_cell);
+    right_rot_inc = beta - rot();
+    left_rot_inc = 2 * PI - beta - rot();
     // projecting on [0, 2π]
     right_rot_inc = std::fmod(right_rot_inc + 2 * PI, 2 * PI);
     left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
@@ -356,7 +364,7 @@ void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*
     forces_t f = forces::non_bond_forces(shear_rate, x[POS_H], p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(pos);
+        f += ligands[bd_i].bond_forces(h(), rot(), dist());
 
     dxdt = velocities::compute_velocities(x[POS_H], f, p);
 }

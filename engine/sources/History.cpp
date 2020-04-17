@@ -13,8 +13,8 @@ void History::update(const AbstrSS *s) {
     update_bond_trajectories(s);
     time.push_back(s->time);
     h.push_back(s->h());
-    rot.push_back(s->rot());
-    dist.push_back(s->dist());
+    rot.push_back(s->global_rot());
+    dist.push_back(s->global_dist());
     hist_i++;
 }
 

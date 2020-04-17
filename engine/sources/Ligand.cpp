@@ -26,15 +26,15 @@ void Ligand::rupture() {
     bd_rec_x = INFTY;
 }
 
-forces_t Ligand::bond_forces(const array<double, 3> & pos) {
+forces_t Ligand::bond_forces(double h, double rot, double dist) {
     AbstractBondType* bond_type = get_curr_bond_type();
 
-    double lig_x = x_pos(pos[POS_ROT]);
-    double lig_y = y_pos(pos[POS_ROT]);
+    double lig_x = x_pos(rot);
+    double lig_y = y_pos(rot);
 
     xy_t bond_vector = helpers::compute_bond_vector(
-            surface_dist(pos),
-            lig_x, bd_rec_x - pos[POS_DIST]
+            surface_dist(h, rot),
+            lig_x, bd_rec_x - dist
     );
 
     double bond_len = bond_vector.length();
@@ -57,19 +57,19 @@ double Ligand::y_pos(double rot) const {
     return - r_cir * cos(rot + rot_inc);
 }
 
-double Ligand::surface_dist(const array<double, 3> & pos) {
-    double surf_dist = pos[POS_H] + lig_type->p->r_cell + y_pos(pos[POS_ROT]);
+double Ligand::surface_dist(double h, double rot) {
+    double surf_dist = h + lig_type->p->r_cell + y_pos(rot);
     if (surf_dist < 0)
         abort();
     return surf_dist;
 }
 
-double Ligand::bond_length(const array<double, 3> & pos) {
+double Ligand::bond_length(double h, double rot, double dist) {
     if (bond_state < 1)
         abort();
 
     xy_t bond_vector = helpers::compute_bond_vector(
-            surface_dist(pos), x_pos(pos[POS_ROT]), bd_rec_x - pos[POS_DIST]);
+            surface_dist(h, rot), x_pos(rot), bd_rec_x - dist);
 
     return bond_vector.length();
 }
@@ -80,20 +80,20 @@ AbstractBondType* Ligand::get_curr_bond_type() {
     return lig_type->bonds_types[bond_state - 1];
 }
 
-double Ligand::update_binding_rates(const array<double, 3> & pos) {
+double Ligand::update_binding_rates(double h, double rot) {
     double any_binding_rate = 0.0;
     AbstractBondType* bond_type;
     for (int i = 0; i < lig_type->bonds_types.size(); i++) {
         bond_type = lig_type->bonds_types[i];
-        binding_rates[i] = bond_type->binding_rate(surface_dist(pos), lig_type->p->temp);
+        binding_rates[i] = bond_type->binding_rate(surface_dist(h, rot), lig_type->p->temp);
         any_binding_rate += binding_rates[i];
     }
     return any_binding_rate;
 }
 
-double Ligand::rupture_rate(const array<double, 3> & pos) {
+double Ligand::rupture_rate(double h, double rot, double dist) {
     AbstractBondType* bond_type = get_curr_bond_type();  // will abort if not bonded
-    return bond_type->rupture_rate(bond_length(pos), lig_type->p->temp);
+    return bond_type->rupture_rate(bond_length(h, rot, dist), lig_type->p->temp);
 }
 
 
