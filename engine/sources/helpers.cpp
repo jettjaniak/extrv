@@ -124,10 +124,4 @@ namespace helpers {
         return positive_mod(a + x, b);
     }
 
-    bool pos_not_ok(const array<double, 3> &pos) {
-        if (pos[POS_LOG_H] > MAX_LOG_H)
-            return true;
-        return std::any_of(pos.begin(), pos.end(), [](double y){return std::isnan(y) || std::isinf(y);});
-    }
-
 }

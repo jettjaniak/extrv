@@ -93,5 +93,4 @@ namespace helpers {
     /// (b + a + x) % b
     size_t cyclic_add(size_t a, int x, size_t b);
 
-    bool pos_not_ok(const array<double, 3> & pos);
 }

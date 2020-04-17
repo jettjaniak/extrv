@@ -28,35 +28,15 @@ double AbstrAdapSS::do_ode_step() {
     double dt_inout = 0.0, time_inout = 0.0;
     array<double, 3> pos_inout {};
 
-    bool dt_zero = false;
     bool step_done = false;
     while (!step_done) {
         dt_inout = try_dt;
         pos_inout = pos;
         time_inout = time;
         result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
-        // If solver is in the world of NaNs and infinities
-        if (helpers::pos_not_ok(pos_inout)) {
-            diag.n_pos_not_ok++;
-            // we have to reset it
-            reset_stepper();
-            // and reduce the step size
-            try_dt /= 2;
-            continue;
-        }
         if (result == fail) {
             // solver made dt_inout smaller
             try_dt = dt_inout;
-            continue;
-        }
-        if (try_dt == 0) {
-            if (dt_zero) {
-                std::cout << "dt was 0 twice in a row, aborting" << std::endl;
-                abort();
-            } else {
-                dt_zero = true;
-            }
-            try_dt = DOUBLE_MIN; // DOUBLE_DENORM_MIN;
             continue;
         }
         step_done = true;

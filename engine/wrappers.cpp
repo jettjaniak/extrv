@@ -144,7 +144,6 @@ PYBIND11_MODULE(extrv_engine, m) {
     // Diagnostic
     py::class_<AbstrSS::Diagnostic>(a_ss, "Diagnostic")
         .def_readonly("dt_freq", &AbstrSS::Diagnostic::dt_freq)
-        .def_readonly("n_pos_not_ok", &AbstrSS::Diagnostic::n_pos_not_ok)
         .def_readonly("n_bonds_created", &AbstrSS::Diagnostic::n_bonds_created);
 
     a_ss.def("h", &AbstrSS::h)

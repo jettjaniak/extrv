@@ -38,18 +38,18 @@ def plot_one_field(ax, field, solver, test_results):
 
 
 def plot(all_tests_results):
-    fig, axes = plt.subplots(1, 1, sharex=True)
-    # fig, axes = plt.subplots(2, 3, sharex=True)
-    axes = [axes]
-    # axes = axes.flatten()
+    # fig, axes = plt.subplots(1, 1, sharex=True)
+    fig, axes = plt.subplots(2, 3, sharex=True)
+    # axes = [axes]
+    axes = axes.flatten()
 
-    for ax, field in zip(axes[-1:], SimulationStats._fields[-1:]):
+    for ax, field in zip(axes, SimulationStats._fields):
         for solver_name in all_tests_results.keys():
             plot_one_field(ax, field, solver_name, all_tests_results)
         ax.title.set_text(field)
 
     # plt.xlabel("shear rate $(1/s)$")
     # plt.ylabel("mean velocity $(\\mu m/s)$")
-    # plt.tight_layout()
-    plt.yscale('log')
-    # plt.legend()
+    plt.tight_layout()
+    # plt.yscale('log')
+    plt.legend()
