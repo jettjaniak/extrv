@@ -9,32 +9,20 @@ from datetime import datetime
 from collections import defaultdict, namedtuple
 
 
-from extrv_engine import EulerGillSS, EulerProbSS, RKGillSS, RKProbSS, AdapGillSS, AdapProbSS, SlipBondType, Parameters
+from extrv_engine import SimulationState, SlipBondType, Parameters
 
-CONST_DT = 1e-6
 FALLING_TIME = 1
 ROLLING_TIME = 10
 N_TRIALS = 50
-# SOLVERS = ['euler_gill', 'euler_prob', 'rk_gill', 'rk_prob', 'adap_gill', 'adap_prob']
-SOLVERS = [
-    'euler_gill, dt <= 1e-6', 'euler_prob, dt = 1e-6',
-    'rk_gill, dt <= 1e-5', 'rk_prob, dt = 1e-6',
-    'adap_gill, dt <= 0.1 (with bonds 1e-4)', 'adap_prob, dt <= 1e-6'
-]
-EULER_GILL_DT = 1e-6
-EULER_PROB_DT = 1e-6
-RK_GILL_DT = 1e-5
-RK_PROB_DT = 1e-6
-ADAP_GILL_MAX_DT = 0.1
-ADAP_GILL_MAX_DT_WITH_BONDS = 1e-4
-ADAP_PROB_MAX_DT = 1e-6
-ADAP_PROB_MAX_DT_WITH_BONDS = 1e-6
+# N_TRIALS = 7
+MAX_DT = 0.1
+MAX_DT_WITH_BONDS = 1e-4
 
 # SHEAR_RATES = [0.1, 0.9]
 SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
 
-ADAP_ABS_ERR = 1e-10
-ADAP_REL_ERR = 1e-6
+ABS_ERR = 1e-10
+REL_ERR = 1e-6
 INITIAL_HEIGHT = 0.03
 SAVE_EVERY = 1e-4
 
@@ -69,16 +57,16 @@ def setup_parameters():
     return p, psgl, psgl_plus_esel_bond
 
 
-def many_tests(solver_name, pool):
+def many_tests(pool):
     for shear_rate in SHEAR_RATES:
-        one_test(solver_name, shear_rate, pool)
+        one_test(shear_rate, pool)
 
 
-def one_test(solver_name, shear_rate, pool):
+def one_test(shear_rate, pool):
     seeds = np.random.randint(uint_info.max, size=N_TRIALS, dtype='uint32')
     # seeds = np.arange(n_trials) + 100
     for seed in seeds:
-        pool.apply_async(iteration_wrapper, (solver_name, shear_rate, seed),
+        pool.apply_async(iteration_wrapper, (shear_rate, seed),
                          callback=iteration_callback, error_callback=iteration_error_callback)
 
 
@@ -90,27 +78,12 @@ def iteration_wrapper(*args, **kwargs):
         raise error
 
 
-def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
+def iteration(shear_rate=0, seed=0, save_every=SAVE_EVERY):
     p, psgl, psgl_plus_esel_bond = setup_parameters()
 
-    if solver_name.startswith('euler_gill'):
-        ss = EulerGillSS(INITIAL_HEIGHT, p, seed, dt=EULER_GILL_DT)
-    elif solver_name.startswith('euler_prob'):
-        ss = EulerProbSS(INITIAL_HEIGHT, p, seed, dt=EULER_PROB_DT)
-    elif solver_name.startswith('rk_gill'):
-        ss = RKGillSS(INITIAL_HEIGHT, p, seed, dt=RK_GILL_DT)
-    elif solver_name.startswith('rk_prob'):
-        ss = RKProbSS(INITIAL_HEIGHT, p, seed, dt=RK_PROB_DT)
-    elif solver_name.startswith('adap_gill'):
-        ss = AdapGillSS(INITIAL_HEIGHT, p, seed,
-                        max_dt=ADAP_GILL_MAX_DT, max_dt_with_bonds=ADAP_GILL_MAX_DT_WITH_BONDS,
-                        abs_err=ADAP_ABS_ERR, rel_err=ADAP_REL_ERR)
-    elif solver_name.startswith('adap_prob'):
-        ss = AdapProbSS(INITIAL_HEIGHT, p, seed,
-                        max_dt=ADAP_PROB_MAX_DT, max_dt_with_bonds=ADAP_PROB_MAX_DT_WITH_BONDS,
-                        abs_err=ADAP_ABS_ERR, rel_err=ADAP_REL_ERR)
-    else:
-        raise ValueError
+    ss = SimulationState(INITIAL_HEIGHT, p, seed,
+                         max_dt=MAX_DT, max_dt_with_bonds=MAX_DT_WITH_BONDS,
+                         abs_err=ABS_ERR, rel_err=REL_ERR)
 
     # falling
     ss.simulate(FALLING_TIME, MAX_STEPS_FALLING)
@@ -123,7 +96,7 @@ def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
     sim_hist = ss.simulate_with_history(FALLING_TIME + ROLLING_TIME, MAX_STEPS_ROLLING, save_every=save_every)
     comp_end_time = time.time()
 
-    print("simulation done for solver", solver_name, "seed", seed, "shear", shear_rate)
+    print("simulation done for seed", seed, "shear", shear_rate)
 
     n_bonds_since_falling = ss.diag.n_bonds_created - n_bonds_before_falling
     mean_bonds_ls = 0.0
@@ -149,13 +122,13 @@ def iteration(solver_name, shear_rate=0, seed=0, save_every=SAVE_EVERY):
         comp_time=comp_end_time - comp_start_time
     )
 
-    return solver_name, shear_rate, sim_stats
-    # return solver_name, shear_rate, sim_stats, ss, sim_hist
+    return shear_rate, sim_stats
+    # return shear_rate, sim_stats, ss, sim_hist
 
 
 def iteration_callback(result):
-    solver_name, shear_rate, sim_stats = result
-    test_results[solver_name][shear_rate].append(sim_stats)
+    shear_rate, sim_stats = result
+    test_results[shear_rate].append(sim_stats)
 
 
 def iteration_error_callback(error):
@@ -167,10 +140,8 @@ if __name__ == '__main__':
     uint_info = np.iinfo(np.uint32)
     pool = multiprocessing.Pool()
 
-    test_results = dict()
-    for solver_name in SOLVERS:
-        test_results[solver_name] = defaultdict(list)
-        many_tests(solver_name, pool)
+    test_results = defaultdict(list)
+    many_tests(pool)
 
     pool.close()
     pool.join()

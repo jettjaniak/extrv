@@ -14,12 +14,11 @@ def standard_error_of_mean(values):
     return np.sqrt(np.var(values) / len(values))
 
 
-def plot_one_field(ax, field, solver, test_results):
-    res = test_results[solver]
+def plot_one_field(ax, field, test_results):
     x = []
     y = []
     err = []
-    for shear, stats_list in res.items():
+    for shear, stats_list in test_results.items():
         values = [getattr(stat, field) for stat in stats_list]
         x.append(shear)
         y.append(np.mean(values))
@@ -34,22 +33,21 @@ def plot_one_field(ax, field, solver, test_results):
     y = y[sort_ind]
     err = err[sort_ind]
 
-    ax.errorbar(x, y, err, label=solver)
+    ax.errorbar(x, y, err)
 
 
-def plot(all_tests_results):
+def plot(test_results):
     # fig, axes = plt.subplots(1, 1, sharex=True)
     fig, axes = plt.subplots(2, 3, sharex=True)
     # axes = [axes]
     axes = axes.flatten()
 
     for ax, field in zip(axes, SimulationStats._fields):
-        for solver_name in all_tests_results.keys():
-            plot_one_field(ax, field, solver_name, all_tests_results)
+        plot_one_field(ax, field, test_results)
         ax.title.set_text(field)
 
     # plt.xlabel("shear rate $(1/s)$")
     # plt.ylabel("mean velocity $(\\mu m/s)$")
     plt.tight_layout()
     # plt.yscale('log')
-    plt.legend()
+    # plt.legend()

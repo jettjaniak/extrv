@@ -6,11 +6,20 @@
 #include "helpers.h"
 #include "History.h"
 
-struct AbstrSS {
+#include <boost/numeric/odeint/stepper/runge_kutta_dopri5.hpp>
+#include <boost/numeric/odeint/stepper/controlled_runge_kutta.hpp>
+
+using namespace boost::numeric::odeint;
+
+typedef runge_kutta_dopri5<array<double, 3>> error_stepper_type;
+typedef controlled_runge_kutta<error_stepper_type> adaptive_stepper_type;
+
+
+struct SimulationState {
     struct Diagnostic {
         /// stores frequencies of -int(log10(try_dt))
         vector<size_t> dt_freq;
-        size_t n_bonds_created;
+        size_t n_bonds_created = 0;
 
         void add_dt(double dt);
     };
@@ -54,7 +63,17 @@ struct AbstrSS {
     /// model parameters
     Parameters* p;
 
-    AbstrSS() = default;
+    adaptive_stepper_type stepper;
+
+    /// maximal time step
+    double max_dt;
+    /// maximal time step
+    double max_dt_with_bonds;
+    /// limit on absolute error of ODE solver
+    double abs_err;
+    /// limit on relative error of ODE solver
+    double rel_err;
+
     /**
      * Initialize simulation.
      *
@@ -62,7 +81,9 @@ struct AbstrSS {
      * @param p model parameters
      * @param seed number that random number generator will be seeded with
      */
-    AbstrSS(double h_0, Parameters* p, unsigned int seed);
+    SimulationState(double h_0, Parameters* p, unsigned int seed,
+                    double max_dt = 0.1, double max_dt_with_bonds = 1e-4,
+                    double abs_err = 1e-10, double rel_err = 1e-6);
 
 
     double h() const;
@@ -109,8 +130,8 @@ struct AbstrSS {
     /// ODE's RHS
     void rhs(const array<double, 3> & x, array<double, 3> & dxdt, double /*t*/);
 
-    virtual void reset_stepper() = 0;
-    virtual double do_ode_step() = 0;
-    virtual double compute_dt_bonds() = 0;
-    virtual vector<size_t> compute_event_nrs(double dt) = 0;
+    void reset_stepper();
+    double do_ode_step();
+    double compute_dt_bonds();
+    vector<size_t> compute_event_nrs(double dt);
 };

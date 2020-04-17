@@ -1,17 +1,29 @@
-#include "AbstrSS.h"
+#include "SimulationState.h"
 
 #include <algorithm>
 #include <utility>
 #include <iostream>
 
-
 #include "forces.h"
 #include "velocities.h"
 #include "helpers.h"
 
+#include <boost/numeric/odeint/stepper/generation.hpp>
 
-AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
 
+SimulationState::SimulationState(
+        double h_0, Parameters* p, unsigned int seed,
+        double max_dt, double max_dt_with_bonds,
+        double abs_err, double rel_err) :
+
+        p(p),
+        max_dt(max_dt),
+        max_dt_with_bonds(max_dt_with_bonds),
+        abs_err(abs_err),
+        rel_err(rel_err)
+{
+    reset_stepper();
+    try_dt = max_dt;
     pos[POS_H] = h_0;
     reseed(seed);
 
@@ -35,27 +47,27 @@ AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
          });
 }
 
-double AbstrSS::h() const {
+double SimulationState::h() const {
     return pos[POS_H];
 }
 
-double AbstrSS::rot() const {
+double SimulationState::rot() const {
     return pos[POS_ROT];
 }
 
-double AbstrSS::dist() const {
+double SimulationState::dist() const {
     return pos[POS_DIST];
 }
 
-double AbstrSS::global_rot() const {
+double SimulationState::global_rot() const {
     return cumulated_rot + rot();
 }
 
-double AbstrSS::global_dist() const {
+double SimulationState::global_dist() const {
     return cumulated_dist + dist();
 }
 
-void AbstrSS::simulate_one_step() {
+void SimulationState::simulate_one_step() {
 
     // Optimization - track only ligands that are close to surface
 
@@ -153,13 +165,13 @@ void AbstrSS::simulate_one_step() {
     }
 }
 
-void AbstrSS::simulate(double max_time, size_t max_steps) {
+void SimulationState::simulate(double max_time, size_t max_steps) {
     for (size_t i = 0; i < max_steps && time < max_time; ++i) {
         simulate_one_step();
     }
 }
 
-History AbstrSS::simulate_with_history(double max_time, size_t max_steps, double save_every) {
+History SimulationState::simulate_with_history(double max_time, size_t max_steps, double save_every) {
     History hist;
     hist.update(this);
 
@@ -175,11 +187,11 @@ History AbstrSS::simulate_with_history(double max_time, size_t max_steps, double
     return hist;
 }
 
-void AbstrSS::reseed(unsigned int seed) {
+void SimulationState::reseed(unsigned int seed) {
     generator = generator_t{seed};
 }
 
-void AbstrSS::update_rot_inc_range() {
+void SimulationState::update_rot_inc_range() {
     if (p->max_surf_dist <= h()) {
         left_rot_inc = right_rot_inc = - rot();
         return;
@@ -194,7 +206,7 @@ void AbstrSS::update_rot_inc_range() {
 }
 
 // TODO: move it somewhere else
-void AbstrSS::update_rot_inc_ind() {
+void SimulationState::update_rot_inc_ind() {
     // |----[------]----|
     // 0    L      R   2 PI
     if (left_rot_inc <= right_rot_inc) {
@@ -360,7 +372,7 @@ void AbstrSS::update_rot_inc_ind() {
     }
 }
 
-void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
+void SimulationState::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
     forces_t f = forces::non_bond_forces(shear_rate, x[POS_H], p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
@@ -369,7 +381,7 @@ void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*
     dxdt = velocities::compute_velocities(x[POS_H], f, p);
 }
 
-void AbstrSS::check_rot_ind() {
+void SimulationState::check_rot_ind() {
     if (helpers::cyclic_add(left_lig_ind, -1, ligands.size()) != right_lig_ind) {
         Ligand & left_lig = ligands[left_lig_ind];
         Ligand & right_lig = ligands[right_lig_ind];
@@ -387,7 +399,7 @@ void AbstrSS::check_rot_ind() {
     }
 }
 
-void AbstrSS::Diagnostic::add_dt(double dt) {
+void SimulationState::Diagnostic::add_dt(double dt) {
     auto i = size_t(-log10(dt));
     if (dt_freq.size() < i + 1) {
         if (i + 1 > dt_freq.max_size())
@@ -395,4 +407,69 @@ void AbstrSS::Diagnostic::add_dt(double dt) {
         dt_freq.resize(i + 1);
     }
     dt_freq[i]++;
+}
+
+double SimulationState::do_ode_step() {
+    if (bd_lig_ind.empty())
+        try_dt = std::min(try_dt, max_dt);
+    else
+        try_dt = std::min(try_dt, max_dt_with_bonds);
+    // TODO: define as class parameter or define operator()
+    namespace pl = std::placeholders;
+    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+
+    controlled_step_result result;
+    double dt_inout = 0.0, time_inout = 0.0;
+    array<double, 3> pos_inout {};
+
+    bool step_done = false;
+    while (!step_done) {
+        dt_inout = try_dt;
+        pos_inout = pos;
+        time_inout = time;
+        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
+        if (result == fail) {
+            // solver made dt_inout smaller
+            try_dt = dt_inout;
+            continue;
+        }
+        step_done = true;
+    }
+
+    double step_done_with_dt = try_dt;
+    try_dt = dt_inout;  // possibly larger after successful step
+    pos = pos_inout;
+    time = time_inout;
+
+    return step_done_with_dt;
+}
+
+void SimulationState::reset_stepper() {
+    stepper = make_controlled<error_stepper_type>(abs_err, rel_err);
+}
+
+double SimulationState::compute_dt_bonds() {
+    //////////////////////////////////////////////
+    //  Gillespie algorithm - first event time  //
+    //////////////////////////////////////////////
+
+    double any_event_rate = 0.0;
+    for (const auto &rate : rates)
+        any_event_rate += rate;
+
+    // TODO: just for debug, remove
+    static constexpr double max_rate = 1e80;
+    if (any_event_rate > max_rate)
+        std::cout << "EVENT RATE > " << max_rate << std::endl;
+
+    if (any_event_rate > 0.0) {
+        std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
+        return dt_bonds_distribution(generator);
+    }
+    return INFTY;
+}
+
+vector<size_t> SimulationState::compute_event_nrs(double) {
+    std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
+    return {which_event_distribution(generator)};
 }

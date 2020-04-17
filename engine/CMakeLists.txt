@@ -13,13 +13,7 @@ add_subdirectory(libs/pybind11)
 pybind11_add_module(extrv_engine wrappers.cpp
         sources/helpers.cpp
         sources/Ligand.cpp
-        sources/AbstrSS.cpp
-        sources/AbstrGillSS.cpp
-        sources/AbstrProbSS.cpp
-        sources/AbstrConstStepSS.cpp
-        sources/EulerSS.cpp
-        sources/RKSS.cpp
-        sources/AdapSS.cpp
+        sources/SimulationState.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp
@@ -30,13 +24,7 @@ pybind11_add_module(extrv_engine wrappers.cpp
 add_executable(extrv main.cpp
         sources/helpers.cpp
         sources/Ligand.cpp
-        sources/AbstrSS.cpp
-        sources/AbstrGillSS.cpp
-        sources/AbstrProbSS.cpp
-        sources/AbstrConstStepSS.cpp
-        sources/EulerSS.cpp
-        sources/RKSS.cpp
-        sources/AdapSS.cpp
+        sources/SimulationState.cpp
         sources/velocities.cpp
         sources/forces.cpp
         sources/interpolated.cpp
