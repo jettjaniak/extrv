@@ -58,7 +58,7 @@ double Ligand::y_pos(double rot) const {
 }
 
 double Ligand::surface_dist(const array<double, 3> & pos) {
-    double surf_dist = exp(pos[POS_LOG_H]) + lig_type->p->r_cell + y_pos(pos[POS_ROT]);
+    double surf_dist = pos[POS_H] + lig_type->p->r_cell + y_pos(pos[POS_ROT]);
     if (surf_dist < 0)
         abort();
     return surf_dist;

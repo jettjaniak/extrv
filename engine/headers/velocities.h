@@ -12,14 +12,14 @@ namespace velocities {
      * sphere velocities (translational and angular) can be determined
      * from forces acting on the sphere.
      *
-     * @param log_h natural logarithm of sphere's height above the surface
+     * @param h natural logarithm of sphere's height above the surface
      * @param f forces acting on the sphere
      * @param p model parameters
      *
      * @return computed velocities
      *
      */
-    array<double, 3> compute_velocities(double log_h, const forces_t &f, const Parameters *p);
+    array<double, 3> compute_velocities(double h, const forces_t &f, const Parameters *p);
 
     /**
      * Function related to hydrodynamics used in velocity computation.

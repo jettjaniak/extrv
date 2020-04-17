@@ -5,8 +5,7 @@
 
 namespace velocities {
 
-    array<double, 3> compute_velocities(double log_h, const forces_t &f, const Parameters *p) {
-        double h = exp(log_h);
+    array<double, 3> compute_velocities(double h, const forces_t &f, const Parameters *p) {
         double h_over_r = h / p->r_cell;
         double t_t_val = interpolated::t_t(h_over_r);
         double f_r_val = interpolated::f_r(h_over_r);
@@ -24,7 +23,7 @@ namespace velocities {
         double o_z = (4 * p->r_cell * f.f_x * t_t_val + 3 * f_t_val * f.t_z) / d_24pi_mu_r3;
 
         array<double, 3> ret {};
-        ret[POS_LOG_H] = v_y / h;  // d log(h) / dt = (1/h) * (d h / dt)
+        ret[POS_H] = v_y;
         ret[POS_ROT] = o_z;
         ret[POS_DIST] = v_x;
 

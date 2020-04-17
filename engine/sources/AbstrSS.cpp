@@ -12,7 +12,7 @@
 
 AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
 
-    pos[POS_LOG_H] = log(h_0);
+    pos[POS_H] = h_0;
     reseed(seed);
 
     Parameters::LigandType* lig_type;
@@ -36,7 +36,7 @@ AbstrSS::AbstrSS(double h_0, Parameters* p, unsigned int seed) : p(p) {
 }
 
 double AbstrSS::h() const {
-    return exp(pos[POS_LOG_H]);
+    return pos[POS_H];
 }
 
 double AbstrSS::rot() const {
@@ -172,12 +172,12 @@ void AbstrSS::reseed(unsigned int seed) {
 }
 
 void AbstrSS::update_rot_inc_range() {
-    if (p->max_surf_dist <= exp(pos[POS_LOG_H])) {
+    if (p->max_surf_dist <= pos[POS_H]) {
         left_rot_inc = right_rot_inc = - pos[POS_ROT];
         return;
     }
     // rot + rot_inc, in [0, π]
-    double beta = acos(1 - (p->max_surf_dist - exp(pos[POS_LOG_H])) / p->r_cell);
+    double beta = acos(1 - (p->max_surf_dist - pos[POS_H]) / p->r_cell);
     right_rot_inc = beta - pos[POS_ROT];
     left_rot_inc = 2 * PI - beta - pos[POS_ROT];
     // projecting on [0, 2π]
@@ -353,12 +353,12 @@ void AbstrSS::update_rot_inc_ind() {
 }
 
 void AbstrSS::rhs(const array<double, 3> &x, array<double, 3> &dxdt, double /*t*/) {
-    forces_t f = forces::non_bond_forces(shear_rate, exp(x[POS_LOG_H]), p);
+    forces_t f = forces::non_bond_forces(shear_rate, x[POS_H], p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
         f += ligands[bd_i].bond_forces(pos);
 
-    dxdt = velocities::compute_velocities(x[POS_LOG_H], f, p);
+    dxdt = velocities::compute_velocities(x[POS_H], f, p);
 }
 
 void AbstrSS::check_rot_ind() {
