@@ -27,21 +27,21 @@ int main() {
         );
         psgl.add_bond_type(&psgl_plus_esel_bond);
         p.add_ligands(&psgl, 20000);
-//        unsigned int seed = i;
-        unsigned int seed = 751134721;
+        unsigned int seed = i;
+//        unsigned int seed = 751134721;
 
 
-        auto s = SimulationState(0.03, &p, seed, 1e-3);
+        std::cout << "seed " << seed << " started." << std::endl;
+        auto s = SimulationState(0.03, &p, seed, 1e-2);
         size_t max_steps_falling = 2e6;
         size_t max_steps_rolling = 6e6;
 
         s.simulate(1, max_steps_falling);
-        std::cout << s.bd_lig_ind.size() << " bonds" << std::endl;
+        std::cout << s.diag.n_bonds_created << " bonds created during falling." << std::endl;
         s.shear_rate = 0.9;
         double max_time = 11.0;
         s.simulate(max_time, max_steps_rolling);
-//        if (s.time < max_time)
-//            std::cout << "only " << s.time << " seconds done!" << std::endl;
-        std::cout << "seed " << seed << " done" << std::endl;
+        std::cout << s.diag.n_bonds_created << " bonds created during falling and rolling." << std::endl;
+        std::cout << "Done." << std::endl << std::endl;
     }
 }

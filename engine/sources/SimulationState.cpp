@@ -47,18 +47,18 @@ SimulationState::SimulationState(
          });
 
     ode_x.resize(ligands.size() + 1 + 3, 0.0);
-    h_ode_i = ligands.size() + 1 + POS_H;
+    log_h_ode_i = ligands.size() + 1 + POS_LOG_H;
     rot_ode_i = ligands.size() + 1 + POS_ROT;
     dist_ode_i = ligands.size() + 1 + POS_DIST;
 //    ode_x.resize(3);
-//    h_ode_i = POS_H;
+//    log_h_ode_i = POS_LOG_H;
 //    rot_ode_i = POS_ROT;
 //    dist_ode_i = POS_DIST;
-    ode_x[h_ode_i] = h_0;
+    ode_x[log_h_ode_i] = log(h_0);
 }
 
 double SimulationState::h() const {
-    return ode_x[h_ode_i];
+    return exp(ode_x[log_h_ode_i]);
 }
 
 double SimulationState::rot() const {
@@ -339,30 +339,31 @@ void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double 
     else
         n_active_lig = (right_lig_ind + ligands.size() - left_lig_ind + 1) % ligands.size();
 
+    double h = exp(x[log_h_ode_i]);
     double any_event_rate = 0.0;
     for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
         // ignore bonded ligands
         if (ligands[i].bond_state != 0) {
             continue;
         }
-        dxdt[i] = ligands[i].update_binding_rates(x[h_ode_i], x[rot_ode_i]);
+        dxdt[i] = ligands[i].update_binding_rates(h, x[rot_ode_i]);
         any_event_rate += dxdt[i];
     }
 
     // rupture events
     for (const auto &i : bd_lig_ind) {
-        dxdt[i] = ligands[i].rupture_rate(x[h_ode_i], x[rot_ode_i], x[dist_ode_i]);
+        dxdt[i] = ligands[i].rupture_rate(h, x[rot_ode_i], x[dist_ode_i]);
         any_event_rate += dxdt[i];
     }
     dxdt[ligands.size()] = any_event_rate;
 
-    forces_t f = forces::non_bond_forces(shear_rate, x[h_ode_i], p);
+    forces_t f = forces::non_bond_forces(shear_rate, h, p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(x[h_ode_i], x[rot_ode_i], x[dist_ode_i]);
+        f += ligands[bd_i].bond_forces(h, x[rot_ode_i], x[dist_ode_i]);
 
-    array<double, 3> vel = velocities::compute_velocities(x[h_ode_i], f, p);
-    dxdt[h_ode_i] = vel[POS_H];
+    array<double, 3> vel = velocities::compute_velocities(h, f, p);
+    dxdt[log_h_ode_i] = vel[POS_LOG_H];
     dxdt[rot_ode_i] = vel[POS_ROT];
     dxdt[dist_ode_i] = vel[POS_DIST];
 }
@@ -414,6 +415,11 @@ double SimulationState::do_ode_step() {
         if (result == fail) {
             // solver made dt_inout smaller
             try_dt = dt_inout;
+            continue;
+        }
+        if (helpers::pos_not_ok(pos_inout.end() - 3, pos_inout.end())) {
+            reset_stepper();
+            try_dt /= 2;
             continue;
         }
         double cdf = 1 - exp(- pos_inout[ligands.size()]);

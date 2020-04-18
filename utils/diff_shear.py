@@ -15,8 +15,7 @@ FALLING_TIME = 1
 ROLLING_TIME = 10
 N_TRIALS = 50
 # N_TRIALS = 7
-MAX_DT = 0.1
-MAX_DT_WITH_BONDS = 1e-4
+MAX_DT = 1e-2
 
 # SHEAR_RATES = [0.1, 0.9]
 SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -82,8 +81,7 @@ def iteration(shear_rate=0, seed=0, save_every=SAVE_EVERY):
     p, psgl, psgl_plus_esel_bond = setup_parameters()
 
     ss = SimulationState(INITIAL_HEIGHT, p, seed,
-                         max_dt=MAX_DT, max_dt_with_bonds=MAX_DT_WITH_BONDS,
-                         abs_err=ABS_ERR, rel_err=REL_ERR)
+                         max_dt=MAX_DT, abs_err=ABS_ERR, rel_err=REL_ERR)
 
     # falling
     ss.simulate(FALLING_TIME, MAX_STEPS_FALLING)
@@ -122,8 +120,8 @@ def iteration(shear_rate=0, seed=0, save_every=SAVE_EVERY):
         comp_time=comp_end_time - comp_start_time
     )
 
-    return shear_rate, sim_stats
-    # return shear_rate, sim_stats, ss, sim_hist
+    # return shear_rate, sim_stats
+    return shear_rate, sim_stats, ss, sim_hist
 
 
 def iteration_callback(result):

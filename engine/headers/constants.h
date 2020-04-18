@@ -12,7 +12,7 @@ constexpr double INFTY = std::numeric_limits<double>::infinity();
 constexpr int LAMBDA_SERIES_MAX_N = 50;
 constexpr double MIN_RATE = 1e-10;
 
-constexpr int POS_H = 0;
+constexpr int POS_LOG_H = 0;
 constexpr int POS_ROT = 1;
 constexpr int POS_DIST = 2;
 

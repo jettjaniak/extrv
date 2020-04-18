@@ -93,4 +93,6 @@ namespace helpers {
     /// (b + a + x) % b
     size_t cyclic_add(size_t a, int x, size_t b);
 
+    bool pos_not_ok(vector<double>::iterator pos_begin, vector<double>::iterator pos_end);
+
 }

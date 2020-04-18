@@ -27,7 +27,7 @@ struct SimulationState {
 
     /// height, rotation and distance
     vector<double> ode_x;
-    size_t h_ode_i;
+    size_t log_h_ode_i;
     size_t rot_ode_i;
     size_t dist_ode_i;
 
