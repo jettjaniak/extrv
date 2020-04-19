@@ -140,6 +140,7 @@ PYBIND11_MODULE(extrv_engine, m) {
     // Diagnostic
     py::class_<SimulationState::Diagnostic>(ss, "Diagnostic")
         .def_readonly("dt_freq", &SimulationState::Diagnostic::dt_freq)
+        .def_readonly("n_pos_not_ok", &SimulationState::Diagnostic::n_pos_not_ok)
         .def_readonly("n_bonds_created", &SimulationState::Diagnostic::n_bonds_created);
 
     ss
