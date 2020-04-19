@@ -20,19 +20,31 @@ struct SimulationState {
         /// stores frequencies of -int(log10(try_dt))
         vector<size_t> dt_freq;
         size_t n_bonds_created = 0;
+        size_t n_pos_not_ok = 0;
 
         void add_dt(double dt);
     };
     Diagnostic diag;
 
-    /// height, rotation and distance
+    /// reaction rates and cell position
     vector<double> ode_x;
     size_t log_h_ode_i;
     size_t rot_ode_i;
     size_t dist_ode_i;
 
+    // TODO: rename it?
     double try_dt;
-    double u;
+    /// maximal time step
+    double max_dt;
+    /// limit on absolute error of ODE solver
+    double ode_abs_err;
+    /// limit on relative error of ODE solver
+    double ode_rel_err;
+
+    /// absolute tolerance value of rate integral
+    double rate_integral_tol;
+    /// if integral of first event rate is close to it, the event fires
+    double rate_integral_value;
 
     double time = 0.0;
     /// sphere's rotation in radians
@@ -46,18 +58,17 @@ struct SimulationState {
     /// ligands on sphere
     vector<Ligand> ligands;
 
+
+    // TODO: it is used only in RHS, move it there
+
     /// range of ligands' rot_incs for which ligands can bond at given step
     double left_rot_inc = 0.0;
     double right_rot_inc = 0.0;
-
     /// indices of leftmost and rightmost ligands that are close enough to surface to bond
     size_t left_lig_ind = 1;
     size_t right_lig_ind = 0;
     size_t after_right_lig_ind = 1;
-    size_t n_active_lig = 0;
 
-    /// rates of binding and rupture reactions
-    vector<double> rates;
 
     /// indices of bonded ligands
     set<size_t> bd_lig_ind;
@@ -68,16 +79,8 @@ struct SimulationState {
     /// model parameters
     Parameters* p;
 
+    /// ODE stepper
     adaptive_stepper_type stepper;
-
-    /// maximal time step
-    double max_dt;
-    /// maximal time step
-    double max_dt_with_bonds;
-    /// limit on absolute error of ODE solver
-    double abs_err;
-    /// limit on relative error of ODE solver
-    double rel_err;
 
     /**
      * Initialize simulation.
@@ -87,8 +90,8 @@ struct SimulationState {
      * @param seed number that random number generator will be seeded with
      */
     SimulationState(double h_0, Parameters* p, unsigned int seed,
-                    double max_dt = 0.1, double max_dt_with_bonds = 1e-4,
-                    double abs_err = 1e-10, double rel_err = 1e-6);
+                    double max_dt = 0.1, double ode_abs_err = 1e-10, double ode_rel_err = 1e-6,
+                    double rate_integral_tol = 1e-3);
 
 
     double h() const;
@@ -137,6 +140,5 @@ struct SimulationState {
 
     void reset_stepper();
     double do_ode_step();
-    double compute_dt_bonds();
-    vector<size_t> compute_event_nrs(double dt);
+    void update_randomness();
 };

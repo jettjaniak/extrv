@@ -14,14 +14,15 @@ from extrv_engine import SimulationState, SlipBondType, Parameters
 FALLING_TIME = 1
 ROLLING_TIME = 10
 N_TRIALS = 50
-# N_TRIALS = 7
-MAX_DT = 1e-2
+# N_TRIALS = 10
+MAX_DT = 0.1
 
 # SHEAR_RATES = [0.1, 0.9]
 SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 ABS_ERR = 1e-10
 REL_ERR = 1e-6
+RATE_INT_TOL = 1e-3
 INITIAL_HEIGHT = 0.03
 SAVE_EVERY = 1e-4
 
@@ -71,17 +72,20 @@ def one_test(shear_rate, pool):
 
 def iteration_wrapper(*args, **kwargs):
     try:
-        return iteration(*args, **kwargs)
+        shear_rate, sim_stats, ss, sim_hist = iteration(*args, **kwargs)
+        return shear_rate, sim_stats
     except Exception as error:
         print("ERROR RAISED!")
         raise error
 
 
 def iteration(shear_rate=0, seed=0, save_every=SAVE_EVERY):
+    print("simulation started for seed", seed, "shear", shear_rate)
     p, psgl, psgl_plus_esel_bond = setup_parameters()
 
     ss = SimulationState(INITIAL_HEIGHT, p, seed,
-                         max_dt=MAX_DT, abs_err=ABS_ERR, rel_err=REL_ERR)
+                         max_dt=MAX_DT, ode_abs_err=ABS_ERR, ode_rel_err=REL_ERR,
+                         rate_integral_tol=RATE_INT_TOL)
 
     # falling
     ss.simulate(FALLING_TIME, MAX_STEPS_FALLING)
@@ -120,7 +124,6 @@ def iteration(shear_rate=0, seed=0, save_every=SAVE_EVERY):
         comp_time=comp_end_time - comp_start_time
     )
 
-    # return shear_rate, sim_stats
     return shear_rate, sim_stats, ss, sim_hist
 
 

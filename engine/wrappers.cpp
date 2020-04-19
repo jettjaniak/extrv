@@ -146,8 +146,8 @@ PYBIND11_MODULE(extrv_engine, m) {
         .def(
             py::init<double, Parameters*, unsigned int, double, double, double, double>(),
             "h_0"_a, "p"_a, "seed"_a,
-            "max_dt"_a = 0.1, "max_dt_with_bonds"_a = 1e-4,
-            "abs_err"_a=1e-10, "rel_err"_a=1e-6
+            "max_dt"_a = 0.1, "ode_abs_err"_a=1e-10, "ode_rel_err"_a=1e-6,
+            "rate_integral_tol"_a=1e-3
         )
         .def("h", &SimulationState::h)
         .def("global_rot", &SimulationState::global_rot)
@@ -165,11 +165,9 @@ PYBIND11_MODULE(extrv_engine, m) {
         .def_readwrite("shear_rate", &SimulationState::shear_rate)
         .def_readwrite("try_dt", &SimulationState::try_dt)
         .def_readwrite("max_dt", &SimulationState::max_dt)
-        .def_readwrite("max_dt_with_bonds", &SimulationState::max_dt_with_bonds)
-        .def_readwrite("abs_err", &SimulationState::abs_err)
-        .def_readwrite("rel_err", &SimulationState::rel_err)
-        .def_readonly("diag", &SimulationState::diag)
-        .def_readonly("n_active_lig", &SimulationState::n_active_lig);
+        .def_readwrite("ode_abs_err", &SimulationState::ode_abs_err)
+        .def_readwrite("ode_rel_err", &SimulationState::ode_rel_err)
+        .def_readonly("diag", &SimulationState::diag);
 
 }
 

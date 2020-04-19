@@ -13,19 +13,19 @@
 
 SimulationState::SimulationState(
         double h_0, Parameters* p, unsigned int seed,
-        double max_dt, double max_dt_with_bonds,
-        double abs_err, double rel_err) :
+        double max_dt, double ode_abs_err, double ode_rel_err,
+        double rate_integral_tol) :
 
         p(p),
         max_dt(max_dt),
-        max_dt_with_bonds(max_dt_with_bonds),
-        abs_err(abs_err),
-        rel_err(rel_err)
+        ode_abs_err(ode_abs_err),
+        ode_rel_err(ode_rel_err),
+        rate_integral_tol(rate_integral_tol)
 {
     reset_stepper();
     try_dt = max_dt;
     reseed(seed);
-    u = helpers::draw_from_uniform_dist(generator);
+    update_randomness();
 
     Parameters::LigandType* lig_type;
     size_t n_of_lig;
@@ -80,14 +80,13 @@ double SimulationState::global_dist() const {
 void SimulationState::simulate_one_step() {
 
     // ODE step
-    double step_done_with_dt = do_ode_step();
-    diag.add_dt(step_done_with_dt);  // diagnostics
+    double rate_integral = do_ode_step();
 
-
-    if (std::abs(1 - exp(- ode_x[ligands.size()]) - u) < 1e-3) {
+    if (rate_integral > rate_integral_value - rate_integral_tol) {
         std::discrete_distribution<size_t> which_event_distribution(ode_x.begin(), ode_x.end() - 4);
         size_t lig_nr = which_event_distribution(generator);
-        std::fill(ode_x.begin(), ode_x.end() - 3, 0.0);
+        auto rate_integrals_end = ode_x.end() - 3;
+        std::fill(ode_x.begin(), rate_integrals_end, 0.0);
         // binding event
         if (ligands[lig_nr].bond_state == 0) {
             bd_lig_ind.insert(lig_nr);
@@ -114,8 +113,7 @@ void SimulationState::simulate_one_step() {
 
         // ODE has changed
         reset_stepper();
-
-        u = helpers::draw_from_uniform_dist(generator);
+        update_randomness();
     }
 }
 
@@ -334,11 +332,6 @@ void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double 
 
     after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
 
-    if (left_lig_ind <= right_lig_ind)
-        n_active_lig = right_lig_ind - left_lig_ind + 1;
-    else
-        n_active_lig = (right_lig_ind + ligands.size() - left_lig_ind + 1) % ligands.size();
-
     double h = exp(x[log_h_ode_i]);
     double any_event_rate = 0.0;
     for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
@@ -346,6 +339,7 @@ void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double 
         if (ligands[i].bond_state != 0) {
             continue;
         }
+        // TODO: now it only works with one type of bond per ligand
         dxdt[i] = ligands[i].update_binding_rates(h, x[rot_ode_i]);
         any_event_rate += dxdt[i];
     }
@@ -403,68 +397,49 @@ double SimulationState::do_ode_step() {
     auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
 
     controlled_step_result result;
-    double dt_inout = 0.0, time_inout = 0.0;
-    vector<double> pos_inout(3);
+    double dt_inout, time_inout;
+    vector<double> ode_x_inout;
+    double rate_integral;
 
-    bool step_done = false;
-    while (!step_done) {
+    while (true) {
         dt_inout = try_dt;
-        pos_inout = ode_x;
+        ode_x_inout = ode_x;
         time_inout = time;
-        result = stepper.try_step(rhs_system, pos_inout, time_inout, dt_inout);
+        result = stepper.try_step(rhs_system, ode_x_inout, time_inout, dt_inout);
         if (result == fail) {
             // solver made dt_inout smaller
             try_dt = dt_inout;
             continue;
         }
-        if (helpers::pos_not_ok(pos_inout.end() - 3, pos_inout.end())) {
+        auto pos_begin = ode_x_inout.end() - 3;
+        if (helpers::pos_not_ok(pos_begin, ode_x_inout.end())) {
+            reset_stepper();
+            try_dt /= 2;
+            diag.n_pos_not_ok++;
+            continue;
+        }
+        rate_integral = ode_x_inout[ligands.size()];
+        if (rate_integral > rate_integral_value + rate_integral_tol) {
             reset_stepper();
             try_dt /= 2;
             continue;
         }
-        double cdf = 1 - exp(- pos_inout[ligands.size()]);
-        if (cdf > u + 1e-3) {
-            reset_stepper();
-            try_dt /= 2;
-            continue;
-        }
-        step_done = true;
+        break;
     }
 
-    double step_done_with_dt = try_dt;
+    diag.add_dt(try_dt);
     try_dt = dt_inout;  // possibly larger after successful step
-    ode_x = pos_inout;
+    ode_x = ode_x_inout;
     time = time_inout;
 
-    return step_done_with_dt;
+    return rate_integral;
 }
 
 void SimulationState::reset_stepper() {
-    stepper = make_controlled<error_stepper_type>(abs_err, rel_err);
+    stepper = make_controlled<error_stepper_type>(ode_abs_err, ode_rel_err);
 }
 
-double SimulationState::compute_dt_bonds() {
-    //////////////////////////////////////////////
-    //  Gillespie algorithm - first event time  //
-    //////////////////////////////////////////////
-
-    double any_event_rate = 0.0;
-    for (const auto &rate : rates)
-        any_event_rate += rate;
-
-    // TODO: just for debug, remove
-    static constexpr double max_rate = 1e80;
-    if (any_event_rate > max_rate)
-        std::cout << "EVENT RATE > " << max_rate << std::endl;
-
-    if (any_event_rate > 0.0) {
-        std::exponential_distribution<double> dt_bonds_distribution(any_event_rate);
-        return dt_bonds_distribution(generator);
-    }
-    return INFTY;
-}
-
-vector<size_t> SimulationState::compute_event_nrs(double) {
-    std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
-    return {which_event_distribution(generator)};
+void SimulationState::update_randomness() {
+    const double u = helpers::draw_from_uniform_dist(generator);
+    rate_integral_value = -log(u);
 }
