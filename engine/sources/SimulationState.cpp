@@ -110,10 +110,9 @@ void SimulationState::simulate_one_step() {
         cumulated_dist += ode_x[dist_ode_i];
         ode_x[dist_ode_i] = 0.0;
 
-
+        update_randomness();
         // ODE has changed
         reset_stepper();
-        update_randomness();
     }
 }
 
@@ -333,6 +332,8 @@ void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double 
     after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
 
     double h = exp(x[log_h_ode_i]);
+    if (std::isnan(h) or std::isinf(h))
+        return;
     double any_event_rate = 0.0;
     for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
         // ignore bonded ligands

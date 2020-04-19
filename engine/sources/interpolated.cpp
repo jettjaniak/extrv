@@ -2,6 +2,9 @@
 
 #include "helpers.h"
 
+#include <boost/math/interpolators/cardinal_cubic_b_spline.hpp>
+
+
 
 namespace interpolated {
     double f_r(double h_over_r)
@@ -51,5 +54,14 @@ namespace interpolated {
             return exp(interp);
         }
         else return - 0.1 * log(h_over_r) - 0.1895;
+    }
+
+    double lambda_fun(double h_over_r) {
+        const static boost::math::interpolators::cardinal_cubic_b_spline<double>
+                lambda_spline(LAMBDA_DATA.begin(), LAMBDA_DATA.end(), LAMBDA_T0, LAMBDA_STEP, LAMBDA_T0_PRIME);
+        if (h_over_r < LAMBDA_T0)
+            return 1 / h_over_r;
+        else
+            return lambda_spline(h_over_r);
     }
 }

@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main() {
-    for (int i = 100; i < 200; i++) {
+    for (int i = 200; i < 201; i++) {
         Parameters p = Parameters(
                 4.5,
                 0.01,
@@ -34,7 +34,7 @@ int main() {
         std::cout << "seed " << seed << " started." << std::endl;
         auto s = SimulationState(0.03, &p, seed, 1e-2);
         size_t max_steps_falling = 2e6;
-        size_t max_steps_rolling = 6e6;
+        size_t max_steps_rolling = 1e7;
 
         s.simulate(1, max_steps_falling);
         std::cout << s.diag.n_bonds_created << " bonds created during falling." << std::endl;
