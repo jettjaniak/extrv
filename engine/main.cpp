@@ -5,7 +5,7 @@
 #include <iostream>
 
 int main() {
-    for (int i = 200; i < 201; i++) {
+    for (int i = 209; i < 210; i++) {
         Parameters p = Parameters(
                 4.5,
                 0.01,
@@ -39,7 +39,7 @@ int main() {
         s.simulate(1, max_steps_falling);
         std::cout << s.diag.n_bonds_created << " bonds created during falling." << std::endl;
         s.shear_rate = 0.9;
-        double max_time = 11.0;
+        double max_time = 10.0;
         s.simulate(max_time, max_steps_rolling);
         std::cout << s.diag.n_bonds_created << " bonds created during falling and rolling." << std::endl;
         std::cout << "Done." << std::endl << std::endl;

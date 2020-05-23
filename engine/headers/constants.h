@@ -11,9 +11,12 @@ constexpr double G = 9806650.;
 constexpr double INFTY = std::numeric_limits<double>::infinity();
 constexpr int LAMBDA_SERIES_MAX_N = 50;
 constexpr double MIN_RATE = 1e-10;
+constexpr double MAX_LOG_H = 5.0;
 
 constexpr int POS_LOG_H = 0;
 constexpr int POS_ROT = 1;
 constexpr int POS_DIST = 2;
+constexpr int POS_SUM_RATE_INT = 3;
+
 
 

@@ -11,7 +11,7 @@
 
 using namespace boost::numeric::odeint;
 
-typedef runge_kutta_dopri5<vector<double>> error_stepper_type;
+typedef runge_kutta_dopri5<array<double, 4>> error_stepper_type;
 typedef controlled_runge_kutta<error_stepper_type> adaptive_stepper_type;
 
 
@@ -27,10 +27,7 @@ struct SimulationState {
     Diagnostic diag;
 
     /// reaction rates and cell position
-    vector<double> ode_x;
-    size_t log_h_ode_i;
-    size_t rot_ode_i;
-    size_t dist_ode_i;
+    array<double, 4> ode_x;
 
     // TODO: rename it?
     double try_dt;
@@ -136,7 +133,7 @@ struct SimulationState {
     void check_rot_ind();
 
     /// ODE's RHS
-    void rhs(const vector<double> & x, vector<double> & dxdt, double /*t*/);
+    void rhs(const array<double, 4> &x, array<double, 4> &dxdt, double /*t*/);
 
     void reset_stepper();
     double do_ode_step();

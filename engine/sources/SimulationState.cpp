@@ -1,7 +1,6 @@
 #include "SimulationState.h"
 
 #include <algorithm>
-#include <utility>
 #include <iostream>
 
 #include "forces.h"
@@ -46,27 +45,20 @@ SimulationState::SimulationState(
             return a.rot_inc < b.rot_inc;
          });
 
-    ode_x.resize(ligands.size() + 1 + 3, 0.0);
-    log_h_ode_i = ligands.size() + 1 + POS_LOG_H;
-    rot_ode_i = ligands.size() + 1 + POS_ROT;
-    dist_ode_i = ligands.size() + 1 + POS_DIST;
-//    ode_x.resize(3);
-//    log_h_ode_i = POS_LOG_H;
-//    rot_ode_i = POS_ROT;
-//    dist_ode_i = POS_DIST;
-    ode_x[log_h_ode_i] = log(h_0);
+    std::fill(ode_x.begin(), ode_x.end(), 0.0);
+    ode_x[POS_LOG_H] = log(h_0);
 }
 
 double SimulationState::h() const {
-    return exp(ode_x[log_h_ode_i]);
+    return exp(ode_x[POS_LOG_H]);
 }
 
 double SimulationState::rot() const {
-    return ode_x[rot_ode_i];
+    return ode_x[POS_ROT];
 }
 
 double SimulationState::dist() const {
-    return ode_x[dist_ode_i];
+    return ode_x[POS_DIST];
 }
 
 double SimulationState::global_rot() const {
@@ -83,10 +75,29 @@ void SimulationState::simulate_one_step() {
     double rate_integral = do_ode_step();
 
     if (rate_integral > rate_integral_value - rate_integral_tol) {
-        std::discrete_distribution<size_t> which_event_distribution(ode_x.begin(), ode_x.end() - 4);
+        vector<double> weights(ligands.size(), 0.0);
+
+        update_rot_inc_range();
+        update_rot_inc_ind();
+
+        after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
+
+        for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
+            // ignore bonded ligands
+            if (ligands[i].bond_state != 0) {
+                continue;
+            }
+            // TODO: now it only works with one type of bond per ligand
+            weights[i] = ligands[i].update_binding_rates(h(), rot());
+        }
+        for (const auto &i : bd_lig_ind) {
+            weights[i] = ligands[i].rupture_rate(h(), rot(), dist());
+        }
+
+        std::discrete_distribution<size_t> which_event_distribution(weights.begin(), weights.end());
         size_t lig_nr = which_event_distribution(generator);
-        auto rate_integrals_end = ode_x.end() - 3;
-        std::fill(ode_x.begin(), rate_integrals_end, 0.0);
+
+        ode_x[POS_SUM_RATE_INT] = 0.0;
         // binding event
         if (ligands[lig_nr].bond_state == 0) {
             bd_lig_ind.insert(lig_nr);
@@ -101,14 +112,14 @@ void SimulationState::simulate_one_step() {
 
         // Update positions after events
 
-        double rot_reminder = std::fmod(ode_x[rot_ode_i], 2 * PI);
-        cumulated_rot += ode_x[rot_ode_i] - rot_reminder;
-        ode_x[rot_ode_i] = rot_reminder;
+        double rot_reminder = std::fmod(rot(), 2 * PI);
+        cumulated_rot += rot() - rot_reminder;
+        ode_x[POS_ROT] = rot_reminder;
 
         for (const auto &i : bd_lig_ind)
-            ligands[i].bd_rec_x -= ode_x[dist_ode_i];
-        cumulated_dist += ode_x[dist_ode_i];
-        ode_x[dist_ode_i] = 0.0;
+            ligands[i].bd_rec_x -= dist();
+        cumulated_dist += dist();
+        ode_x[POS_DIST] = 0.0;
 
         update_randomness();
         // ODE has changed
@@ -323,7 +334,7 @@ void SimulationState::update_rot_inc_ind() {
     }
 }
 
-void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double /*t*/) {
+void SimulationState::rhs(const array<double, 4> &x, array<double, 4> &dxdt, double /*t*/) {
     std::fill(dxdt.begin(), dxdt.end(), 0.0);
 
     update_rot_inc_range();
@@ -331,36 +342,38 @@ void SimulationState::rhs(const vector<double> &x, vector<double> &dxdt, double 
 
     after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
 
-    double h = exp(x[log_h_ode_i]);
+    if (x[POS_LOG_H] > MAX_LOG_H)
+        return;
+    double h = exp(x[POS_LOG_H]);
+    // Don't bother computing anything, it will be caught later.
     if (std::isnan(h) or std::isinf(h))
         return;
-    double any_event_rate = 0.0;
+
+    dxdt[POS_SUM_RATE_INT] = 0.0;
     for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
         // ignore bonded ligands
         if (ligands[i].bond_state != 0) {
             continue;
         }
         // TODO: now it only works with one type of bond per ligand
-        dxdt[i] = ligands[i].update_binding_rates(h, x[rot_ode_i]);
-        any_event_rate += dxdt[i];
+        dxdt[POS_SUM_RATE_INT] += ligands[i].update_binding_rates(h, x[POS_ROT]);
     }
 
     // rupture events
     for (const auto &i : bd_lig_ind) {
-        dxdt[i] = ligands[i].rupture_rate(h, x[rot_ode_i], x[dist_ode_i]);
-        any_event_rate += dxdt[i];
+        dxdt[POS_SUM_RATE_INT] += ligands[i].rupture_rate(h, x[POS_ROT], x[POS_DIST]);
     }
-    dxdt[ligands.size()] = any_event_rate;
 
     forces_t f = forces::non_bond_forces(shear_rate, h, p);
     // add forces of each bond
     for (auto & bd_i : bd_lig_ind)
-        f += ligands[bd_i].bond_forces(h, x[rot_ode_i], x[dist_ode_i]);
+        f += ligands[bd_i].bond_forces(h, x[POS_ROT], x[POS_DIST]);
 
     array<double, 3> vel = velocities::compute_velocities(h, f, p);
-    dxdt[log_h_ode_i] = vel[POS_LOG_H];
-    dxdt[rot_ode_i] = vel[POS_ROT];
-    dxdt[dist_ode_i] = vel[POS_DIST];
+    dxdt[POS_LOG_H] = vel[POS_LOG_H];
+    dxdt[POS_ROT] = vel[POS_ROT];
+    dxdt[POS_DIST] = vel[POS_DIST];
+
 }
 
 void SimulationState::check_rot_ind() {
@@ -399,7 +412,7 @@ double SimulationState::do_ode_step() {
 
     controlled_step_result result;
     double dt_inout, time_inout;
-    vector<double> ode_x_inout;
+    array<double, 4> ode_x_inout {};
     double rate_integral;
 
     while (true) {
@@ -412,14 +425,13 @@ double SimulationState::do_ode_step() {
             try_dt = dt_inout;
             continue;
         }
-        auto pos_begin = ode_x_inout.end() - 3;
-        if (helpers::pos_not_ok(pos_begin, ode_x_inout.end())) {
+        if (ode_x[POS_LOG_H] > MAX_LOG_H || helpers::values_not_ok(ode_x_inout.begin(), ode_x_inout.end())) {
             reset_stepper();
             try_dt /= 2;
             diag.n_pos_not_ok++;
             continue;
         }
-        rate_integral = ode_x_inout[ligands.size()];
+        rate_integral = ode_x_inout[POS_SUM_RATE_INT];
         if (rate_integral > rate_integral_value + rate_integral_tol) {
             reset_stepper();
             try_dt /= 2;

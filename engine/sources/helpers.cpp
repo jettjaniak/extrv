@@ -124,7 +124,5 @@ namespace helpers {
         return positive_mod(a + x, b);
     }
 
-    bool pos_not_ok(vector<double>::iterator pos_begin, vector<double>::iterator pos_end) {
-        return std::any_of(pos_begin, pos_end,[](double y){return std::isnan(y) || std::isinf(y);});
-    }
+
 }

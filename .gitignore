@@ -8,6 +8,6 @@
 engine/cmake-build-release/
 engine/cmake-build-debug/
 
-engine/libs/boost_1_72_0
+engine/libs/boost
 
 results/
