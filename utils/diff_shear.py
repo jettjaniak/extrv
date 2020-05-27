@@ -13,12 +13,12 @@ from extrv_engine import SimulationState, SlipBondType, Parameters
 
 FALLING_TIME = 1
 ROLLING_TIME = 10
-N_TRIALS = 50
-# N_TRIALS = 10
+# N_TRIALS = 50
+N_TRIALS = 10
 MAX_DT = 0.1
 
-# SHEAR_RATES = [0.1, 0.9]
-SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
+SHEAR_RATES = [0.1, 0.9]
+# SHEAR_RATES = [0.1, 0.3, 0.5, 0.7, 0.9]
 
 ABS_ERR = 1e-10
 REL_ERR = 1e-6
@@ -38,8 +38,8 @@ def setup_parameters():
         visc=0.01,
         temp=310,
         dens_diff=0.05,
-        rep_0=5074.616349947093,
-        rep_scale=1146.409200818891
+        rep_0=5075,
+        rep_scale=1145
     )
 
     psgl_plus_esel_bond = SlipBondType(

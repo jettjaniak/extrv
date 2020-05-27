@@ -11,8 +11,8 @@ int main() {
                 0.01,
                 310,
                 0.05,
-                5074.616349947093,
-                1146.409200818891
+                5075,
+                1145
         );
 
         Parameters::LigandType psgl = Parameters::LigandType();
@@ -28,8 +28,6 @@ int main() {
         psgl.add_bond_type(&psgl_plus_esel_bond);
         p.add_ligands(&psgl, 20000);
         unsigned int seed = i;
-//        unsigned int seed = 751134721;
-
 
         std::cout << "seed " << seed << " started." << std::endl;
         auto s = SimulationState(0.03, &p, seed, 1e-2);

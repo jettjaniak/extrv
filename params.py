@@ -1,7 +1,7 @@
 from extrv_engine import SlipBondType, Parameters
 
-REP_0 = 5074.616349947093
-REP_SCALE = 1146.409200818891
+REP_0 = 5075
+REP_SCALE = 1145
 
 
 def setup_parameters(*, fold_change=1.0, rep_0=REP_0, rep_scale=REP_SCALE):
