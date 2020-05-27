@@ -50,8 +50,8 @@ def setup_parameters():
         visc=0.01,
         temp=310,
         dens_diff=0.05,
-        rep_0=5074.616349947093,
-        rep_scale=1146.409200818891
+        rep_0=5075,
+        rep_scale=1145
     )
 
     psgl_plus_esel_bond = SlipBondType(
