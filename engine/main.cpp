@@ -7,7 +7,7 @@
 #include <iostream>
 
 int main() {
-    for (int i = 100; i < 200; i++) {
+    for (int i = 220; i < 226; i++) {
         Parameters p = Parameters(
                 4.5,
                 0.01,
@@ -29,34 +29,22 @@ int main() {
         );
         psgl.add_bond_type(&psgl_plus_esel_bond);
         p.add_ligands(&psgl, 20000);
-//        unsigned int seed = i;
-        unsigned int seed = 751134721;
+        unsigned int seed = i;
+        double dt = 1e-5;
+        auto s = EulerProbSS(0.03, &p, i, 1e-5);
+        double falling_time = 1.0;
+        size_t max_steps_falling = falling_time / dt + 10;
+        double rolling_time = 5.0;
+        size_t max_steps_rolling = rolling_time / dt + 10;
+        double max_time = falling_time + rolling_time;
 
-//        auto s = EulerGillSS(0.03, &p, i, 1e-5);
-//        auto s = EulerProbSS(0.03, &p, i, 1e-5);
-//        auto s = RKGillSS(0.03, &p, i, 1e-5);
-//        auto s = RKProbSS(0.03, &p, i, 1e-5);
-//        auto s = AdapProbSS(0.03, &p, i, 1e-5);
-
-        auto s = AdapGillSS(0.03, &p, seed, 1e-5);
-        size_t max_steps_falling = 2e6;
-        size_t max_steps_rolling = 6e6;
-
-//        auto s = RKGillSS(0.03, &p, i, 1e-5);
-//        size_t max_steps_falling = 2e5;
-//        size_t max_steps_rolling = 6e5;
-
-//        auto s = AdapGillSS(0.03, &p, i);
-//        size_t max_steps_falling = 1e6;
-//        size_t max_steps_rolling = 3e6;
-
-        s.simulate(1, max_steps_falling);
+        s.simulate(falling_time, max_steps_falling);
         std::cout << s.bd_lig_ind.size() << " bonds" << std::endl;
-        s.shear_rate = 0.9;
-        double max_time = 11.0;
+        s.shear_rate = 100;
+
         s.simulate(max_time, max_steps_rolling);
-//        if (s.time < max_time)
-//            std::cout << "only " << s.time << " seconds done!" << std::endl;
+        if (s.time < max_time)
+            std::cout << "only " << s.time << " seconds done!" << std::endl;
         std::cout << "seed " << seed << " done" << std::endl;
     }
 }

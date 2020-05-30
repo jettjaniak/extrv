@@ -3,7 +3,7 @@ project(extrv)
 set(CMAKE_CXX_STANDARD 17)
 include_directories(headers)
 
-set(Boost_INCLUDE_DIR "libs/boost_1_72_0")
+set(Boost_INCLUDE_DIR "libs/boost")
 find_package(Boost 1.72.0)
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
