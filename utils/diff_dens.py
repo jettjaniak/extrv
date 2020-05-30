@@ -20,8 +20,8 @@ BINDING_RATE_0 = 0.09
 
 WALL_ADHESINS_DENSITY_FOLD_CHANGES = [1, 2, 3, 4, 5]
 
-ABS_ERR = 1e-10
-REL_ERR = 1e-6
+ABS_ERR = 1e-12
+REL_ERR = 0
 INITIAL_HEIGHT = 0.03
 SAVE_EVERY = 1e-4
 
@@ -123,19 +123,17 @@ if __name__ == '__main__':
         os.makedirs(directory)
     seeds = tuple(generate_good_seeds(N_TRIALS))
 
-    for rel_err_exp in [-8, -2, -6, -4]:
-        rel_err = 10**rel_err_exp
-        for abs_err_exp in [-12, -6, -10, -8]:
-            abs_err = 10 ** abs_err_exp
-            # We use dict comprehension instead of default dict to have ordered keys.
-            test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
+    for abs_err_exp in [-12, -3, -10, -8, -4]:
+        abs_err = 10 ** abs_err_exp
+        # We use dict comprehension instead of default dict to have ordered keys.
+        test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
 
-            pool = multiprocessing.Pool()
-            for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES:
-                one_test(fold_change, pool, seeds, abs_err, rel_err)
-            pool.close()
-            pool.join()
+        pool = multiprocessing.Pool()
+        for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES:
+            one_test(fold_change, pool, seeds, abs_err, 0)
+        pool.close()
+        pool.join()
 
-            date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
-            with open(f'{directory}/abs1e{abs_err_exp}_rel1e{rel_err_exp}_{date_str}.pickle', 'wb') as file:
-                pickle.dump(test_results, file)
+        date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
+        with open(f'{directory}/abs1e{abs_err_exp}_rel0_{date_str}.pickle', 'wb') as file:
+            pickle.dump(test_results, file)
