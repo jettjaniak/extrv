@@ -1,11 +1,10 @@
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 from utils.diff_shear import SimulationStats
 
 import matplotlib
 matplotlib.rcParams.update({
-    'errorbar.capsize': 4,
+    'errorbar.capsize': 10,
     'font.size': 15
 })
 
@@ -15,32 +14,33 @@ def standard_error_of_mean(values):
 
 
 def plot_one_field(ax, field, test_results):
-    x = []
-    y = []
-    err = []
-    for shear, stats_list in test_results.items():
+    variables = []
+    means = []
+    errors = []
+    for variable, stats_list in test_results.items():
         values = [getattr(stat, field) for stat in stats_list]
-        x.append(shear)
-        y.append(np.mean(values))
-        err.append(standard_error_of_mean(values))
+        variables.append(variable)
+        ax.scatter(
+            np.repeat(variable, len(values)), values,
+            s=20, c=[(1, 0, 0, 0.3)]
+        )
+        means.append(np.mean(values))
+        errors.append(standard_error_of_mean(values))
 
-    x = np.array(x)
-    y = np.array(y)
-    err = np.array(err)
+    variables = np.array(variables)
+    means = np.array(means)
+    errors = np.array(errors)
 
-    sort_ind = np.argsort(x)
-    x = x[sort_ind]
-    y = y[sort_ind]
-    err = err[sort_ind]
-
-    ax.errorbar(x, y, err)
+    ax.errorbar(variables, means, errors, linewidth=2, zorder=10, color='black')
 
 
-def plot(test_results):
+def plot(test_results, title=''):
     # fig, axes = plt.subplots(1, 1, sharex=True)
     fig, axes = plt.subplots(2, 3, sharex=True)
     # axes = [axes]
     axes = axes.flatten()
+    if title:
+        fig.suptitle(title)
 
     for ax, field in zip(axes, SimulationStats._fields):
         plot_one_field(ax, field, test_results)

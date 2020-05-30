@@ -13,18 +13,20 @@
 SimulationState::SimulationState(
         double h_0, Parameters* p, unsigned int seed,
         double max_dt, double ode_abs_err, double ode_rel_err,
-        double rate_integral_tol) :
+        double rate_integral_tol_) :
 
         p(p),
         max_dt(max_dt),
         ode_abs_err(ode_abs_err),
         ode_rel_err(ode_rel_err),
-        rate_integral_tol(rate_integral_tol)
+        rate_integral_tol(rate_integral_tol_)
 {
     reset_stepper();
     try_dt = max_dt;
     reseed(seed);
     update_randomness();
+    if (rate_integral_tol == -1.0)
+        rate_integral_tol = ode_abs_err;
 
     Parameters::LigandType* lig_type;
     size_t n_of_lig;
@@ -413,7 +415,7 @@ double SimulationState::do_ode_step() {
     controlled_step_result result;
     double dt_inout, time_inout;
     array<double, 4> ode_x_inout {};
-    double rate_integral;
+    double old_rate_integral, rate_integral;
 
     while (true) {
         dt_inout = try_dt;
@@ -433,8 +435,12 @@ double SimulationState::do_ode_step() {
         }
         rate_integral = ode_x_inout[POS_SUM_RATE_INT];
         if (rate_integral > rate_integral_value + rate_integral_tol) {
+            diag.n_rate_int_too_big++;
             reset_stepper();
-            try_dt /= 2;
+            old_rate_integral = ode_x[POS_SUM_RATE_INT];
+            double diff_curr = rate_integral - old_rate_integral;
+            double diff_opt = rate_integral_value - old_rate_integral;
+            try_dt *= diff_opt / diff_curr;
             continue;
         }
         break;

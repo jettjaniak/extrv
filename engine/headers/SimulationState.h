@@ -21,6 +21,7 @@ struct SimulationState {
         vector<size_t> dt_freq;
         size_t n_bonds_created = 0;
         size_t n_pos_not_ok = 0;
+        size_t n_rate_int_too_big = 0;
 
         void add_dt(double dt);
     };
@@ -88,7 +89,7 @@ struct SimulationState {
      */
     SimulationState(double h_0, Parameters* p, unsigned int seed,
                     double max_dt = 0.1, double ode_abs_err = 1e-10, double ode_rel_err = 1e-6,
-                    double rate_integral_tol = 1e-3);
+                    double rate_integral_tol = -1.0);
 
 
     double h() const;
