@@ -1,5 +1,4 @@
 import time
-import numpy as np
 from scipy import integrate
 import multiprocessing
 import pickle
@@ -13,9 +12,9 @@ from utils.testing_utils import SimulationStats, setup_parameters
 FALLING_TIME = 1
 ROLLING_TIME = 10
 N_TRIALS = 30
-SHEAR_RATE = 100
-REC_DENS_0 = 1000
-BINDING_RATE_0 = 0.09
+SHEAR_RATE = 50
+REC_DENS_0 = 750
+BINDING_RATE_0 = 0.06
 
 WALL_ADHESINS_DENSITY_FOLD_CHANGES = [1, 2, 3, 4, 5]
 
@@ -27,22 +26,15 @@ MAX_STEPS_FALLING = int(2 * FALLING_TIME * 1e6)
 MAX_STEPS_ROLLING = int(2 * ROLLING_TIME * 1e6)
 
 
-def one_test(fold_change, pool_, seeds_, dt_):
-    for seed in seeds_:
-        pool_.apply_async(iteration_wrapper, (fold_change, seed, dt_),
-                          callback=iteration_callback, error_callback=iteration_error_callback)
-
-
 def iteration_wrapper(*args, **kwargs):
     try:
-        fold_change, sim_stats, ss, sim_hist = iteration(*args, **kwargs)
-        return fold_change, sim_stats
+        iteration(*args, **kwargs)
     except Exception as error:
         print("ERROR RAISED!")
         raise error
 
 
-def iteration(fold_change=1, seed=0, dt=DT, save_every=SAVE_EVERY):
+def iteration(stats_list, fold_change=1, seed=0, dt=DT, save_every=SAVE_EVERY):
     print("simulation starting for fold change", fold_change, "seed", seed)
     p, psgl, psgl_plus_esel_bond = setup_parameters(rec_dens=REC_DENS_0 * fold_change)
 
@@ -84,12 +76,8 @@ def iteration(fold_change=1, seed=0, dt=DT, save_every=SAVE_EVERY):
         comp_time=comp_end_time - comp_start_time
     )
 
+    stats_list.append(sim_stats)
     return fold_change, sim_stats, ss, sim_hist
-
-
-def iteration_callback(result):
-    fold_change, sim_stats = result
-    test_results[fold_change].append(sim_stats)
 
 
 def iteration_error_callback(error):
@@ -97,42 +85,54 @@ def iteration_error_callback(error):
     raise error
 
 
-def generate_good_seeds(n_seeds):
-    def seed_test(seed_):
-        p, psgl, psgl_plus_esel_bond = setup_parameters(rec_dens=REC_DENS_0)
-        ss = EulerProbSS(INITIAL_HEIGHT, p, seed, DT)
-        ss.simulate(FALLING_TIME, MAX_STEPS_FALLING)
-        return ss.diag.n_bonds_created > 0
+def for_err_test(err_exp_, nice_inc_=0):
+    os.nice(nice_inc_)
+    err = 10 ** err_exp_
+    with multiprocessing.Manager() as manager:
+        # We use dict comprehension instead of default dict to have ordered keys.
+        test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
+        test_results = manager.dict(test_results)
 
-    uint_info = np.iinfo(np.uint32)
-    n_good = 0
-    while n_good < n_seeds:
-        seed = np.random.randint(uint_info.max, dtype='uint32')
-        if seed_test(seed):
-            n_good += 1
-            yield seed
+        pool = multiprocessing.Pool()
+        for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES:
+            stats_list = manager.list()
+            test_results[fold_change] = stats_list
+            for seed in seeds:
+                pool.apply_async(iteration_wrapper, (stats_list, fold_change, seed, err),
+                                 error_callback=iteration_error_callback)
+        pool.close()
+        pool.join()
+
+        tr_cast = {}
+        for fold_change in test_results.keys():
+            tr_cast[fold_change] = list(test_results[fold_change])
+
+    date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
+    with open(f'{directory}/dt1e{err_exp_}_{date_str}.pickle', 'wb') as file:
+        pickle.dump(tr_cast, file)
 
 
 if __name__ == '__main__':
     directory = '../results/diff_dens/diff_dt/'
     if not os.path.exists(directory):
         os.makedirs(directory)
-    seeds = tuple(generate_good_seeds(N_TRIALS))
+    GOOD_SEEDS = (3547861650, 3493256329, 2110501889, 1759636959, 4207477044, 3202205499, 384168247, 2338098826,
+                  1503092553, 1887514105, 215949290, 3476569911, 46394626, 1114791030, 2374546849, 3859547804,
+                  297072674, 2165632110, 224476, 4178, 1731712957, 3190037783, 3759517182, 4177028560, 1830405957,
+                  3762189420, 1546919209, 752713666, 2277760481, 2225307367, 771879583, 2686016408, 3091179815,
+                  54641801, 822526847, 3485949959, 1808968316, 2740946722, 2128909877, 1735928740, 709544941,
+                  256163407, 2950738251, 67318337, 3705137511, 23055023, 3076940865, 2962143592, 3516257955)
 
-    for dt_exp in [-5, -7, -6]:
-        dt = 10**dt_exp
-        print(f"Testing with dt = {dt}.")
-        print("---------------------------")
-        # We use dict comprehension instead of default dict to have ordered keys.
-        test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
+    # seeds = tuple(generate_good_seeds(N_TRIALS))
+    seeds = GOOD_SEEDS[:N_TRIALS]
 
-        pool = multiprocessing.Pool()
-        for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES:
-            one_test(fold_change, pool, seeds, dt)
-        pool.close()
-        pool.join()
+    processes = []
+    nice_inc = 0
+    for dt_exp in [-7, -6, -5]:
+        proc = multiprocessing.Process(target=for_err_test, args=(dt_exp, nice_inc))
+        nice_inc += 2
+        processes.append(proc)
+        proc.start()
 
-        date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
-        with open(f'{directory}/dt1e{dt_exp}_{date_str}.pickle', 'wb') as file:
-            pickle.dump(test_results, file)
-        print(f"Done testing with dt = {dt}.\n")
+    for proc in processes:
+        proc.join()
