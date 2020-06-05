@@ -106,7 +106,8 @@ def iteration(stats_list, fold_change=1, seed=0, abs_err=ABS_ERR, save_every=SAV
     return fold_change, sim_stats, ss, sim_hist
 
 
-def for_err_test(err_exp_):
+def for_err_test(err_exp_, nice_inc_=0):
+    os.nice(nice_inc_)
     err = 10 ** err_exp_
     with multiprocessing.Manager() as manager:
         # We use dict comprehension instead of default dict to have ordered keys.
@@ -123,9 +124,13 @@ def for_err_test(err_exp_):
         pool.close()
         pool.join()
 
+        tr_cast = {}
+        for fold_change in test_results.keys():
+            tr_cast[fold_change] = list(test_results[fold_change])
+
     date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
     with open(f'{directory}/err1e{err_exp_}_{date_str}.pickle', 'wb') as file:
-        pickle.dump(test_results, file)
+        pickle.dump(tr_cast, file)
 
 
 if __name__ == '__main__':
@@ -144,8 +149,10 @@ if __name__ == '__main__':
     seeds = GOOD_SEEDS[:N_TRIALS]
 
     processes = []
+    nice_inc = 0
     for err_exp in [-12, -11, -10, -9, -8, -7, -6]:
-        proc = multiprocessing.Process(target=for_err_test, args=(err_exp,))
+        proc = multiprocessing.Process(target=for_err_test, args=(err_exp, nice_inc))
+        nice_inc += 2
         processes.append(proc)
         proc.start()
 
