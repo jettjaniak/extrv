@@ -12,7 +12,6 @@ from utils.testing_utils import SimulationStats, setup_parameters
 
 FALLING_TIME = 1
 ROLLING_TIME = 10
-# N_TRIALS = 30
 MAX_DT = 0.1
 SHEAR_RATE = 10
 REC_DENS_0 = 750
@@ -106,9 +105,9 @@ def iteration(stats_list, fold_change=1, seed=0, abs_err=ABS_ERR, save_every=SAV
     return fold_change, sim_stats, ss, sim_hist
 
 
-def for_err_test(err_base, err_exp_, nice_inc_=0):
-    os.nice(nice_inc_)
-    err = err_base ** err_exp_
+def for_err_test(err_base, err_exp, nice_inc=0):
+    os.nice(nice_inc)
+    err = err_base ** err_exp
     with multiprocessing.Manager() as manager:
         # We use dict comprehension instead of default dict to have ordered keys.
         test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
@@ -129,21 +128,17 @@ def for_err_test(err_base, err_exp_, nice_inc_=0):
             tr_cast[fold_change] = list(test_results[fold_change])
 
     date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
-    with open(f'{directory}/err{err_base}^{err_exp_}_{date_str}.pickle', 'wb') as file:
+    with open(f'{directory}/err{err_base}^{err_exp}_{date_str}.pickle', 'wb') as file:
         pickle.dump(tr_cast, file)
 
 
 if __name__ == '__main__':
-    # seeds = tuple(generate_good_seeds(40))
-    # print(seeds)
-    # exit()
     directory = '../results/diff_dens/diff_err/'
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    GOOD_SEEDS = (3547861650, 3493256329, 2110501889, 1759636959, 4207477044, 3202205499, 384168247, 2338098826,
-                  1503092553, 1887514105, 215949290, 3476569911, 46394626, 1114791030, 2374546849, 3859547804,
-                  297072674, 2165632110, 224476, 4178, 1731712957, 3190037783, 3759517182, 4177028560, 1830405957,
+    # 80 seeds
+    GOOD_SEEDS = (1731712957, 3190037783, 3759517182, 4177028560, 1830405957,
                   3762189420, 1546919209, 752713666, 2277760481, 2225307367, 771879583, 2686016408, 3091179815,
                   54641801, 822526847, 3485949959, 1808968316, 2740946722, 2128909877, 1735928740, 709544941,
                   256163407, 2950738251, 67318337, 3705137511, 23055023, 3076940865, 2962143592, 3516257955,
@@ -155,13 +150,14 @@ if __name__ == '__main__':
                   3102573477, 2513463839, 1460214160, 629244395, 2998528036, 1651710757, 156828413, 2688925137,
                   1635904256, 1031466595, 2716957902)
 
-    seeds = GOOD_SEEDS[70:]
+    seeds = GOOD_SEEDS[:30]
 
     processes = []
-    nice_inc = 7
-    for err_exp in [-27, -28, -29, -30]:
-        proc = multiprocessing.Process(target=for_err_test, args=(2, err_exp, nice_inc))
-        nice_inc += 1
+    nice_inc_ = 5
+    for err_exp_ in [-10, -11, -12]:
+        proc_kwargs = dict(err_base=2, err_exp=err_exp_, nice_inc=nice_inc_)
+        proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
+        nice_inc_ += 1
         processes.append(proc)
         proc.start()
 
