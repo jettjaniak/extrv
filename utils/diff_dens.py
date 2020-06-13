@@ -85,9 +85,9 @@ def iteration_error_callback(error):
     raise error
 
 
-def for_err_test(err_exp_, nice_inc_=0):
-    os.nice(nice_inc_)
-    err = 10 ** err_exp_
+def for_err_test(err_base, err_exp, nice_inc=0):
+    os.nice(nice_inc)
+    err = err_base ** err_exp
     with multiprocessing.Manager() as manager:
         # We use dict comprehension instead of default dict to have ordered keys.
         test_results = {fold_change: [] for fold_change in WALL_ADHESINS_DENSITY_FOLD_CHANGES}
@@ -108,29 +108,36 @@ def for_err_test(err_exp_, nice_inc_=0):
             tr_cast[fold_change] = list(test_results[fold_change])
 
     date_str = datetime.now().strftime("%d.%m.%Y_%H-%M-%S")
-    with open(f'{directory}/dt1e{err_exp_}_{date_str}.pickle', 'wb') as file:
+    with open(f'{directory}/dt{err_base}^{err_exp}_{date_str}.pickle', 'wb') as file:
         pickle.dump(tr_cast, file)
 
 
 if __name__ == '__main__':
-    directory = '../results/diff_dens/diff_dt/'
+    directory = '../results/diff_dens/diff_err/'
     if not os.path.exists(directory):
         os.makedirs(directory)
-    GOOD_SEEDS = (3547861650, 3493256329, 2110501889, 1759636959, 4207477044, 3202205499, 384168247, 2338098826,
-                  1503092553, 1887514105, 215949290, 3476569911, 46394626, 1114791030, 2374546849, 3859547804,
-                  297072674, 2165632110, 224476, 4178, 1731712957, 3190037783, 3759517182, 4177028560, 1830405957,
+
+    # 80 seeds
+    GOOD_SEEDS = (1731712957, 3190037783, 3759517182, 4177028560, 1830405957,
                   3762189420, 1546919209, 752713666, 2277760481, 2225307367, 771879583, 2686016408, 3091179815,
                   54641801, 822526847, 3485949959, 1808968316, 2740946722, 2128909877, 1735928740, 709544941,
-                  256163407, 2950738251, 67318337, 3705137511, 23055023, 3076940865, 2962143592, 3516257955)
+                  256163407, 2950738251, 67318337, 3705137511, 23055023, 3076940865, 2962143592, 3516257955,
+                  3987088566, 997047223, 3296440446, 3213720315, 501563541, 3609636494, 3947717566, 1205502233,
+                  3141042261, 2198693213, 1654518378, 8356930, 682264254, 1174718341, 556715953, 3943414791,
+                  3560480401, 1483454036, 1038552105, 325198726, 712250723, 783014756, 2310304458, 1895812771,
+                  2484051420, 622190755, 1641609963, 3466489807, 1441286071, 2419453959, 1533929822, 2464008272,
+                  4191568628, 1751682214, 2288410354, 3596124070, 1820690884, 2414023370, 2264240200, 3133142593,
+                  3102573477, 2513463839, 1460214160, 629244395, 2998528036, 1651710757, 156828413, 2688925137,
+                  1635904256, 1031466595, 2716957902)
 
-    # seeds = tuple(generate_good_seeds(N_TRIALS))
-    seeds = GOOD_SEEDS[:N_TRIALS]
+    seeds = GOOD_SEEDS[:30]
 
     processes = []
-    nice_inc = 0
-    for dt_exp in [-7, -6, -5]:
-        proc = multiprocessing.Process(target=for_err_test, args=(dt_exp, nice_inc))
-        nice_inc += 2
+    nice_inc_ = 5
+    for dt_exp_ in [-10, -11, -12]:
+        proc_kwargs = dict(err_base=2, err_exp=dt_exp_, nice_inc=nice_inc_)
+        proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
+        nice_inc_ += 1
         processes.append(proc)
         proc.start()
 
