@@ -113,7 +113,7 @@ def for_err_test(err_base, err_exp, nice_inc=0):
 
 
 if __name__ == '__main__':
-    directory = '../results/diff_dens/diff_err/'
+    directory = '../results/diff_dens/diff_dt/'
     if not os.path.exists(directory):
         os.makedirs(directory)
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     processes = []
     nice_inc_ = 5
-    for dt_exp_ in [-10, -11, -12]:
+    for dt_exp_ in [-15, -16, -17]:
         proc_kwargs = dict(err_base=2, err_exp=dt_exp_, nice_inc=nice_inc_)
         proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
         nice_inc_ += 1
