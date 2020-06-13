@@ -11,7 +11,8 @@ vector<size_t> AbstrProbSS::compute_event_nrs(double dt) {
     double uniform, prob;
     for (const auto &rate : rates) {
         uniform = helpers::draw_from_uniform_dist(generator);
-        prob = 1 - exp(- dt * rate);
+//        prob = 1 - exp(- dt * rate);
+        prob = - expm1(- dt * rate);
         if (uniform < prob)
             event_nrs.push_back(event_i);
         event_i++;
