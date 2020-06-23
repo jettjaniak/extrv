@@ -10,17 +10,27 @@ double AbstrEulerSS::do_ode_step() {
     static array<double, 3> tiny_pos, dxdt;
     rhs(pos,dxdt, time);
     static double pos_item_temp, inc;
+    static long not_good = 0;
     for (int i = 0; i < 3; i++) {
         inc = tiny_pos[i] + dxdt[i] * try_dt;
         if (inc != 0.0) {
-            pos_item_temp = pos[i] + inc;
+//            pos_item_temp = pos[i] + inc;
+
+//            if (pos_item_temp != pos[i]) {
             // Good.
-            if (pos_item_temp != pos[i]) {
-                pos[i] = pos_item_temp;
+            if (pos[i] == 0.0 || std::abs(inc / pos[i]) > 1e-15) {
+//                pos[i] = pos_item_temp;
+                pos[i] += inc;
                 tiny_pos[i] = 0.0;
             // Not good.
-            } else tiny_pos[i] = inc;
+            } else {
+                tiny_pos[i] = inc;
+                // std::cout << ++not_good << std::endl;
+            }
         }
+//        else {
+//            std::cout << "inc == 0.0";
+//        }
     }
 //    namespace pl = std::placeholders;
 //    auto rhs_system = std::bind(&AbstrSS::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
