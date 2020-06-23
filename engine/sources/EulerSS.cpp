@@ -7,40 +7,40 @@ AbstrEulerSS::AbstrEulerSS(double dt) :
 void AbstrEulerSS::reset_stepper() {}
 
 double AbstrEulerSS::do_ode_step() {
-//    static array<double, 3> tiny_pos, dxdt;
+    static array<double, 3> tiny_pos, dxdt;
 
 //    static array<double, 3> dxdt;
-//    rhs(pos, dxdt, time);
+    rhs(pos, dxdt, time);
 //
 //    for (int i = 0; i < 3; i++) {
 //        pos[i] += dxdt[i] * try_dt;
 //    }
 
 
-//    static double pos_item_temp, inc;
-////    static long not_good = 0;
-//    for (int i = 0; i < 3; i++) {
-//        inc = tiny_pos[i] + dxdt[i] * try_dt;
-//        if (inc != 0.0) {
-////            pos_item_temp = pos[i] + inc;
-//
-////            if (pos_item_temp != pos[i]) {
-//            // Good.
-//            if (pos[i] == 0.0 || std::abs(inc / pos[i]) > 1e-15) {
-////                pos[i] = pos_item_temp;
-//                pos[i] += inc;
-//                tiny_pos[i] = 0.0;
-//            // Not good.
-//            } else {
-//                tiny_pos[i] = inc;
-//                // std::cout << ++not_good << std::endl;
-//            }
+    static double pos_item_temp, inc;
+//    static long not_good = 0;
+    for (int i = 0; i < 3; i++) {
+        inc = tiny_pos[i] + dxdt[i] * try_dt;
+        if (inc != 0.0) {
+//            pos_item_temp = pos[i] + inc;
+
+//            if (pos_item_temp != pos[i]) {
+            // Good.
+            if (pos[i] == 0.0 || std::abs(inc / pos[i]) > 1e-15) {
+//                pos[i] = pos_item_temp;
+                pos[i] += inc;
+                tiny_pos[i] = 0.0;
+            // Not good.
+            } else {
+                tiny_pos[i] = inc;
+                // std::cout << ++not_good << std::endl;
+            }
+        }
+
+//        else {
+//            std::cout << "inc == 0.0";
 //        }
-//
-////        else {
-////            std::cout << "inc == 0.0";
-////        }
-//    }
+    }
 
 
     namespace pl = std::placeholders;
@@ -48,7 +48,6 @@ double AbstrEulerSS::do_ode_step() {
 
 //    static array<double, 3> pos_out, dxdt;
 //    stepper.do_step(rhs_system, pos, time, pos_out, try_dt);
-    stepper.do_step(rhs_system, pos, time, try_dt);
 
 //    vector<int> eq;
 //    for (int i = 0; i < 3; i++) {
