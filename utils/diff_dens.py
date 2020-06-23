@@ -12,7 +12,7 @@ from utils.testing_utils import SimulationStats, setup_parameters
 FALLING_TIME = 1
 ROLLING_TIME = 10
 N_TRIALS = 30
-SHEAR_RATE = 50
+SHEAR_RATE = 10
 REC_DENS_0 = 750
 BINDING_RATE_0 = 0.06
 
