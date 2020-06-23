@@ -9,12 +9,12 @@ void AbstrEulerSS::reset_stepper() {}
 double AbstrEulerSS::do_ode_step() {
 //    static array<double, 3> tiny_pos, dxdt;
 
-    static array<double, 3> dxdt;
-    rhs(pos, dxdt, time);
-
-    for (int i = 0; i < 3; i++) {
-        pos[i] += dxdt[i] * try_dt;
-    }
+//    static array<double, 3> dxdt;
+//    rhs(pos, dxdt, time);
+//
+//    for (int i = 0; i < 3; i++) {
+//        pos[i] += dxdt[i] * try_dt;
+//    }
 
 
 //    static double pos_item_temp, inc;
@@ -43,12 +43,13 @@ double AbstrEulerSS::do_ode_step() {
 //    }
 
 
-//    namespace pl = std::placeholders;
-//    auto rhs_system = std::bind(&AbstrSS::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
-//
+    namespace pl = std::placeholders;
+    auto rhs_system = std::bind(&AbstrSS::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+
 //    static array<double, 3> pos_out, dxdt;
 //    stepper.do_step(rhs_system, pos, time, pos_out, try_dt);
-//
+    stepper.do_step(rhs_system, pos, time, try_dt);
+
 //    vector<int> eq;
 //    for (int i = 0; i < 3; i++) {
 //        if (pos[i] == pos_out[i])
@@ -88,6 +89,8 @@ double AbstrEulerSS::do_ode_step() {
 //        }
 //    }
 //    pos = pos_out;
+
+
     double step_done_with_dt = try_dt;
     time += step_done_with_dt;  // do_step takes time by value
     try_dt = dt;
