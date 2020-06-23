@@ -69,6 +69,7 @@ FIELDS_MAP = dict(
     rot='cell rotation',
     n_bonds='number of all formed bonds',
     mean_h='mean distance from wall'
+    # mean_bond_ls='mean bond lifespan'
 )
 
 FIELDS_Y_LABEL_MAP = dict(
@@ -76,6 +77,7 @@ FIELDS_Y_LABEL_MAP = dict(
     rot='absolute rotation in radians',
     n_bonds='number of bonds',
     mean_h='mean distance in $\\mu m$'
+    # mean_bond_ls='mean bond lifespan in s'
 )
 
 DF_COLUMNS = ("fold change", *FIELDS_MAP.keys())

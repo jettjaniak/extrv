@@ -410,11 +410,11 @@ double SimulationState::do_ode_step() {
     try_dt = std::min(try_dt, max_dt);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
-    auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
+    static auto rhs_system = std::bind(&SimulationState::rhs, std::ref(*this), pl::_1 , pl::_2 , pl::_3);
 
     controlled_step_result result;
     double dt_inout, time_inout;
-    array<double, 4> ode_x_inout {};
+    static array<double, 4> ode_x_inout;
     double old_rate_integral, rate_integral;
 
     while (true) {
@@ -445,8 +445,34 @@ double SimulationState::do_ode_step() {
         }
         break;
     }
-
     diag.add_dt(try_dt);
+
+//    static long n_eq = 0;
+//    for (int i = 0; i < 3; i++) {
+//        if (ode_x[i] == ode_x_inout[i]) {
+//            std::cout << ++n_eq << ", dt = " << try_dt << std::endl;
+//            std::cout << "pos before: [";
+//            for (const auto &item : ode_x) {
+//                std::cout << item << ", ";
+//            }
+//            std::cout << "]" << std::endl;
+//
+//            std::cout << "pos after:  [";
+//            for (const auto &item : ode_x_inout) {
+//                std::cout << item << ", ";
+//            }
+//            std::cout << "]" << std::endl;
+//
+////            std::cout << "dx / dt:    [";
+////            for (const auto &item : dxdt) {
+////                std::cout << item << ", ";
+////            }
+////            std::cout << "]" << std::endl << std::endl;
+//            std::cout << std::endl;
+//            break;
+//        }
+//    }
+
     try_dt = dt_inout;  // possibly larger after successful step
     ode_x = ode_x_inout;
     time = time_inout;
