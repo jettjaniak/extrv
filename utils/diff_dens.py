@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     processes = []
     nice_inc_ = 5
-    for dt_exp_ in [-15, -16, -17]:
+    for dt_exp_ in [-18, -20, -22]:
         proc_kwargs = dict(err_base=2, err_exp=dt_exp_, nice_inc=nice_inc_)
         proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
         nice_inc_ += 1
