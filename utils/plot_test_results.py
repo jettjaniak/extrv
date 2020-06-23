@@ -11,7 +11,7 @@ from utils.testing_utils import FIELDS_MAP, FIELDS_Y_LABEL_MAP, DF_COLUMNS, get_
 import matplotlib
 matplotlib.rcParams.update({
     'errorbar.capsize': 10,
-    'font.size': 18
+    'font.size': 15
 })
 
 

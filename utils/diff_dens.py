@@ -13,7 +13,7 @@ from utils.testing_utils import SimulationStats, setup_parameters
 FALLING_TIME = 1
 ROLLING_TIME = 10
 MAX_DT = 0.1
-SHEAR_RATE = 100
+SHEAR_RATE = 10
 REC_DENS_0 = 750
 BINDING_RATE_0 = 0.06
 
@@ -153,8 +153,8 @@ if __name__ == '__main__':
     seeds = GOOD_SEEDS[:30]
 
     processes = []
-    nice_inc_ = 5
-    for err_exp_ in [-10, -11, -12]:
+    nice_inc_ = 10
+    for err_exp_ in [-14, -16]:
         proc_kwargs = dict(err_base=2, err_exp=err_exp_, nice_inc=nice_inc_)
         proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
         nice_inc_ += 1
