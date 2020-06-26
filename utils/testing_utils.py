@@ -169,6 +169,18 @@ def wilcoxon_test(err_or_dt, base, min_exp_bound=-float('inf'), ignore_exp=()):
     return {k: pd.DataFrame(v, index=range(1, 6)) for k, v in dict_for_steps_pairs.items()}
 
 
+def wilcoxon_test_err_and_dt(dt_exp=-19, err_exp=-13):
+    res = defaultdict(list)
+    for var in FIELDS_MAP.keys():
+        dt_df = get_svd('dt', 2, var)[dt_exp]
+        err_df = get_svd('err', 2, var)[err_exp]
+        for fc in range(1, 6):
+            w_test_res = pg.wilcoxon(dt_df[fc], err_df[fc])
+            pval = w_test_res['p-val'].values[0]
+            res[var].append(pval)
+    return pd.DataFrame(res, index=range(1, 6))
+
+
 def kw_test(err_or_dt, var, min_exp_bound=-float('inf'), ignore_exp=()):
     err_or_dt_dict, _min_exp, _max_exp = get_err_or_dt_dict(f'results/diff_dens/diff_{err_or_dt}', err_or_dt,
                                                             min_exp_bound=min_exp_bound, ignore_exp=ignore_exp)

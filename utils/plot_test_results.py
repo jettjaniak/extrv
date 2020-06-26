@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy import interpolate
 import matplotlib.pyplot as plt
+import seaborn as sns
 from utils.diff_shear import SimulationStats
 from utils.testing_utils import FIELDS_MAP, FIELDS_Y_LABEL_MAP, DF_COLUMNS, get_err_or_dt_dict
 
@@ -17,6 +18,10 @@ matplotlib.rcParams.update({
 
 def standard_error_of_mean(values):
     return np.sqrt(np.var(values) / len(values))
+
+
+def standard_error(values):
+    return np.sqrt(np.var(values))
 
 
 def plot_one_field(ax, field, test_results, color='black', label=''):
@@ -82,7 +87,7 @@ def plot_multi(test_results_dict, title=''):
 
 
 def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1, min_exp_bound=-float('inf'), ignore_exp=()):
-    fig = plt.figure(figsize=(18, 13))
+    fig = plt.figure(figsize=(15, 10))
     gs = fig.add_gridspec(6, 9)
     axes = [
         fig.add_subplot(gs[0:3, 0:4]),
@@ -91,6 +96,7 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
         fig.add_subplot(gs[3:6, 4:8])
     ]
     cb_ax = fig.add_subplot(gs[1:-1, -1:])
+    cb_ax.set_ylabel("absolute local ODE error tolerance")
 
     err_or_dt_dict, min_exp, max_exp = get_err_or_dt_dict(results_dir, err_or_dt, base, min_exp_bound, ignore_exp)
     diff_exp = max_exp - min_exp
@@ -160,6 +166,44 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
     cb_ax.set_yticklabels(["${" + str(base) + "}^{" + str(exp) + "}$" for exp in cb_ax.get_yticks()])
     # dummy_ax.set_visible(False)
     # plt.colorbar(img, orientation="vertical", cax=cb_ax)
-    # cb_ax.set_ylim((0, 1))ibib
+    # cb_ax.set_ylim((0, 1))
+
+    plt.tight_layout()
+
+
+def plot_dt_and_err(dt_exp=-19, err_exp=-13):
+
+    fig = plt.figure(figsize=(15, 10))
+    gs = fig.add_gridspec(6, 8)
+    axes = [
+        fig.add_subplot(gs[0:3, 0:4]),
+        fig.add_subplot(gs[0:3, 4:8]),
+        fig.add_subplot(gs[3:6, 0:4]),
+        fig.add_subplot(gs[3:6, 4:8])
+    ]
+
+    dt_dict, _, _ = get_err_or_dt_dict('results/diff_dens/diff_dt', 'dt', 2)
+    dt_df = dt_dict[dt_exp]
+    err_dict, _, _ = get_err_or_dt_dict('results/diff_dens/diff_err', 'err', 2)
+    err_df = err_dict[err_exp]
+    
+    alg_field = "simulation"
+    dt_label = "original algorithm, step size $2^" + "{" + str(dt_exp) + "}$"
+    err_label = "our algorithm, error tolerance $2^" + "{" + str(err_exp) + "}$"
+    
+    dt_df[alg_field] = dt_label
+    err_df[alg_field] = err_label
+    full_df = dt_df.append(err_df)
+
+    for i, (field, ax) in enumerate(zip(FIELDS_MAP.keys(), axes)):
+        sns.boxplot(x="fold change", y=field, hue=alg_field,
+                    data=full_df, palette="Set3", ax=ax)
+        if i != 0:
+            ax._remove_legend(7)
+
+    for field_name, y_label, ax in zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes):
+        ax.title.set_text(field_name)
+        ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        ax.set_ylabel(y_label)
 
     plt.tight_layout()

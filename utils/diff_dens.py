@@ -150,11 +150,11 @@ if __name__ == '__main__':
                   3102573477, 2513463839, 1460214160, 629244395, 2998528036, 1651710757, 156828413, 2688925137,
                   1635904256, 1031466595, 2716957902)
 
-    seeds = GOOD_SEEDS[:30]
+    seeds = GOOD_SEEDS[0:30]
 
     processes = []
-    nice_inc_ = 10
-    for err_exp_ in [-14, -16]:
+    nice_inc_ = 5
+    for err_exp_ in [-13]:
         proc_kwargs = dict(err_base=2, err_exp=err_exp_, nice_inc=nice_inc_)
         proc = multiprocessing.Process(target=for_err_test, kwargs=proc_kwargs)
         nice_inc_ += 1
