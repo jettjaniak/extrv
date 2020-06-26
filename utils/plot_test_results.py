@@ -12,7 +12,7 @@ from utils.testing_utils import FIELDS_MAP, FIELDS_Y_LABEL_MAP, DF_COLUMNS, get_
 import matplotlib
 matplotlib.rcParams.update({
     'errorbar.capsize': 10,
-    'font.size': 15
+    'font.size': 17
 })
 
 
@@ -88,15 +88,15 @@ def plot_multi(test_results_dict, title=''):
 
 def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1, min_exp_bound=-float('inf'), ignore_exp=()):
     fig = plt.figure(figsize=(15, 10))
-    gs = fig.add_gridspec(6, 9)
+    gs = fig.add_gridspec(6, 10)
     axes = [
         fig.add_subplot(gs[0:3, 0:4]),
         fig.add_subplot(gs[0:3, 4:8]),
         fig.add_subplot(gs[3:6, 0:4]),
         fig.add_subplot(gs[3:6, 4:8])
     ]
-    cb_ax = fig.add_subplot(gs[1:-1, -1:])
-    cb_ax.set_ylabel("absolute local ODE error tolerance")
+    cb_ax = fig.add_subplot(gs[1:-1, -2:])
+    cb_ax.set_ylabel("error tolerance $\\epsilon$")
 
     err_or_dt_dict, min_exp, max_exp = get_err_or_dt_dict(results_dir, err_or_dt, base, min_exp_bound, ignore_exp)
     diff_exp = max_exp - min_exp
@@ -111,10 +111,11 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
     def cm(exp_):
         return cm_(cm_norm(exp_))
 
-    for field_name, y_label, ax in zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes):
+    for i, (field_name, y_label, ax) in enumerate(zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes)):
         ax.title.set_text(field_name)
         ax.grid(True)
-        ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        if i > 1:
+            ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
         ax.set_ylabel(y_label)
 
     ylims = []
@@ -171,9 +172,9 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
     plt.tight_layout()
 
 
-def plot_dt_and_err(dt_exp=-19, err_exp=-13):
+def plot_dt_and_err(dt_exp=-19, err_exp=-13, our_cmap_val=0.9, their_cmap_val=0.35):
 
-    fig = plt.figure(figsize=(15, 10))
+    fig = plt.figure(figsize=(15, 8))
     gs = fig.add_gridspec(6, 8)
     axes = [
         fig.add_subplot(gs[0:3, 0:4]),
@@ -187,23 +188,34 @@ def plot_dt_and_err(dt_exp=-19, err_exp=-13):
     err_dict, _, _ = get_err_or_dt_dict('results/diff_dens/diff_err', 'err', 2)
     err_df = err_dict[err_exp]
     
-    alg_field = "simulation"
-    dt_label = "original algorithm, step size $2^" + "{" + str(dt_exp) + "}$"
-    err_label = "our algorithm, error tolerance $2^" + "{" + str(err_exp) + "}$"
+    alg_field = "algorithm"
+    dt_label = "original algorithm, step size $dt = 2^" + "{" + str(dt_exp) + "}$"
+    err_label = "our algorithm, error tolerance $\\epsilon = 2^" + "{" + str(err_exp) + "}$"
     
     dt_df[alg_field] = dt_label
     err_df[alg_field] = err_label
     full_df = dt_df.append(err_df)
 
+    their_cmap = plt.get_cmap('viridis')
+    our_cmap = plt.get_cmap('inferno')
+    palette = [
+        their_cmap(their_cmap_val),
+        our_cmap(our_cmap_val)
+    ]
     for i, (field, ax) in enumerate(zip(FIELDS_MAP.keys(), axes)):
         sns.boxplot(x="fold change", y=field, hue=alg_field,
-                    data=full_df, palette="Set3", ax=ax)
+                    data=full_df, palette=palette, ax=ax)
         if i != 0:
             ax._remove_legend(7)
+        else:
+            ax.legend(fontsize=15)
 
-    for field_name, y_label, ax in zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes):
+    for i, (field_name, y_label, ax) in enumerate(zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes)):
         ax.title.set_text(field_name)
-        ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        if i > 1:
+            ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        else:
+            ax.set_xlabel(None)
         ax.set_ylabel(y_label)
 
     plt.tight_layout()

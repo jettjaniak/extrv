@@ -66,15 +66,15 @@ def get_dfs_for_fields(test_results: TestResultsType, ignore=('comp_time',)):
 
 FIELDS_MAP = dict(
     dist='distance traveled in flow direction',
-    rot='cell rotation',
+    rot='absolute cell rotation',
     n_bonds='number of all formed bonds',
-    mean_h='mean distance from wall'
+    mean_h='mean distance from the wall'
     # mean_bond_ls='mean bond lifespan'
 )
 
 FIELDS_Y_LABEL_MAP = dict(
     dist='distance in $\\mu m$',
-    rot='absolute rotation in radians',
+    rot='rotation in radians',
     n_bonds='number of bonds',
     mean_h='mean distance in $\\mu m$'
     # mean_bond_ls='mean bond lifespan in s'
