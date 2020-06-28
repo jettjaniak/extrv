@@ -29,12 +29,6 @@ struct forces_t {
     }
 };
 
-struct velocities_t {
-    double v_x;
-    double v_y;
-    double o_z;
-};
-
 struct xyz_t {
     double x;
     double y;
@@ -64,13 +58,6 @@ struct xy_t {
     double length() {
         return sqrt(x * x + y * y);
     }
-};
-
-struct Position {
-    /// distance from sphere to surface in μm
-    double h = 0.0;
-    double dist = 0.0;
-    double rot = 0.0;
 };
 
 typedef std::mt19937 generator_t;

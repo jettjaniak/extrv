@@ -91,7 +91,6 @@ CatchSlipPselBondType::CatchSlipPselBondType(
 
 
 double CatchSlipPselBondType::rupture_rate(double bond_length, double temp) {
-    // TODO: any gain from using static?
     double half_f = bond_force(bond_length) / 2;
     double slip_part = (2.0 / 3.0) * rup_rate_0_slip * exp(react_compl_slip * half_f / (K_B * temp));
     double catch_part = rup_rate_0_catch * exp(react_compl_catch * half_f / (K_B * temp));

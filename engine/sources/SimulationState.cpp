@@ -28,6 +28,7 @@ SimulationState::SimulationState(
     if (rate_integral_tol == -1.0)
         rate_integral_tol = ode_abs_err;
 
+    // Sample cell adhesins (ligands) positions. Reject those that have (almost) no chance of forming a bond.
     Parameters::LigandType* lig_type;
     size_t n_of_lig;
     for (auto& lig_type_and_nr : p->lig_types_and_nrs) {
@@ -64,24 +65,24 @@ double SimulationState::dist() const {
 }
 
 double SimulationState::global_rot() const {
-    return cumulated_rot + rot();
+    return cumulative_rot + rot();
 }
 
 double SimulationState::global_dist() const {
-    return cumulated_dist + dist();
+    return cumulative_dist + dist();
 }
 
 void SimulationState::simulate_one_step() {
 
-    // ODE step
-    double rate_integral = do_ode_step();
+    do_ode_step();
 
-    if (rate_integral > rate_integral_value - rate_integral_tol) {
-        vector<double> weights(ligands.size(), 0.0);
+    // random event
+    if (ode_x[POS_SUM_RATE_INT] > rate_integral_value - rate_integral_tol) {
+        ode_x[POS_SUM_RATE_INT] = 0.0;
+        vector<double> rates(ligands.size(), 0.0);
 
         update_rot_inc_range();
         update_rot_inc_ind();
-
         after_right_lig_ind = (right_lig_ind + 1) % ligands.size();
 
         for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
@@ -90,16 +91,15 @@ void SimulationState::simulate_one_step() {
                 continue;
             }
             // TODO: now it only works with one type of bond per ligand
-            weights[i] = ligands[i].update_binding_rates(h(), rot());
+            rates[i] = ligands[i].update_binding_rates(h(), rot());
         }
         for (const auto &i : bd_lig_ind) {
-            weights[i] = ligands[i].rupture_rate(h(), rot(), dist());
+            rates[i] = ligands[i].rupture_rate(h(), rot(), dist());
         }
 
-        std::discrete_distribution<size_t> which_event_distribution(weights.begin(), weights.end());
+        std::discrete_distribution<size_t> which_event_distribution(rates.begin(), rates.end());
         size_t lig_nr = which_event_distribution(generator);
 
-        ode_x[POS_SUM_RATE_INT] = 0.0;
         // binding event
         if (ligands[lig_nr].bond_state == 0) {
             bd_lig_ind.insert(lig_nr);
@@ -113,14 +113,13 @@ void SimulationState::simulate_one_step() {
         }
 
         // Update positions after events
-
         double rot_reminder = std::fmod(rot(), 2 * PI);
-        cumulated_rot += rot() - rot_reminder;
+        cumulative_rot += rot() - rot_reminder;
         ode_x[POS_ROT] = rot_reminder;
 
         for (const auto &i : bd_lig_ind)
             ligands[i].bd_rec_x -= dist();
-        cumulated_dist += dist();
+        cumulative_dist += dist();
         ode_x[POS_DIST] = 0.0;
 
         update_randomness();
@@ -169,7 +168,6 @@ void SimulationState::update_rot_inc_range() {
     left_rot_inc = std::fmod(left_rot_inc + 2 * PI, 2 * PI);
 }
 
-// TODO: move it somewhere else
 void SimulationState::update_rot_inc_ind() {
     // |----[------]----|
     // 0    L      R   2 PI
@@ -352,6 +350,7 @@ void SimulationState::rhs(const array<double, 4> &x, array<double, 4> &dxdt, dou
         return;
 
     dxdt[POS_SUM_RATE_INT] = 0.0;
+    // bond formation events
     for (size_t i = left_lig_ind; i != after_right_lig_ind; i = (i + 1) % ligands.size()) {
         // ignore bonded ligands
         if (ligands[i].bond_state != 0) {
@@ -360,7 +359,6 @@ void SimulationState::rhs(const array<double, 4> &x, array<double, 4> &dxdt, dou
         // TODO: now it only works with one type of bond per ligand
         dxdt[POS_SUM_RATE_INT] += ligands[i].update_binding_rates(h, x[POS_ROT]);
     }
-
     // rupture events
     for (const auto &i : bd_lig_ind) {
         dxdt[POS_SUM_RATE_INT] += ligands[i].rupture_rate(h, x[POS_ROT], x[POS_DIST]);
@@ -406,7 +404,7 @@ void SimulationState::Diagnostic::add_dt(double dt) {
     dt_freq[i]++;
 }
 
-double SimulationState::do_ode_step() {
+void SimulationState::do_ode_step() {
     try_dt = std::min(try_dt, max_dt);
     // TODO: define as class parameter or define operator()
     namespace pl = std::placeholders;
@@ -427,6 +425,7 @@ double SimulationState::do_ode_step() {
             try_dt = dt_inout;
             continue;
         }
+        // We got in trouble, let's try with smaller step size.
         if (ode_x[POS_LOG_H] > MAX_LOG_H || helpers::values_not_ok(ode_x_inout.begin(), ode_x_inout.end())) {
             reset_stepper();
             try_dt /= 2;
@@ -434,6 +433,7 @@ double SimulationState::do_ode_step() {
             continue;
         }
         rate_integral = ode_x_inout[POS_SUM_RATE_INT];
+        // If we went too far, use linear interpolation to guess how long step we should make
         if (rate_integral > rate_integral_value + rate_integral_tol) {
             diag.n_rate_int_too_big++;
             reset_stepper();
@@ -447,37 +447,9 @@ double SimulationState::do_ode_step() {
     }
     diag.add_dt(try_dt);
 
-//    static long n_eq = 0;
-//    for (int i = 0; i < 3; i++) {
-//        if (ode_x[i] == ode_x_inout[i]) {
-//            std::cout << ++n_eq << ", dt = " << try_dt << std::endl;
-//            std::cout << "pos before: [";
-//            for (const auto &item : ode_x) {
-//                std::cout << item << ", ";
-//            }
-//            std::cout << "]" << std::endl;
-//
-//            std::cout << "pos after:  [";
-//            for (const auto &item : ode_x_inout) {
-//                std::cout << item << ", ";
-//            }
-//            std::cout << "]" << std::endl;
-//
-////            std::cout << "dx / dt:    [";
-////            for (const auto &item : dxdt) {
-////                std::cout << item << ", ";
-////            }
-////            std::cout << "]" << std::endl << std::endl;
-//            std::cout << std::endl;
-//            break;
-//        }
-//    }
-
     try_dt = dt_inout;  // possibly larger after successful step
     ode_x = ode_x_inout;
     time = time_inout;
-
-    return rate_integral;
 }
 
 void SimulationState::reset_stepper() {

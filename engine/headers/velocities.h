@@ -17,12 +17,12 @@ namespace velocities {
      * @param p model parameters
      *
      * @return computed velocities
-     *
      */
     array<double, 3> compute_velocities(double h, const forces_t &f, const Parameters *p);
 
     /**
      * Function related to hydrodynamics used in velocity computation.
+     * Not used during the simulation, as it is interpolated from pre-calculated values.
      */
     double lambda_fun(double h_over_r);
 

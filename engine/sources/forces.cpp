@@ -5,10 +5,7 @@
 
 forces_t forces::non_bond_forces(double shear_rate, double h, const Parameters *p) {
     forces_t f;
-    double grav = grav_force(p);
-    double rep = repulsive_force(h, p);
-    f.f_y = grav + rep;
-//    f.f_y = repulsive_force(h, p) + grav_force(p);
+    f.f_y = repulsive_force(h, p) + grav_force(p);
     if (shear_rate != 0.0)
         f += shear_forces(shear_rate, h, p);
     return f;

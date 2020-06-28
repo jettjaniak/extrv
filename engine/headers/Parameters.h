@@ -47,7 +47,7 @@ struct Parameters {
     /// second pair element is number of ligands of particular type on whole sphere
     vector<pair<LigandType*, size_t>> lig_types_and_nrs;
 
-    // TODO: documentation
+    // maximal surface distance for which any binding rate is higher than MIN_RATE
     double max_surf_dist = 0.0;
 
     /**

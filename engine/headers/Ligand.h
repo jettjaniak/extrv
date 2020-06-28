@@ -59,7 +59,8 @@ struct Ligand {
     /**
      * Compute distance from ligand to surface.
      *
-     * TODO
+     * @param h distance between the cell and the wall
+     * @param rot sphere's rotation
      */
     double surface_dist(double h, double rot);
 
@@ -67,7 +68,9 @@ struct Ligand {
      * Compute bond length.
      * Should abort if ligand is not bonded (bond_state == 0).
      *
-     * TODO
+     * @param h distance between the cell and the wall
+     * @param rot sphere's rotation
+     * @param dist distance that cell traveled in the flow direction
      */
     double bond_length(double h, double rot, double dist);
 
@@ -81,7 +84,12 @@ struct Ligand {
     double rupture_rate(double h, double rot, double dist);
 
     /**
-     * TODO
+     * Select with which wall adhesin the cell adhesin should form a bond,
+     * set the corresponding bond state and wall adhesin position.
+     *
+     * @param rot sphere's rotation
+     * @param dist distance that cell traveled in the flow direction
+     * @param generator random number generator
      */
     void bond(double rot, double dist, generator_t &generator);
 
@@ -94,7 +102,9 @@ struct Ligand {
     /**
      * Computes forces that bond exerts on the sphere.
      *
-     * TODO
+     * @param h distance between the cell and the wall
+     * @param rot sphere's rotation
+     * @param dist distance that cell traveled in the flow direction
      */
     forces_t bond_forces(double h, double rot, double dist);
 };
