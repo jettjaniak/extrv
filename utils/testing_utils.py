@@ -1,7 +1,7 @@
 import os
 import pickle
 from collections import namedtuple
-from extrv_engine import SlipBondType, Parameters
+# from extrv_engine import SlipBondType, Parameters
 from typing import Dict, List
 import numpy as np
 import pandas as pd
@@ -15,28 +15,28 @@ SimulationStats = namedtuple("SimulationStats", ['mean_h', 'rot', 'dist', 'n_bon
 TestResultsType = Dict[float, List[SimulationStats]]
 
 
-def setup_parameters(*, rec_dens=750, binding_rate_0=0.06):
-    p = Parameters(
-        r_cell=4.5,
-        visc=0.01,
-        temp=310,
-        dens_diff=0.05,
-        rep_0=5075,
-        rep_scale=1145
-    )
-    psgl_plus_esel_bond = SlipBondType(
-        eq_bond_len=27,
-        spring_const=100,
-        binding_rate_0=binding_rate_0,
-        rec_dens=rec_dens,
-        react_compl_slip=0.18,
-        rup_rate_0_slip=2.6
-    )
-    psgl = Parameters.LigandType()
-    psgl.add_bond_type(psgl_plus_esel_bond)
-    p.add_ligands(lig_type=psgl, n_of_lig=20000)
-    # Don't let them be garbage collected!
-    return p, psgl, psgl_plus_esel_bond
+# def setup_parameters(*, rec_dens=750, binding_rate_0=0.06):
+#     p = Parameters(
+#         r_cell=4.5,
+#         visc=0.01,
+#         temp=310,
+#         dens_diff=0.05,
+#         rep_0=5075,
+#         rep_scale=1145
+#     )
+#     psgl_plus_esel_bond = SlipBondType(
+#         eq_bond_len=27,
+#         spring_const=100,
+#         binding_rate_0=binding_rate_0,
+#         rec_dens=rec_dens,
+#         react_compl_slip=0.18,
+#         rup_rate_0_slip=2.6
+#     )
+#     psgl = Parameters.LigandType()
+#     psgl.add_bond_type(psgl_plus_esel_bond)
+#     p.add_ligands(lig_type=psgl, n_of_lig=20000)
+#     # Don't let them be garbage collected!
+#     return p, psgl, psgl_plus_esel_bond
 
 
 def get_dfs_for_fields(test_results: TestResultsType, ignore=('comp_time',)):

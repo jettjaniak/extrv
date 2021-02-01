@@ -6,8 +6,8 @@ import pandas as pd
 from scipy import interpolate
 import matplotlib.pyplot as plt
 import seaborn as sns
-from utils.diff_shear import SimulationStats
-from utils.testing_utils import FIELDS_MAP, FIELDS_Y_LABEL_MAP, DF_COLUMNS, get_err_or_dt_dict
+# from utils.diff_shear import SimulationStats
+from utils.testing_utils import FIELDS_MAP, FIELDS_Y_LABEL_MAP, DF_COLUMNS, get_err_or_dt_dict, SimulationStats
 
 import matplotlib
 matplotlib.rcParams.update({
@@ -116,6 +116,8 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
         ax.grid(True)
         if i > 1:
             ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        else:
+            ax.set_xlabel(" ")
         ax.set_ylabel(y_label)
 
     ylims = []
@@ -172,9 +174,59 @@ def plot_diff_err_or_dt(results_dir: str, err_or_dt: str = 'err', base=2, trim=1
     plt.tight_layout()
 
 
+def plot_one_err_or_dt(results_dir: str, err_or_dt: str = 'err', exp=-13, base=2):
+    fig = plt.figure(figsize=(15, 10))
+    gs = fig.add_gridspec(6, 8)
+    axes = [
+        fig.add_subplot(gs[0:3, 0:4]),
+        fig.add_subplot(gs[0:3, 4:8]),
+        fig.add_subplot(gs[3:6, 0:4]),
+        fig.add_subplot(gs[3:6, 4:8])
+    ]
+
+    df = get_err_or_dt_dict(results_dir, err_or_dt, base)[0][exp]
+
+    for i, (field_name, y_label, ax) in enumerate(zip(FIELDS_MAP.values(), FIELDS_Y_LABEL_MAP.values(), axes)):
+        ax.title.set_text(field_name)
+        ax.grid(True)
+        if i > 1:
+            ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+        else:
+            ax.set_xlabel(" ")
+        ax.set_ylabel(y_label)
+
+    means = df.groupby('fold change').mean()
+    errors = df.groupby('fold change').apply(standard_error_of_mean)
+    field_0 = tuple(FIELDS_MAP.keys())[0]
+    xs = means[field_0].index
+    xs_ls = np.linspace(xs.min(), xs.max(), 300)
+
+    for field, ax in zip(FIELDS_MAP.keys(), axes):
+        color = (0, 0, 0, 1)
+        # transparent_color = [*color[:3], 0.15]
+        # means_spline = interpolate.pchip(xs, means[field])
+        # means_smooth = means_spline(xs_ls)
+        # ax.plot(xs_ls, means_smooth, color=color, linewidth=2, zorder=50)
+        ax.scatter(xs, means[field], color=color, zorder=100, s=8**2)
+
+        # errors_spline = interpolate.pchip(xs, errors[field])
+        # errors_smooth = errors_spline(xs_ls)
+        #
+        # errors_high_smooth = means_smooth + errors_smooth
+        # errors_low_smooth = means_smooth - errors_smooth
+
+        # ax.fill_between(xs_ls, errors_high_smooth, errors_low_smooth, color=transparent_color, zorder=30)
+        # ax.plot(xs_ls, errors_high_smooth, color=color, linestyle='--', zorder=5)
+        # ax.plot(xs_ls, errors_low_smooth, color=cm(exp), linestyle='--', zorder=5)
+
+        ax.errorbar(means.index, means[field], errors[field], color=color, linewidth=2)
+
+    plt.tight_layout()
+
+
 def plot_dt_and_err(dt_exp=-19, err_exp=-13, our_cmap_val=0.9, their_cmap_val=0.35):
 
-    fig = plt.figure(figsize=(15, 8))
+    fig = plt.figure(figsize=(15, 9))
     gs = fig.add_gridspec(6, 8)
     axes = [
         fig.add_subplot(gs[0:3, 0:4]),
@@ -214,8 +266,18 @@ def plot_dt_and_err(dt_exp=-19, err_exp=-13, our_cmap_val=0.9, their_cmap_val=0.
         ax.title.set_text(field_name)
         if i > 1:
             ax.set_xlabel("wall adehsins density (750/$\\mu m^2$)")
+            # if i == 2:
+            #     width = 0.4
+            #     high = 127
+            #     low = 121
+            #     ax.plot(
+            #         [4 - width/2, 4 - width/2, 4 + width/2, 4 + width/2],
+            #         [high, low, low, high], c='black'
+            #     )
+            #     ax.text(3.945, 107, "*")
         else:
-            ax.set_xlabel(None)
+            ax.set_xlabel(" ")
+
         ax.set_ylabel(y_label)
 
     plt.tight_layout()
